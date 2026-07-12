@@ -27,4 +27,4 @@ docs 不只是说明书，还包含架构入口、area map、current contract、
 
 ## 推荐阅读顺序
 
-先读 AGENTS.md、README 与 docs/README，再看 architecture 与 area maps；确认 current contract 后，进入对应路由、类型、数据库表和实现文件。
+先读项目 README 与当前文档目录，再看 architecture 与 area maps；确认 current contract 后，进入对应路由、类型、数据库表和实现文件。
