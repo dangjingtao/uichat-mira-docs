@@ -2,7 +2,7 @@
 title: 导航如何生成
 description: Mira-Docs 如何从目录和 Markdown 文件生成页面导航。
 group: 快速开始
-order: 3
+order: 5
 ---
 
 # 导航如何生成

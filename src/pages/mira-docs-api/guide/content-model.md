@@ -2,7 +2,7 @@
 title: 内容模型
 description: Mira-Docs 如何把目录、Markdown 和元数据转换成页面。
 group: 核心概念
-order: 5
+order: 3
 ---
 
 # 内容模型

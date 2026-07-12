@@ -18,5 +18,17 @@ import "./Supabase.theme.css";
 import "./tailwind.css";
 import "./styles.css";
 import "./claude-visual.css";
+
+const themeKey = "mira-color-theme";
+const defaultTheme = "claude";
+const savedTheme =
+  typeof window !== "undefined" ? window.localStorage.getItem(themeKey) : null;
+const initialTheme =
+  savedTheme === "claude" || savedTheme === "apple" || savedTheme === "supabase"
+    ? savedTheme
+    : defaultTheme;
+
+document.documentElement.dataset.theme = initialTheme;
+
 registerSW({immediate: true});
 ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter basename={import.meta.env.BASE_URL}><App /></BrowserRouter></React.StrictMode>);
