@@ -2,7 +2,7 @@
 title: 构建集成
 description: Mira-Docs 在 Vite 构建中的实际接入点。
 group: 参考
-order: 11
+order: 21
 ---
 
 # 构建集成

@@ -91,6 +91,7 @@ type SiteArea = {
   title: string;
   description: string;
   docs: Doc[];
+  path: string;
   href: string;
 };
 const githubUrl = "https://github.com/dangjingtao/uichat-mira";
@@ -421,6 +422,7 @@ const siteAreas: SiteArea[] = siteAreaRoots.map((root) => {
     .filter((doc) => doc.root === root)
     .sort(compareDocs);
   const first = docs[0];
+  const path = `/${root}`;
   return {
     key: root,
     title:
@@ -430,7 +432,8 @@ const siteAreas: SiteArea[] = siteAreaRoots.map((root) => {
         .replace(/\b\w/g, (letter) => letter.toUpperCase()),
     description: first?.description || "该目录暂时没有可用文档。",
     docs,
-    href: docHref(`/${root}`),
+    path,
+    href: docHref(path),
   };
 });
 const docSections: DocSection[] = Object.entries(sectionInfo)
@@ -1631,11 +1634,11 @@ function RoutedApp() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [themeName, setThemeName] = useState<ThemeName>(() => {
-    if (typeof window === "undefined") return "supabase";
+    if (typeof window === "undefined") return "claude";
     const saved = window.localStorage.getItem("mira-color-theme");
     return themeOptions.some((theme) => theme.name === saved)
       ? (saved as ThemeName)
-      : "supabase";
+      : "claude";
   });
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -2060,8 +2063,8 @@ function AreaDocNav({ area, current }: { area: SiteArea; current: string }) {
       <div className="docnav-group">
         <h5>
           <Link
-            className={current === area.href ? "active" : ""}
-            to={area.href}
+            className={current === area.path ? "active" : ""}
+            to={area.path}
           >
             {area.title}
           </Link>
@@ -2126,8 +2129,8 @@ function DocsLayout() {
   const currentDoc = allDocs.find((item) => item.path === location.pathname);
   const currentArea = siteAreas.find(
     (area) =>
-      location.pathname === area.href ||
-      location.pathname.startsWith(`${area.href}/`),
+      location.pathname === area.path ||
+      location.pathname.startsWith(`${area.path}/`),
   );
   const isBlogArea = currentArea?.key === "blogs";
   const doc = currentDoc || allDocs[0];

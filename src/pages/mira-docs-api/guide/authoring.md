@@ -2,7 +2,7 @@
 title: 编写文档
 description: 在 Mira-Docs 中新增文章、目录和导航分组。
 group: 快速开始
-order: 2
+order: 4
 ---
 
 # 编写文档

@@ -2,7 +2,7 @@
 title: Frontmatter 参考
 description: Mira-Docs 当前支持的 Markdown 元数据字段。
 group: 参考
-order: 10
+order: 20
 ---
 
 # Frontmatter 参考
