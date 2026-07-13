@@ -13,39 +13,177 @@ Mira 想做的并不是「给模型一堆工具，然后期待它自己发挥」
 
 > 本页先固定已经形成共识的 Agent 策略。节点字段、状态结构、测试合同和实现细节会继续拆成后续专题文档。
 
-## 当前稳定主循环
+## 用户问题如何进入 Agent
+
+用户问题首先进入 `prepareContext`，而不是直接进入 Planner，也不是直接发起 Harness Invocation。
+
+`prepareContext` 会读取线程与任务上下文，同时从 Harness Registry 取得能力定义，完成候选能力匹配并生成本轮 `ToolExposure`。准备完成后，普通请求才进入 Planner；只有审批恢复等已经带有冻结 `pendingToolCall` 的情况，才会绕过 Planner 直接回到 Policy。
+
+<!--
+Mermaid source:
+flowchart TD
+  U[用户问题] --> PC[PrepareContext]
+  PC --> C[线程与任务上下文]
+  PC --> HR[Harness Registry]
+  HR --> CM[Capability Matcher]
+  CM --> TE[ToolExposure]
+  C --> P[Planner]
+  TE --> P
+  PC -. frozen pendingToolCall .-> PO[Policy]
+  P -->|answer / ask_user| G[Generate]
+  G --> EV[Evaluate]
+  EV --> E[END]
+  P -->|retrieve| R[Retrieve]
+  R --> ED[Evidence]
+  ED --> P
+  P -->|use_tool| N[Normalize]
+  N --> PO
+  PO -->|needs approval| A[Approval / Pause]
+  PO -->|allow| T[ToolNode]
+  T --> HI[Harness Invocation]
+  HI --> ED
+  PO -->|deny| G
+-->
 
 ::: html
-<div style="margin:28px 0;padding:20px;border:1px solid var(--hairline,#e6dfd8);border-radius:16px;background:var(--surface-soft,#f5f0e8);">
-  <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-active,#a9583e);margin-bottom:14px;">AGENT V1.5 LOOP</div>
-  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
-    <span style="padding:11px 14px;border-radius:10px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);"><strong>Planner</strong></span>
-    <span>→</span>
-    <span style="padding:11px 14px;border-radius:10px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);"><strong>Normalize</strong></span>
-    <span>→</span>
-    <span style="padding:11px 14px;border-radius:10px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);"><strong>Policy</strong></span>
-    <span>→</span>
-    <span style="padding:11px 14px;border-radius:10px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);"><strong>ToolNode</strong></span>
-    <span>→</span>
-    <span style="padding:11px 14px;border-radius:10px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);"><strong>Evidence</strong></span>
-    <span>→</span>
-    <span style="padding:11px 14px;border-radius:10px;background:var(--surface-card,#efe9de);border:1px solid var(--hairline,#e6dfd8);"><strong>Planner</strong></span>
+<div style="margin:28px 0;padding:22px;border:1px solid var(--hairline,#e6dfd8);border-radius:18px;background:var(--surface-soft,#f5f0e8);overflow-x:auto;">
+  <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-active,#a9583e);margin-bottom:18px;">FULL AGENT ENTRY &amp; EXECUTION FLOW</div>
+
+  <div style="min-width:720px;display:grid;gap:12px;">
+    <div style="display:flex;justify-content:center;">
+      <div style="min-width:220px;padding:14px 18px;border-radius:12px;background:#252320;color:#faf9f5;text-align:center;box-shadow:0 6px 18px rgba(37,35,32,.12);">
+        <strong style="display:block;font-size:16px;">用户问题</strong>
+        <span style="display:block;margin-top:4px;font-size:12px;color:#d7d2ca;">User Message / Goal</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:20px;line-height:1;color:var(--muted,#8a8379);">↓</div>
+
+    <div style="padding:18px;border-radius:14px;background:var(--canvas,#faf9f5);border:2px solid var(--primary-active,#a9583e);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px;">
+        <div>
+          <strong style="display:block;font-size:17px;">PrepareContext</strong>
+          <span style="display:block;margin-top:4px;font-size:13px;color:var(--body-c,#3d3d3a);">准备线程、任务与本轮能力暴露</span>
+        </div>
+        <span style="padding:5px 9px;border-radius:999px;background:var(--surface-card,#efe9de);font-size:11px;white-space:nowrap;">真实 Graph 入口</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px;">
+        <div style="padding:13px;border-radius:11px;border:1px solid var(--hairline,#e6dfd8);background:var(--surface-soft,#f5f0e8);">
+          <strong style="font-size:13px;">线程与任务上下文</strong>
+          <div style="margin-top:5px;font-size:12px;color:var(--body-c,#3d3d3a);">Messages · Goal · Task Frame</div>
+        </div>
+        <div style="padding:13px;border-radius:11px;border:1px solid var(--hairline,#e6dfd8);background:var(--surface-soft,#f5f0e8);">
+          <strong style="font-size:13px;">Harness Registry</strong>
+          <div style="margin-top:5px;font-size:12px;color:var(--body-c,#3d3d3a);">读取已注册能力定义</div>
+        </div>
+        <div style="padding:13px;border-radius:11px;border:1px solid var(--hairline,#e6dfd8);background:var(--surface-soft,#f5f0e8);">
+          <strong style="font-size:13px;">Capability Matcher</strong>
+          <div style="margin-top:5px;font-size:12px;color:var(--body-c,#3d3d3a);">按用户问题匹配候选能力</div>
+        </div>
+        <div style="padding:13px;border-radius:11px;border:1px solid var(--hairline,#e6dfd8);background:var(--surface-soft,#f5f0e8);">
+          <strong style="font-size:13px;">ToolExposure</strong>
+          <div style="margin-top:5px;font-size:12px;color:var(--body-c,#3d3d3a);">生成 Planner 本轮可见工具</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;padding:10px 12px;border-radius:10px;border:1px dashed var(--primary-active,#a9583e);font-size:12px;color:var(--body-c,#3d3d3a);">
+        恢复入口：若 State 已带有冻结的 <code>pendingToolCall</code>，PrepareContext 后直接进入 Policy，避免 Planner 改写已冻结调用。
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:20px;line-height:1;color:var(--muted,#8a8379);">↓</div>
+
+    <div style="display:flex;justify-content:center;">
+      <div style="min-width:260px;padding:15px 20px;border-radius:12px;background:var(--surface-card,#efe9de);border:1px solid var(--hairline,#e6dfd8);text-align:center;">
+        <strong style="display:block;font-size:17px;">Planner</strong>
+        <span style="display:block;margin-top:4px;font-size:12px;color:var(--body-c,#3d3d3a);">唯一语义决策中心</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1.45fr;gap:12px;align-items:stretch;">
+      <div style="padding:15px;border-radius:13px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);">
+        <div style="font-size:11px;letter-spacing:.06em;color:var(--primary-active,#a9583e);margin-bottom:9px;">ANSWER / ASK USER</div>
+        <div style="padding:11px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Generate</strong></div>
+        <div style="text-align:center;padding:4px 0;color:var(--muted,#8a8379);">↓</div>
+        <div style="padding:11px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Evaluate</strong></div>
+        <div style="text-align:center;padding:4px 0;color:var(--muted,#8a8379);">↓</div>
+        <div style="padding:11px;border-radius:9px;background:#252320;color:#faf9f5;text-align:center;"><strong>END</strong></div>
+      </div>
+
+      <div style="padding:15px;border-radius:13px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);">
+        <div style="font-size:11px;letter-spacing:.06em;color:var(--primary-active,#a9583e);margin-bottom:9px;">RETRIEVE</div>
+        <div style="padding:11px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Retrieve</strong></div>
+        <div style="text-align:center;padding:4px 0;color:var(--muted,#8a8379);">↓</div>
+        <div style="padding:11px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Evidence</strong></div>
+        <div style="text-align:center;padding:4px 0;color:var(--muted,#8a8379);">↺</div>
+        <div style="padding:11px;border-radius:9px;background:var(--surface-card,#efe9de);text-align:center;"><strong>Planner</strong></div>
+      </div>
+
+      <div style="padding:15px;border-radius:13px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);">
+        <div style="font-size:11px;letter-spacing:.06em;color:var(--primary-active,#a9583e);margin-bottom:9px;">USE TOOL</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:7px;align-items:center;">
+          <div style="padding:11px 8px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Normalize</strong></div>
+          <span style="color:var(--muted,#8a8379);">→</span>
+          <div style="padding:11px 8px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Policy</strong></div>
+          <span style="color:var(--muted,#8a8379);">→</span>
+          <div style="padding:11px 8px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>ToolNode</strong></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">
+          <div style="padding:10px;border-radius:9px;border:1px dashed var(--hairline,#e6dfd8);font-size:12px;text-align:center;">
+            <strong>需要审批</strong><br><span style="color:var(--body-c,#3d3d3a);">Approval / Pause</span>
+          </div>
+          <div style="padding:10px;border-radius:9px;border:1px dashed var(--hairline,#e6dfd8);font-size:12px;text-align:center;">
+            <strong>拒绝或阻断</strong><br><span style="color:var(--body-c,#3d3d3a);">Generate / Error</span>
+          </div>
+        </div>
+
+        <div style="text-align:center;padding:6px 0;color:var(--muted,#8a8379);">↓ allow</div>
+        <div style="padding:11px;border-radius:9px;background:#252320;color:#faf9f5;text-align:center;">
+          <strong>Harness Invocation</strong>
+          <div style="margin-top:4px;font-size:11px;color:#d7d2ca;">真实工具执行入口</div>
+        </div>
+        <div style="text-align:center;padding:5px 0;color:var(--muted,#8a8379);">↓</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:7px;align-items:center;">
+          <div style="padding:11px;border-radius:9px;background:var(--surface-soft,#f5f0e8);text-align:center;"><strong>Evidence</strong></div>
+          <span style="color:var(--muted,#8a8379);">↺</span>
+          <div style="padding:11px;border-radius:9px;background:var(--surface-card,#efe9de);text-align:center;"><strong>Planner</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:12px 14px;border-radius:11px;background:var(--surface-card,#efe9de);font-size:13px;color:var(--body-c,#3d3d3a);">
+      <strong>Harness 在流程中出现两次：</strong>Planner 之前参与能力注册、匹配与 ToolExposure；Planner 决定使用工具并通过 Normalize / Policy 后，才由 Harness Invocation 执行真实调用。
+    </div>
   </div>
 </div>
 :::
 
-当前主循环稳定为：
+## 核心决策循环
+
+当前稳定循环为：
 
 ```text
 Planner
 → Normalize
 → Policy
 → ToolNode
+→ Harness Invocation
 → Evidence
 → Planner
 ```
 
-这条路径的重点不是节点数量，而是职责不能互相越权。
+如果 Planner 选择的是检索路径，则是：
+
+```text
+Planner
+→ Retrieve
+→ Evidence
+→ Planner
+```
+
+这两条路径的重点不是节点数量，而是职责不能互相越权。
 
 ## Planner 是唯一语义决策中心
 
