@@ -1,5 +1,34 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import {BrowserRouter} from "react-router-dom";
+import {registerSW} from "virtual:pwa-register";
+import "@fontsource/public-sans/400.css";
+import "@fontsource/public-sans/500.css";
+import "@fontsource/public-sans/600.css";
+import "@fontsource/public-sans/700.css";
+import "@fontsource/cormorant-garamond/400.css";
+import "@fontsource/cormorant-garamond/500.css";
+import "@fontsource/cormorant-garamond/600.css";
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/500.css";
 import App from "./App";
+import "./claude.theme.css";
+import "./apple.theme.css";
+import "./Supabase.theme.css";
+import "./tailwind.css";
 import "./styles.css";
-ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><App /></React.StrictMode>);
+import "./claude-visual.css";
+
+const themeKey = "mira-color-theme";
+const defaultTheme = "claude";
+const savedTheme =
+  typeof window !== "undefined" ? window.localStorage.getItem(themeKey) : null;
+const initialTheme =
+  savedTheme === "claude" || savedTheme === "apple" || savedTheme === "supabase"
+    ? savedTheme
+    : defaultTheme;
+
+document.documentElement.dataset.theme = initialTheme;
+
+registerSW({immediate: true});
+ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter basename={import.meta.env.BASE_URL}><App /></BrowserRouter></React.StrictMode>);
