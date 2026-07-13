@@ -61,8 +61,8 @@ src/
 
 ```ts
 export const directoryLabels = {
-  "visual/product-design-system": "产品设计系统",
-  "visual/theme": "主题",
+  "视觉/product-design-system": "产品设计系统",
+  "视觉/theme": "主题",
 };
 ```
 

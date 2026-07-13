@@ -122,7 +122,7 @@
   .claude-visual h3{ font-family:var(--font-sans); font-weight:600; font-size:18px; letter-spacing:0; }
   .claude-visual h4{ font-family:var(--font-sans); font-weight:600; font-size:14px; letter-spacing:0; }
   .claude-visual p{ margin:0 0 var(--sp-sm); color:var(--body-c); max-width:64ch; }
-  .claude-visual .lede{ font-size:19px; color:var(--body-c); }
+  .claude-visual .lede{ font-size:16px; color:var(--body-c); }
   .claude-visual .section-head{ max-width:680px; margin-bottom:var(--sp-lg); }
   .claude-visual .mono-label{ font-family:var(--font-mono); font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
 

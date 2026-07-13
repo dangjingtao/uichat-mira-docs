@@ -44,19 +44,19 @@ const defaultItems: CapabilityItem[] = [
 function CapabilityContent({ item }: { item: CapabilityItem }) {
   return (
     <>
-      <span className="font-mono text-[11px] font-medium tracking-[0.16em] text-[#bd6247]">
+      <span className="font-mono text-[11px] font-medium tracking-[0.16em] text-primary-active">
         {item.id}
       </span>
 
       <div className="min-w-0">
-        <h3 className="m-0 text-[19px] font-semibold leading-7 tracking-[-0.015em] text-[#28231f] sm:text-[21px]">
+        <h3 className="m-0 text-[19px] font-semibold leading-7 tracking-[-0.015em] text-ink sm:text-[21px]">
           {item.title}
         </h3>
-        <p className="mb-0 mt-2 max-w-[31rem] text-[15px] leading-7 text-[#716961]">
+        <p className="mb-0 mt-2 max-w-[31rem] text-[15px] leading-7 text-muted sm:text-[16px]">
           {item.description}
         </p>
         {item.detail ? (
-          <div className="mt-3 text-xs tracking-[0.03em] text-[#92877d]">
+          <div className="mt-3 text-xs tracking-[0.03em] text-muted-soft">
             {item.detail}
           </div>
         ) : null}
@@ -73,7 +73,7 @@ function Capability({ item }: { item: CapabilityItem }) {
     return (
       <a
         href={item.href}
-        className={`${classes} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#cf7558]/50 focus-visible:ring-offset-4 hover:border-[#c8775e]`}
+        className={`${classes} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-4 hover:border-primary`}
       >
         <CapabilityContent item={item} />
       </a>
@@ -95,22 +95,22 @@ export function CoreCapabilities({
     <section
       id="capabilities"
       aria-labelledby="capabilities-title"
-      className={`bg-[#fbf9f5] px-5 py-20 text-[#28231f] sm:px-8 sm:py-24 lg:py-28 ${className}`}
+      className={`bg-canvas px-5 py-20 text-ink sm:px-8 sm:py-24 lg:py-28 ${className}`}
     >
       <div className="mx-auto max-w-[1120px]">
         <header className="pb-12 md:pb-14">
           <div>
-            <p className="mb-4 mt-0 font-mono text-[11px] font-medium tracking-[0.16em] text-[#bd6247]">
+            <p className="mb-4 mt-0 font-mono text-[11px] font-medium tracking-[0.16em] text-primary-active">
               核心能力
             </p>
             <h2
               id="capabilities-title"
-              className="m-0 max-w-[780px] font-serif text-[38px] font-normal leading-[1.14] tracking-[-0.035em] text-[#211d1a] sm:text-[44px]"
+              className="m-0 max-w-[780px] font-serif text-[38px] font-normal leading-[1.14] tracking-[-0.035em] text-ink sm:text-[44px]"
             >
               不止聊天，
               <span className="block">而是持续工作的上下文。</span>
             </h2>
-            <p className="mb-0 mt-6 max-w-[32rem] text-[16px] leading-7 text-[#6e665e]">
+            <p className="mb-0 mt-6 max-w-[32rem] text-[16px] leading-7 text-muted">
               对话、角色、文件、知识与工具共享同一份上下文。一次交流可以沉淀为长期资料，也可以继续转化为真实行动。
             </p>
           </div>

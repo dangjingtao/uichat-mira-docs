@@ -11,7 +11,6 @@ import { marked } from "marked";
 import {
   ArrowUpRight,
   ChevronDown,
-  Cloud,
   Code2,
   Compass,
   Cpu,
@@ -430,7 +429,7 @@ const siteAreas: SiteArea[] = siteAreaRoots.map((root) => {
       root
         .replace(/[-_]+/g, " ")
         .replace(/\b\w/g, (letter) => letter.toUpperCase()),
-    description: first?.description || "该目录暂时没有可用文档。",
+    description: root === "design-md" ? "" : first?.description || "",
     docs,
     path,
     href: docHref(path),
@@ -499,7 +498,8 @@ function getDocSignature(doc: Doc) {
     return {
       title: `${authorProfiles.tomz.name} × ${authorProfiles.mira.name}`,
       body: "这篇文章来自两人的共同讨论，由 Mira 完成写作，Tomz Dang 审定发布。",
-      links: [{ label: "关于两位作者 →", href: docHref("/blogs") }],
+      links: [],
+      showKicker: false,
       accentClassName: "",
     };
   }
@@ -510,22 +510,24 @@ function getDocSignature(doc: Doc) {
       title: "来自我最爱的 Mira",
       body: authorProfiles.mira.bio,
       links,
+      showKicker: true,
       accentClassName: "is-mira",
     };
   }
   return {
     title: authorProfiles.tomz.name,
-    body: authorProfiles.tomz.bio,
+    body: "",
     links: [
       { label: "GitHub", href: githubUrl },
       { label: "更多文章 →", href: docHref("/blogs") },
     ],
+    showKicker: false,
     accentClassName: "",
   };
 }
 const configuredHeaderNav: ConfiguredNavGroup[] = [
   {
-    label: "产品",
+    label: "项目",
     items: [
       { label: "UIChat", href: "https://docs.uichat.tomz.io/" },
       {
@@ -593,29 +595,6 @@ const content = {
         "检索到说明不等于任务完成，工具返回成功也不等于业务目标成立，Mira 会把证据交回决策回路。",
     },
   ] satisfies CardItem[],
-  readingMap: [] as CardItem[],
-  models: [
-    {
-      title: "Claude",
-      description: "长上下文与工具调用能力强，适合复杂任务编排。",
-      tag: "云端 API",
-    },
-    {
-      title: "GPT 系列",
-      description: "通用能力全面，生态与插件资源丰富。",
-      tag: "云端 API",
-    },
-    {
-      title: "通义 / DeepSeek",
-      description: "中文语境理解好，国内访问速度更稳定。",
-      tag: "云端 API",
-    },
-    {
-      title: "Ollama 本地模型",
-      description: "Llama、Qwen、Mistral 等模型本地运行，零延迟、零上传。",
-      tag: "本地部署",
-    },
-  ] satisfies CardItem[],
   code: [
     "__dirname: D:\\workspace\\rag-demo\\electron app.getAppPath():",
     "D:\\workspace\\rag-demo\\electron process.resourcesPath:",
@@ -628,31 +607,6 @@ const content = {
     "{code:-32601, message:'Autofill.setAddresses' wasn't found}",
     "[vite] hmr update /src/features/Settings/pages/MicroApps/Tts/index.tsx",
   ],
-  footer: [
-    {
-      title: "产品",
-      items: [
-        { label: "功能", href: "#features" },
-        { label: "模型支持", href: "#models" },
-        { label: "文档", href: docHref("/about/origin") },
-      ],
-    },
-    {
-      title: "资源",
-      items: [
-        { label: "快速开始", href: docHref("/about/origin") },
-        { label: "配置参考", href: docHref("/engineering/development") },
-        { label: "GitHub", href: githubUrl },
-      ],
-    },
-    {
-      title: "社区",
-      items: [
-        { label: "讨论区", href: "#" },
-        { label: "问题反馈", href: "#" },
-      ],
-    },
-  ] as { title: string; items: LinkItem[] }[],
 };
 content.nav = [
   { label: "文档", href: docHref("/about/origin") },
@@ -717,75 +671,6 @@ function SectionHead({
     </div>
   );
 }
-function modelIcon(title: string): LucideIcon {
-  return title.includes("Ollama") ? Cpu : Cloud;
-}
-function mapIcon(key: string): LucideIcon {
-  const icons: Record<string, LucideIcon> = {
-    about: Compass,
-    philosophy: Lightbulb,
-    product: Sparkles,
-    architecture: Network,
-    engineering: Code2,
-    status: FileCode2,
-  };
-  return icons[key] || Compass;
-}
-function ModelCards({
-  items,
-  links = false,
-}: {
-  items: CardItem[];
-  links?: boolean;
-}) {
-  return (
-    <div className="model-grid">
-      {items.map((item) => {
-        const Icon = modelIcon(item.title);
-        return (
-          <article className="model-card" key={item.title}>
-            <div className="thumb">
-              <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
-              <span className="sr-only">{item.title}</span>
-            </div>
-            <h3>{item.title}</h3>
-            <p style={{ margin: 0 }}>{item.description}</p>
-            {links ? (
-              <a className="tag" href={item.href}>
-                {"阅读入口 →"}
-              </a>
-            ) : (
-              <span className="tag">{item.tag}</span>
-            )}
-          </article>
-        );
-      })}
-    </div>
-  );
-}
-function DynamicReadingMap() {
-  return (
-    <div className="model-grid reading-map-grid">
-      {visibleSections.map((section) => {
-        const Icon = mapIcon(section.key);
-        return (
-          <article className="model-card" key={section.key}>
-            <div className="thumb">
-              <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
-              <span className="sr-only">{section.title}</span>
-            </div>
-            <h3>{section.title}</h3>
-            <p style={{ margin: 0 }}>{section.description}</p>
-            <Link className="tag" to={section.docs[0].path}>
-              阅读入口 →
-            </Link>
-          </article>
-        );
-      })}
-    </div>
-  );
-}
-
 function PhilosophySpotlight() {
   return (
     <div className="philosophy-spotlight">
@@ -830,8 +715,7 @@ function PhilosophySpotlight() {
         <h2 className="philosophy-spotlight-heading">
           <span>自主，不等于失控。</span>
           <span className="philosophy-spotlight-heading-accent">
-            <span>智能，也不应以</span>
-            <span>失去自己为代价。</span>
+            <span>智能，不失去自能。</span>
           </span>
         </h2>
         <div className="philosophy-spotlight-intro philosophy-spotlight-body">
@@ -847,7 +731,6 @@ function PhilosophySpotlight() {
       <div className="philosophy-spotlight-divider" aria-hidden="true" />
       <div className="philosophy-spotlight-chapter">
         <h3>接住，不是接管</h3>
-        <p className="philosophy-spotlight-lead">接住你，不是取代你。</p>
         <div className="philosophy-spotlight-body">
           <p>
             当人疲惫、混乱或暂时说不清需求时，Mira
@@ -884,34 +767,15 @@ function PhilosophySpotlight() {
 function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={className}>
-      <div className="wrap">
-        <div className="footer-cols">
-          <div>
-            <div className="brand" style={{ color: "#fff", marginBottom: 12 }}>
-              <img className="brand-logo" src={logoSrc} alt="" />
-              UIChat Mira
-            </div>
-            <p style={{ maxWidth: "30ch", color: "rgba(250,249,245,.7)" }}>
-              本地优先的多模型智能体客户端，你的对话，留在你的电脑上。
-            </p>
-          </div>
-          {content.footer.map((group) => (
-            <div key={group.title}>
-              <h5>{group.title}</h5>
-              <ul>
-                {group.items.map((item) => (
-                  <li key={`${group.title}-${item.label}`}>
-                    <a href={item.href}>{item.label}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="footer-bottom">
-          <p>Released under the MIT License.</p>
-          <p>Copyright © 2026 Tomz Dang</p>
-        </div>
+      <div className="wrap footer-simple">
+        <p className="footer-copy">
+          <span className="brand" style={{ color: "#fff" }}>
+            <img className="brand-logo" src={logoSrc} alt="" />
+            UIChat Mira
+          </span>
+          <span>Released under the MIT License.</span>
+        </p>
+        <p className="footer-copyright">Copyright © 2026 Tomz Dang</p>
       </div>
     </footer>
   );
@@ -920,7 +784,7 @@ function AuthorIntro() {
   return (
     <section className="border-0 pb-section">
       <div className="wrap">
-        <div className="grid grid-cols-1 items-center gap-6 rounded-lg border border-hairline bg-canvas p-6 md:grid-cols-[88px_minmax(0,1fr)] md:gap-[22px] md:p-7 xl:grid-cols-[128px_minmax(0,1fr)_auto] xl:gap-8 xl:p-10">
+        <div className="author-intro-card grid grid-cols-1 items-center gap-6 rounded-lg border border-hairline bg-canvas p-6 md:grid-cols-[88px_minmax(0,1fr)_auto] md:gap-[22px] md:p-7 xl:grid-cols-[128px_minmax(0,1fr)_auto] xl:gap-8 xl:p-10">
           <div className="flex h-[72px] w-[72px] overflow-hidden rounded-full bg-surface-cream md:h-20 md:w-20 xl:h-28 xl:w-28">
             <img
               className="block h-full w-full object-cover"
@@ -956,7 +820,7 @@ function AuthorIntro() {
               </a>
             </div>
           </div>
-          <div className="min-w-[230px] border-l border-hairline pl-7 max-[820px]:col-span-full max-[820px]:min-w-0 max-[820px]:border-l-0 max-[820px]:border-t max-[820px]:pl-0 max-[820px]:pt-4">
+          <div className="min-w-0 border-t border-hairline pt-4 xl:min-w-[230px] xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0">
             <div className="my-[7px] flex items-baseline gap-3.5 max-[820px]:my-0 max-[820px]:mr-[18px] max-[820px]:inline-flex max-[560px]:my-[7px] max-[560px]:mr-0 max-[560px]:flex">
               <strong className="min-w-12 font-mono text-[14px] font-medium text-primary-active">
                 0.7.1
@@ -1416,7 +1280,6 @@ function HomePage() {
               <Button href={docHref("/about/origin")} kind="primary">
                 开始认识 Mira
               </Button>
-              <Button href="#reading-map">查看文档地图</Button>
             </div>
             <div className="hero-meta">
               {content.meta.map((item) => (
@@ -1438,26 +1301,6 @@ function HomePage() {
         </div>
       </section>
       <CoreCapabilities />
-      <section id="reading-map">
-        <div className="wrap">
-          <SectionHead
-            eyebrow="文档地图"
-            title="从精神到实现。"
-            description="当前文档按 frontmatter 自动生成导航和阅读路径。"
-          />
-          <DynamicReadingMap />
-        </div>
-      </section>
-      <section id="models">
-        <div className="wrap">
-          <SectionHead
-            eyebrow="模型支持"
-            title="云端与本地,自由组合。"
-            description="按任务选模型：复杂推理交给云端旗舰模型，日常琐事交给本地小模型处理，费用与延迟都可控。"
-          />
-          <ModelCards items={content.models} />
-        </div>
-      </section>
       <section id="configure">
         <div
           className="wrap"
@@ -2183,7 +2026,7 @@ function DocsLayout() {
 }
 function BlogListPage({ area }: { area: SiteArea }) {
   const [activeCategory, setActiveCategory] = useState("全部");
-  const tabs = ["全部", ...blogCategories];
+  const tabs = ["全部", ...blogCategories, "归档"];
   const isArchiveView = activeCategory === "归档";
   const filteredDocs = (
     activeCategory === "全部"
@@ -2226,13 +2069,6 @@ function BlogListPage({ area }: { area: SiteArea }) {
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className={`archive-entry${isArchiveView ? " active" : ""}`}
-              onClick={() => setActiveCategory("归档")}
-            >
-              归档
-            </button>
           </div>
         </div>
         {isArchiveView ? (
@@ -2374,20 +2210,22 @@ function BlogPostPage({
                 ))}
               </div>
               <div className="author-signature-copy">
-                {authorAvatars.length === 1 ? (
+                {authorAvatars.length === 1 && signature.showKicker ? (
                   <span className="author-signature-kicker">
                     {authorProfiles[getDocAuthors(doc)[0]].roleLabel}
                   </span>
                 ) : null}
                 <h4>{signature.title}</h4>
-                <p>{signature.body}</p>
-                <div className="author-signature-links">
-                  {signature.links.map((link) => (
-                    <a href={link.href} key={link.label}>
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
+                {signature.body ? <p>{signature.body}</p> : null}
+                {signature.links.length ? (
+                  <div className="author-signature-links">
+                    {signature.links.map((link) => (
+                      <a href={link.href} key={link.label}>
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="post-nav">
@@ -2450,7 +2288,7 @@ function AreaPage({ area }: { area: SiteArea }) {
       <div className="doc-eyebrow">SECTION · {area.key.toUpperCase()}</div>
       <div className="doc-title-block">
         <h1>{area.title}</h1>
-        <p className="doc-lede">{area.description}</p>
+        {area.description ? <p className="doc-lede">{area.description}</p> : null}
       </div>
       <div className="docs-sitemap-grid">
         <section className="area-overview-card">
@@ -2508,7 +2346,7 @@ function DocPage({ path }: { path: string }) {
       </div>
       <div className="doc-title-block">
         <h1>{doc.title}</h1>
-        <p className="doc-lede">{doc.description}</p>
+        {doc.description ? <p className="doc-lede">{doc.description}</p> : null}
       </div>
       <div className="markdown" dangerouslySetInnerHTML={{ __html: html }} />
       {path === "/sitemap" ? (

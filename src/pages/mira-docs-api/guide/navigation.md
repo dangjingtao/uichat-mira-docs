@@ -67,7 +67,7 @@ export const topNavigationOrder = [
 一个较大的页面可以拆成多个 Markdown 文件，再通过相同的 `merge` 值合并：
 
 ```text
-src/pages/design-md/visual/
+src/pages/design-md/视觉/
 ├── product-design-system.md
 └── product-design-system/
     ├── overview.md

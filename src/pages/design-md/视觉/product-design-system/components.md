@@ -19,10 +19,7 @@ merge: product-design-system
           <div class="brand"><span class="mark"></span>Claude</div>
           <ul class="menu">
             <li><a href="#">产品</a></li>
-            <li><a href="#">解决方案</a></li>
-            <li><a href="#">应用场景</a></li>
             <li><a href="#">定价</a></li>
-            <li><a href="#">研究</a></li>
             <li><a href="#">公司</a></li>
           </ul>
           <div class="right">

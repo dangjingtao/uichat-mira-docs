@@ -13,7 +13,7 @@ merge: product-design-system
         <span class="eyebrow">非官方 · 第三方逆向分析 · 基于 VoltAgent/awesome-design-md</span>
         <div class="hero-grid">
           <div>
-            <h1 class="hero-title">暖色画布上的<br>编辑体设计系统。</h1>
+            <h1 class="hero-title">Mira 的设计系统</h1>
             <p class="lede">这份文档完整还原了社区对 Claude / Anthropic 网站视觉语言的公开分析。</p>
             <div class="hero-cta">
               <a class="btn btn-primary" href="#colors-brand">浏览完整色板</a>

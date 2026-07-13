@@ -36,7 +36,7 @@ merge: product-design-system
           <span class="type-label">Public Sans · 600 · 17px</span>
         </div>
         <div class="type-row">
-          <span class="type-sample-sans" style="font-size:16px;font-weight:400">Aa 正文段落 body-md，用于长段说明性文字，行高较松以配合编辑感排版。</span>
+          <span class="type-sample-sans" style="font-size:16px;font-weight:400">Aa 正文段落 body-md</span>
           <span class="type-label">Public Sans · 400 · 16px / 1.6</span>
         </div>
         <div class="type-row">

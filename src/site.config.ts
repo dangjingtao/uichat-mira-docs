@@ -10,6 +10,6 @@ export const topNavigationOrder = [
 ] as const;
 
 export const directoryLabels: Record<string, string> = {
-  "visual/product-design-system": "产品设计系统",
-  "visual/theme": "主题",
+  "视觉/product-design-system": "产品设计系统",
+  "视觉/theme": "主题",
 };

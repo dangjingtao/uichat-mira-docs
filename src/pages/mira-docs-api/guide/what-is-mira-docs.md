@@ -1,6 +1,5 @@
 ---
 title: Mira-Docs 是什么
-description: Mira-docs一款自研的文档站构建系统。基于 React、TypeScript 与 Vite 构建，托管于 GitHub Pages 和 Cloudflare Pages。
 nav: Mira-Docs
 group: 快速开始
 order: 1
