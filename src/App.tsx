@@ -426,9 +426,11 @@ const siteAreas: SiteArea[] = siteAreaRoots.map((root) => {
     key: root,
     title:
       first?.nav ||
-      root
-        .replace(/[-_]+/g, " ")
-        .replace(/\b\w/g, (letter) => letter.toUpperCase()),
+      (root === "blogs"
+        ? "博客"
+        : root
+            .replace(/[-_]+/g, " ")
+            .replace(/\b\w/g, (letter) => letter.toUpperCase())),
     description: root === "design-md" ? "" : first?.description || "",
     docs,
     path,
