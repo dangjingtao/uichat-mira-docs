@@ -12,6 +12,9 @@ function pageDirectoryManifest(){return existsSync(pagesRoot)?readdirSync(pagesR
 function pageDirectoriesPlugin(){return{name:"page-directories",configureServer(server:any){server.watcher.add(pagesRoot)},resolveId(id:string){return id==="virtual:page-directories"?"\0virtual:page-directories":undefined},load(id:string){if(id!=="\0virtual:page-directories")return;return `export default ${JSON.stringify(pageDirectoryManifest())}`},handleHotUpdate({file,server}:any){const normalized=file.replace(/\\/g,"/");if(!normalized.startsWith(pagesRoot.replace(/\\/g,"/")))return;const module=server.moduleGraph.getModuleById("\0virtual:page-directories");if(module)server.moduleGraph.invalidateModule(module);server.ws.send({type:"full-reload"});return []}}}
 
 export default defineConfig(({ mode }) => ({
+  server: {
+    port: 5174,
+  },
   plugins: [pageDirectoriesPlugin(), react(), tailwindcss(), VitePWA({
     registerType: "autoUpdate",
     includeAssets: ["mira-logo.png"],

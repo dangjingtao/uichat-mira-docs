@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快速开始 · UIChat Mira 文档</title>
+  <style>
+    :root {
+      --primary: #cc785c;
+      --primary-active: #a9583e;
+      --ink: #141413;
+      --body-c: #3d3d3a;
+      --muted: #6c6a64;
+      --muted-soft: #8e8b82;
+      --hairline: #e6dfd8;
+      --canvas: #faf9f5;
+      --surface-soft: #f5f0e8;
+      --surface-card: #efe9de;
+      --surface-dark: #181715;
+      --surface-dark-elevated: #252320;
+      --on-primary: #fff;
+      --on-dark: #faf9f5;
+      --on-dark-soft: #a09d96;
+      --accent-teal: #5db8a6;
+      --accent-amber: #e8a55a;
+      --font-display: 'Cormorant Garamond', Garamond, serif;
+      --font-sans: 'Public Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --r-sm: 4px;
+      --r-md: 8px;
+      --r-lg: 12px;
+      --r-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: .85em;
+      background: var(--surface-card);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: var(--font-display);
+      font-weight: 500;
+      letter-spacing: -.01em;
+    }
+
+    h1 {
+      font-size: 38px;
+      margin: 0 0 8px;
+    }
+
+
+    h2 {
+      font-size: 26px;
+      margin: 48px 0 14px;
+    }
+
+    h3 {
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 17px;
+      margin: 28px 0 8px;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: var(--body-c);
+      max-width: 70ch;
+    }
+
+    /* top bar */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      height: 56px;
+      background: rgba(250, 249, 245, .92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+    }
+
+    .top-nav-inner {
+      width: 100%;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 17px;
+    }
+
+    .brand .mark {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      position: relative;
+      flex: none;
+    }
+
+    .brand .mark::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      background: var(--canvas);
+      border-radius: 2px;
+      transform: rotate(45deg);
+    }
+
+    .top-links {
+      display: flex;
+      gap: 20px;
+      font-size: 13.5px;
+      font-weight: 500;
+    }
+
+    .top-links a {
+      opacity: .7;
+    }
+
+    .top-links a.active,
+    .top-links a:hover {
+      opacity: 1;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-soft);
+      border: 1px solid var(--hairline);
+      border-radius: var(--r-md);
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--muted-soft);
+      min-width: 200px;
+    }
+
+    .search-box kbd {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      background: var(--surface-card);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* shell */
+    .shell {
+      display: grid;
+      grid-template-columns: 250px 1fr 200px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    @media (max-width:1100px) {
+      .shell {
+        grid-template-columns: 230px 1fr;
+      }
+
+      .toc {
+        display: none;
+      }
+    }
+
+    @media (max-width:760px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .docnav {
+        display: none;
+      }
+    }
+
+    .docnav {
+      position: sticky;
+      top: 56px;
+      align-self: start;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      padding: 32px 20px;
+      border-right: 1px solid var(--hairline);
+    }
+
+    .docnav h5 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted-soft);
+      margin: 24px 0 8px;
+    }
+
+    .docnav h5:first-child {
+      margin-top: 0;
+    }
+
+    .docnav ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .docnav li a {
+      display: block;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13.5px;
+      color: var(--body-c);
+    }
+
+    .docnav li a:hover {
+      background: var(--surface-soft);
+      color: var(--ink);
+    }
+
+    .docnav li a.active {
+      background: var(--surface-card);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .doc-main {
+      padding: 48px 48px 96px;
+      min-width: 0;
+    }
+
+    @media (max-width:760px) {
+      .doc-main {
+        padding: 32px 20px 64px;
+      }
+    }
+
+    .doc-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--primary-active);
+      margin-bottom: 10px;
+    }
+
+    .doc-lede {
+      font-size: 16.5px;
+      color: var(--muted);
+      max-width: 64ch;
+    }
+
+    .toc {
+      position: sticky;
+      top: 56px;
+      align-self: start;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      padding: 32px 20px;
+    }
+
+    .toc h5 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--muted-soft);
+      margin: 0 0 12px;
+    }
+
+    .toc ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .toc li a {
+      display: block;
+      padding: 4px 0;
+      font-size: 13px;
+      color: var(--muted);
+      border-left: 2px solid transparent;
+      padding-left: 10px;
+    }
+
+    .toc li a.active {
+      color: var(--ink);
+      border-left-color: var(--primary);
+      font-weight: 500;
+    }
+
+    .note {
+      background: var(--surface-soft);
+      border-left: 3px solid var(--hairline);
+      padding: 12px 16px;
+      border-radius: 0 var(--r-sm) var(--r-sm) 0;
+      font-size: 14px;
+      color: var(--body-c);
+      margin: 20px 0;
+    }
+
+    .note.tip {
+      border-left-color: var(--accent-teal);
+    }
+
+    .note.warn {
+      border-left-color: var(--primary);
+    }
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      margin: 0 0 24px;
+      padding: 0;
+    }
+
+    .steps li {
+      counter-increment: step;
+      position: relative;
+      padding-left: 36px;
+      margin-bottom: 18px;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--surface-card);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+    }
+
+    pre {
+      background: var(--surface-dark);
+      color: var(--on-dark-soft);
+      border-radius: var(--r-lg);
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.7;
+      margin: 16px 0 24px;
+    }
+
+    pre .kw {
+      color: var(--accent-teal);
+    }
+
+    pre .str {
+      color: var(--accent-amber);
+    }
+
+    pre .cm {
+      color: var(--muted-soft);
+      font-style: italic;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin: 16px 0 24px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--hairline);
+      vertical-align: top;
+    }
+
+    th {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+
+    td code {
+      white-space: nowrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 38px;
+      padding: 0 18px;
+      border-radius: var(--r-md);
+      font-weight: 500;
+      font-size: 13.5px;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--canvas);
+      color: var(--ink);
+      border-color: var(--hairline);
+    }
+
+    .page-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--hairline);
+    }
+
+    .page-nav a {
+      font-size: 13.5px;
+    }
+
+    .page-nav .dir {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      color: var(--muted-soft);
+      margin-bottom: 2px;
+    }
+
+    .page-nav .to {
+      display: block;
+      font-weight: 600;
+      font-family: var(--font-display);
+      font-size: 17px;
+    }
+
+    .page-nav .next {
+      text-align: right;
+      margin-left: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="top-nav">
+    <div class="top-nav-inner">
+      <div style="display:flex;align-items:center;gap:32px">
+        <a class="brand" href="index.html"><span class="mark"></span>UIChat Mira</a>
+        <div class="top-links">
+          <a class="active" href="docs.html">文档</a>
+          <a href="index.html#philosophy">产品哲学</a>
+          <a href="index.html#features">产品能力</a>
+          <a href="index.html#reading-map">阅读地图</a>
+        </div>
+      </div>
+      <div class="search-box">搜索文档… <kbd>⌘K</kbd></div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <!-- 左侧文档导航 -->
+    <nav class="docnav">
+      <h5 id="about">认识 Mira</h5>
+      <ul>
+        <li><a class="active" href="#mira">Mira 是什么</a></li>
+        <li><a href="#product-map">产品地图</a></li>
+        <li><a href="#author">作者与项目</a></li>
+      </ul>
+      <h5 id="philosophy">产品哲学</h5>
+      <ul>
+        <li><a href="#local-first">本地优先</a></li>
+        <li><a href="#controlled-agency">可控的自主</a></li>
+        <li><a href="#evidence">证据先于答案</a></li>
+      </ul>
+      <h5 id="product">产品能力</h5>
+      <ul>
+        <li><a href="#workspace">对话工作区</a></li>
+        <li><a href="#knowledge">知识与评测</a></li>
+        <li><a href="#roles">角色、工具与微应用</a></li>
+      </ul>
+      <h5 id="architecture">架构与工程</h5>
+      <ul>
+        <li><a href="#runtime">桌面运行时</a></li>
+        <li><a href="#agent">Agent V1.5 运行回路</a></li>
+        <li><a href="#harness">Harness 与工具边界</a></li>
+        <li><a href="#provider">Provider 与上下文</a></li>
+      </ul>
+      <h5 id="status">现状与方向</h5>
+      <ul>
+        <li><a href="#current">当前实现快照</a></li>
+        <li><a href="#roadmap">下一段路</a></li>
+      </ul>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="doc-main">
+      <div class="doc-eyebrow">认识 Mira · 产品总览</div>
+      <h1 id="mira">从聊天出发，最终回到你身边。</h1>
+      <p class="doc-lede">UIChat Mira 是一个 local-first desktop workspace：聊天只是入口，模型、角色、知识、MCP、工具与微应用在同一个本地工作空间里协同。</p>
+
+      <div class="note tip">Mira 不是把所有能力堆进一个输入框，而是给长期的人机协作建立一个有边界、有记忆、有工具、也有退路的空间。</div>
+
+      <h2 id="product-map">产品地图</h2>
+      <p>Mira 当前可以按五个产品域理解：对话工作区、模型与 Provider、知识与评测、角色与微应用，以及工具与集成。</p>
+      <h3 id="workspace">对话工作区</h3>
+      <p>线程保存任务上下文，消息记录人和模型的交流，Agent run 保存一次推理与工具执行的过程。附件、知识检索、上下文摘要和运行状态共同进入对话。</p>
+      <h3 id="knowledge">知识与评测</h3>
+      <p>知识系统负责让模型接触用户自己的材料，评测系统负责回答“这次改动真的更好吗”。Markdown 工作区保留来源，适合维护长期判断和项目背景。</p>
+      <h3 id="roles">角色、工具与微应用</h3>
+      <p>Role 定义任务视角和行为约束，工具通过 Harness 注册和暴露，微应用复用共享运行时承载不同工作方式。</p>
+
+      <h2 id="local-first">本地优先，不是本地孤岛</h2>
+      <p>对话、配置、知识与工作状态应当首先属于用户，而不是某个远端服务的附属物。Provider、MCP 和集成可以连接外部能力，本地负责保存状态与边界。</p>
+      <h2 id="controlled-agency">可控的自主</h2>
+      <p>Planner 可以决定检索、调用工具、生成答案或继续推理，但执行权始终受 Harness、Policy 与 Approval 约束。决策和执行必须分开。</p>
+      <h2 id="evidence">证据先于答案</h2>
+      <p>“证据足以回答”不等于“任务已经完成”。Retrieve 与 ToolNode 只写入客观证据，再回到 Planner，由 Planner 根据新证据决定继续、生成或停止。</p>
+
+      <h2 id="author">作者与项目</h2>
+      <p>UIChat Mira 由 <strong>Tomz Dang</strong> 发起并持续构建。项目版本为 <code>0.7.1</code>，源码与文档公开在 GitHub。</p>
+      <p><a href="https://github.com/dangjingtao/uichat-mira">源码仓库 →</a>　<a
+          href="https://github.com/dangjingtao/uichat-mira-docs">文档站源码 →</a></p>
+
+      <h2 id="runtime">桌面运行时</h2>
+      <p>Renderer 使用 React 与 Vite；Electron 负责窗口、生命周期和 preload 边界，Tauri 作为并行壳保留；Fastify 与 SQLite 承载本地后端和持久化。</p>
+      <h2 id="agent">Agent V1.5 运行回路</h2>
+      <p>运行从 prepareContext 进入 nextActionPlanner。Planner 可以选择 Retrieve、Tool、Generate 或错误终止，证据随后回到
+        Planner，避免额外决策节点猜测用户意图。</p>
+      <h2 id="harness">Harness 与工具边界</h2>
+      <p>CapabilityMatch 回答系统能否提供能力，ToolExposure 回答模型此刻能否看到，Invocation 才是带具体 toolId 的执行请求。</p>
+      <h2 id="provider">Provider 与上下文</h2>
+      <p>Provider 层负责连接模型，上下文层负责决定模型此刻真正能看到什么。能力来自配置和探测结果，不能只根据供应商名称猜测。</p>
+
+      <h2 id="current">当前实现快照</h2>
+      <p>当前文档核对 UIChat Mira dev 分支提交 <code>c6c2c098</code>。源码已经覆盖聊天工作区、模型与 Provider、知识库、评测、角色、工具、MCP、集成和微应用。</p>
+      <h2 id="roadmap">下一段路</h2>
+      <p>下一阶段优先巩固 V1.5 Agent 回路，补齐状态不变量、失败路径、节点级回归测试和端到端轨迹，并强化 Evidence 的来源标记和完成条件。</p>
+
+      <h2 id="install">快速开始</h2>
+      <p>如果你准备运行产品，可以继续阅读下面的安装、Provider 配置和第一次对话示例。</p>
+      <ol class="steps">
+        <li>从 GitHub Releases 下载对应系统的安装包。</li>
+        <li>首次启动时创建本地配置，并选择一个模型 Provider。</li>
+        <li>在工作区创建线程，开始第一条对话。</li>
+      </ol>
+      <ol class="steps">
+        <li>从 GitHub Releases 下载对应系统的安装包（macOS / Windows / Linux）。</li>
+        <li>首次启动时，Mira 会在 <code>~/.mira/config.yaml</code> 创建一份默认配置文件。</li>
+        <li>（可选）如果只想用命令行，可以通过包管理器安装 CLI 版本：</li>
+      </ol>
+      <pre><span class="cm"># macOS / Linux</span>
+curl -fsSL https://get.uichat-mira.dev | sh
+
+<span class="cm"># 安装完成后验证版本</span>
+mira --version</pre>
+
+      <div class="note">Windows 用户请使用安装包中的 PowerShell 脚本，命令行参数与 macOS/Linux 版本保持一致。</div>
+
+      <h3>配置第一个模型</h3>
+      <p>打开配置文件，填入至少一个模型提供方。云端模型需要 API Key，本地模型只需要指向本地服务地址：</p>
+      <pre><span class="kw">providers</span>:
+  - name: <span class="str">claude</span>
+    type: anthropic
+    api_key_env: <span class="str">ANTHROPIC_API_KEY</span>   <span class="cm"># 从环境变量读取，不写进配置文件</span>
+  - name: <span class="str">local-qwen</span>
+    type: ollama
+    base_url: <span class="str">http://127.0.0.1:11434</span>
+    model: <span class="str">qwen2.5:14b</span></pre>
+
+      <table>
+        <tr>
+          <th>字段</th>
+          <th>说明</th>
+          <th>是否必填</th>
+        </tr>
+        <tr>
+          <td><code>name</code></td>
+          <td>模型提供方的唯一标识，用于对话中切换</td>
+          <td>是</td>
+        </tr>
+        <tr>
+          <td><code>type</code></td>
+          <td>提供方类型：anthropic / openai / ollama / custom</td>
+          <td>是</td>
+        </tr>
+        <tr>
+          <td><code>api_key_env</code></td>
+          <td>存放密钥的环境变量名（云端模型需要）</td>
+          <td>视类型而定</td>
+        </tr>
+        <tr>
+          <td><code>base_url</code></td>
+          <td>本地或私有部署的服务地址</td>
+          <td>本地模型需要</td>
+        </tr>
+      </table>
+
+      <h2 id="first-chat">第一次对话</h2>
+      <p>启动 UIChat Mira 后，在顶部模型切换栏选择一个已配置好的提供方，就可以直接开始对话：</p>
+      <ol class="steps">
+        <li>点击左上角「新建对话」。</li>
+        <li>在模型切换栏选择 <code>claude</code> 或 <code>local-qwen</code>。</li>
+        <li>输入消息并发送——本地模型的回复不会经过任何外部服务器。</li>
+      </ol>
+
+      <div class="note warn">如果本地模型没有响应，先确认 Ollama 服务是否已经启动（<code>ollama serve</code>），并检查 <code>base_url</code> 端口是否一致。
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:32px">
+        <a class="btn btn-primary" href="index.html?doc=/about/origin">阅读产品文档</a>
+        <a class="btn btn-secondary" href="index.html?doc=/engineering/development">查看开发与配置</a>
+      </div>
+
+      <div class="page-nav">
+        <a href="index.html">
+          <span class="dir">← 返回</span>
+          <span class="to">产品首页</span>
+        </a>
+        <a class="next" href="#provider">
+          <span class="dir">下一篇 →</span>
+          <span class="to">Provider 与上下文</span>
+        </a>
+      </div>
+    </main>
+
+    <!-- 右侧本页目录 -->
+    <aside class="toc">
+      <h5>本页目录</h5>
+      <ul>
+        <li><a href="#mira" class="active">Mira 是什么</a></li>
+        <li><a href="#product-map">产品地图</a></li>
+        <li><a href="#local-first">产品哲学</a></li>
+        <li><a href="#workspace">产品能力</a></li>
+        <li><a href="#runtime">架构与工程</a></li>
+        <li><a href="#current">现状与方向</a></li>
+        <li><a href="#install">快速开始</a></li>
+      </ul>
+    </aside>
+  </div>
+
+</body>
+
+</html>

@@ -50,12 +50,17 @@ order: 2
 
 ## 自定义 HTML 块
 
-需要展示交互组件、视觉参考或独立 HTML 预览时，可以在 Markdown 中使用 `html` 块：
+需要展示自定义组件、视觉参考或独立 HTML 预览时，可以在 Markdown 中使用 `html` 块。块内容会按原始 HTML 插入当前文档：
 
 ```md
 ::: html
-<div class="example-block">自定义 HTML 内容</div>
+<div class="example-block">
+  <h3>自定义 HTML 内容</h3>
+  <p>这里可以放 Markdown 不适合表达的页面结构。</p>
+</div>
 :::
 ```
 
-构建时会把块内容作为原始 HTML 交给 Markdown 页面渲染。复杂页面可以拆成多个 Markdown 文件，用 `merge` 合并为一个页面；Markdown 负责标题、说明和索引，HTML 块负责 Markdown 不适合表达的视觉组件。
+构建时会把块内容作为原始 HTML 交给 Markdown 页面渲染。HTML 块适合静态结构、样式示例和视觉稿；其中的 `<script>` 不会自动变成 React 组件逻辑。需要复杂交互时，应改用 React 组件，或把完整页面作为独立 HTML 文件通过 iframe 嵌入。
+
+复杂页面可以拆成多个 Markdown 文件，用 `merge` 合并为一个页面；Markdown 负责标题、说明和索引，HTML 块负责 Markdown 不适合表达的视觉组件。

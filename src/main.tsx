@@ -17,6 +17,10 @@ import "./apple.theme.css";
 import "./Supabase.theme.css";
 import "./tailwind.css";
 import "./styles.css";
+import "./home.css";
+import "./blog-list.css";
+import "./markdown.css";
+import "./blog-detail.css";
 import "./claude-visual.css";
 
 const themeKey = "mira-color-theme";

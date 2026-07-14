@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { marked } from "marked";
+import hljs from "highlight.js/lib/common";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -455,6 +456,20 @@ const logoSrc = `${appBase}mira-logo.png`;
 const miraAvatarUrl = `${appBase}mira-avatar.png`;
 const authorAvatarUrl =
   "https://avatars.githubusercontent.com/u/20751798?s=160&v=4";
+const siteTitle = "UIChat Mira";
+const defaultPageTitle = "本地优先的多模型智能体";
+
+function getPageTitle(pathname: string) {
+  if (pathname === "/") return defaultPageTitle;
+  if (pathname === "/sitemap") return "站点地图";
+
+  const doc = allDocs.find((item) => item.path === pathname);
+  if (doc) return doc.title;
+
+  const area = siteAreas.find((item) => item.path === pathname);
+  return area?.title || defaultPageTitle;
+}
+
 const authorProfiles: Record<
   AuthorKey,
   {
@@ -547,6 +562,17 @@ const configuredHeaderNav: ConfiguredNavGroup[] = [
 function homeHref(hash = "") {
   return `${appBase}${hash}`;
 }
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => (
+    {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[character] || character
+  ));
+}
 function removeMarkdownH1(source: string) {
   let inFence = false;
   return source
@@ -569,12 +595,74 @@ function renderMarkdown(source: string) {
     /::: html\s*([\s\S]*?):::/g,
     (_, html) => html.trim(),
   );
-  const html = marked.parse(prepared, { gfm: true }) as string;
+  const renderer = new marked.Renderer();
+  renderer.code = ({ text, lang }) => {
+    const language = lang?.trim().toLowerCase();
+    if (language === "mermaid") {
+      const sourceCode = escapeHtml(text);
+      return `<div class="markdown-mermaid" data-mermaid data-mermaid-source="${sourceCode}">${sourceCode}</div>`;
+    }
+    const highlighted = language && hljs.getLanguage(language)
+      ? hljs.highlight(text, { language, ignoreIllegals: true }).value
+      : hljs.highlightAuto(text).value;
+    const languageClass = language && /^[a-z0-9-]+$/.test(language)
+      ? ` language-${language}`
+      : "";
+    return `<pre><code class="hljs${languageClass}">${highlighted}</code></pre>`;
+  };
+  const html = marked.parse(prepared, { gfm: true, renderer }) as string;
   return html.replace(
     /<h([23])>([\s\S]*?)<\/h\1>/g,
     (_, level, text) =>
       `<h${level} id="${slug(text)}">${text}<a class="md-anchor" href="#${slug(text)}">#</a></h${level}>`,
   );
+}
+function RenderedMarkdown({ html, className = "markdown" }: { html: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    let rendering = false;
+    let queued = false;
+    const renderMermaid = async () => {
+      if (rendering) {
+        queued = true;
+        return;
+      }
+      const nodes = Array.from(container.querySelectorAll<HTMLElement>("[data-mermaid]"));
+      if (!nodes.length) return;
+      rendering = true;
+      const { default: mermaid } = await import("mermaid");
+      nodes.forEach((node) => {
+        node.textContent = node.dataset.mermaidSource || "";
+      });
+      const dark = document.documentElement.classList.contains("dark");
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: dark ? "dark" : "base",
+        themeVariables: dark ? undefined : {
+          fontFamily: "Public Sans, sans-serif",
+          primaryColor: "#efe9de",
+          primaryTextColor: "#141413",
+          lineColor: "#cc785c",
+          secondaryColor: "#f5f0e8",
+          tertiaryColor: "#faf9f5",
+        },
+      });
+      await mermaid.run({ nodes });
+      rendering = false;
+      if (queued) {
+        queued = false;
+        void renderMermaid();
+      }
+    };
+    void renderMermaid();
+    const observer = new MutationObserver(() => void renderMermaid());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    return () => observer.disconnect();
+  }, [html]);
+  return <div ref={containerRef} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 const content = {
@@ -1268,8 +1356,7 @@ function HomePage() {
     <div className="site">
       <header>
         <div
-          className="wrap hero-grid"
-          style={{ paddingTop: 80, paddingBottom: 0 }}
+          className="wrap hero-grid home-hero-grid"
         >
           <div>
             <h1 className="hero-title">
@@ -1304,15 +1391,7 @@ function HomePage() {
       </section>
       <CoreCapabilities />
       <section id="configure">
-        <div
-          className="wrap"
-          style={{
-            display: "grid",
-            gridTemplateColumns: ".9fr 1.1fr",
-            gap: 56,
-            alignItems: "center",
-          }}
-        >
+        <div className="wrap home-configure-grid">
           <div>
             <span className="eyebrow">配置示例</span>
             <h2>
@@ -1334,7 +1413,7 @@ function HomePage() {
           </div>
         </div>
       </section>
-      <section style={{ borderBottom: "none" }}>
+      <section className="home-final-section">
         <div className="wrap">
           <div className="cta-band cta-band-coral">
             <h2>从本地的第一次对话开始。</h2>
@@ -1502,6 +1581,9 @@ function RoutedApp() {
   }, [darkMode]);
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [location.pathname]);
+  useEffect(() => {
+    document.title = `${getPageTitle(location.pathname)} · ${siteTitle}`;
   }, [location.pathname]);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -2199,7 +2281,7 @@ function BlogPostPage({
         </article>
         <div className="article-shell">
           <div className="article-body markdown blog-markdown">
-            <div dangerouslySetInnerHTML={{ __html: html }} />
+            <RenderedMarkdown html={html} />
             <div className={`author-signature author-signature-${authorAvatars.length > 1 ? "duo" : "solo"} ${signature.accentClassName || ""}`}>
               <div className={`author-signature-avatars author-signature-avatars-${authorAvatars.length}`}>
                 {authorAvatars.map((author) => (
@@ -2350,7 +2432,7 @@ function DocPage({ path }: { path: string }) {
         <h1>{doc.title}</h1>
         {doc.description ? <p className="doc-lede">{doc.description}</p> : null}
       </div>
-      <div className="markdown" dangerouslySetInnerHTML={{ __html: html }} />
+      <RenderedMarkdown html={html} />
       {path === "/sitemap" ? (
         <DynamicSitemap />
       ) : (

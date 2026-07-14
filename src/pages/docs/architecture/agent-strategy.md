@@ -19,8 +19,7 @@ Mira 想做的并不是「给模型一堆工具，然后期待它自己发挥」
 
 `prepareContext` 会读取线程与任务上下文，同时从 Harness Registry 取得能力定义，完成候选能力匹配并生成本轮 `ToolExposure`。准备完成后，普通请求才进入 Planner；只有审批恢复等已经带有冻结 `pendingToolCall` 的情况，才会绕过 Planner 直接回到 Policy。
 
-<!--
-Mermaid source:
+```mermaid
 flowchart TD
   U[用户问题] --> PC[PrepareContext]
   PC --> C[线程与任务上下文]
@@ -43,9 +42,10 @@ flowchart TD
   T --> HI[Harness Invocation]
   HI --> ED
   PO -->|deny| G
--->
+```
 
 ::: html
+
 <div style="margin:28px 0;padding:22px;border:1px solid var(--hairline,#e6dfd8);border-radius:18px;background:var(--surface-soft,#f5f0e8);overflow-x:auto;">
   <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-active,#a9583e);margin-bottom:18px;">FULL AGENT ENTRY &amp; EXECUTION FLOW</div>
 
@@ -156,6 +156,7 @@ flowchart TD
     <div style="padding:12px 14px;border-radius:11px;background:var(--surface-card,#efe9de);font-size:13px;color:var(--body-c,#3d3d3a);">
       <strong>Harness 在流程中出现两次：</strong>Planner 之前参与能力注册、匹配与 ToolExposure；Planner 决定使用工具并通过 Normalize / Policy 后，才由 Harness Invocation 执行真实调用。
     </div>
+
   </div>
 </div>
 :::
