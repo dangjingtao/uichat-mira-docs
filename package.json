@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:github-pages": "npm run build -- --mode github-pages",
     "preview": "vite preview"
   },
   "dependencies": {

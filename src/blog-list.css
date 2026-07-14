@@ -15,7 +15,7 @@
 }
 
 .blog-list-page{padding-top:42px}
-.blog-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.72fr);gap:28px;align-items:center;padding:0 0 14px;border-bottom:1px solid var(--hairline)}
+.blog-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.72fr);gap:28px;align-items:center;padding:0 0 14px;border-bottom:1px solid var(--hairline);overflow:hidden}
 .blog-header-copy{min-width:0;padding-top:4px}
 .blog-header h1{font-size:clamp(34px,4.6vw,54px);line-height:1.03;letter-spacing:-.02em}
 .blog-lede{font-size:18px;max-width:56ch}

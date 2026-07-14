@@ -32,6 +32,14 @@ const initialTheme =
     ? savedTheme
     : defaultTheme;
 
+if (window.location.pathname !== "/" && window.location.pathname.endsWith("/")) {
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname.replace(/\/+$/, "")}${window.location.search}${window.location.hash}`,
+  );
+}
+
 document.documentElement.dataset.theme = initialTheme;
 
 registerSW({immediate: true});

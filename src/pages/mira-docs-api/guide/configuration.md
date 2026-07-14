@@ -67,3 +67,48 @@ export const directoryLabels = {
 ```
 
 这只改变显示名称，不改变目录、URL 或 Markdown 索引规则。
+
+## Logo 资源
+
+Logo 地址在 `src/site.config.ts` 中配置：
+
+```ts
+export const logoUrl = "https://assets.tomz.io/images/mira-logo.png";
+```
+
+配置了 `logoUrl` 时，页头和页尾优先使用线上地址。线上资源加载失败时，页面会自动回退到本地的 `public/mira-logo.png`，因此替换 CDN 地址不会让导航和页尾出现破图。
+
+如果需要只使用本地 Logo，可以将 `logoUrl` 配置为空字符串：
+
+```ts
+export const logoUrl = "";
+```
+
+## SEO 构建模式
+
+SEO 地址配置在 `src/site.config.ts`：
+
+```ts
+export const siteUrl = "https://tomz.io";
+export const seo = {
+  enabled: true,
+} as const;
+```
+
+如果生产站点更换域名，只需要更新这个值，SEO 构建生成的 canonical、Open Graph、JSON-LD、Sitemap 和 robots 地址会一起更新。
+
+SEO 是否启用也在同一个配置文件中控制。开启后，普通 `npm run build` 就会生成适合搜索引擎抓取的静态页面；设为 `false` 时恢复为普通 SPA 构建：
+
+```ts
+export const seo = {
+  enabled: true,
+} as const;
+```
+
+GitHub Pages 使用带基础路径的版本：
+
+```bash
+npm run build:github-pages
+```
+
+SEO 构建会为公开路由生成静态 `index.html`，并生成 `sitemap.xml`、`robots.txt`、页面 description、canonical、Open Graph、Twitter Card 和 JSON-LD。React 脚本仍会被保留，浏览器加载后继续接管搜索、主题切换和其他交互。
