@@ -7,7 +7,7 @@ order: 1
 
 # Mira-Docs 是什么
 
-Mira-Docs 是一个由 Markdown 驱动的文档站。文章是源码，页面、路由、顶部导航和侧边导航由构建阶段读取目录后生成。
+Mira-Docs 是一个由 Markdown 驱动的文档站。思路借鉴于[vitepress](https://github.com/vuejs/vitepress)，采用vite + react构建。文章是源码，页面、路由、顶部导航和侧边导航由构建阶段读取目录后生成。
 
 它解决的是文档站本身的问题：让文件结构成为信息架构，让新增目录可以进入站点，而不是再维护一份导航清单。
 
@@ -25,6 +25,12 @@ Mira-Docs 当前包含：
 - 顶部导航顺序配置
 - 多 Markdown 合并为单页面
 - Markdown 中的自定义 HTML 块
+- Mermaid 图表运行时渲染
+- 普通代码块语法高亮
+
+在 Markdown 中使用 `::: html` 块，可以直接嵌入自定义 HTML 结构，用于组件示例、视觉参考和静态 HTML 预览。完整用法见[编写文档](./authoring)。
+
+使用 `mermaid` 代码围栏可以编写流程图等图表，页面会将其渲染为 SVG，并在主题切换时同步更新。普通代码围栏会根据语言标记显示语法高亮。具体写法和错误回退行为见[编写文档](./authoring)。
 
 Mira-Docs 当前不提供 HTTP API。仓库里没有可供外部调用的 API 服务，因此这里不编写接口、认证或请求示例。
 

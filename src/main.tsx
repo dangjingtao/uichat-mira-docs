@@ -17,6 +17,10 @@ import "./apple.theme.css";
 import "./Supabase.theme.css";
 import "./tailwind.css";
 import "./styles.css";
+import "./home.css";
+import "./blog-list.css";
+import "./markdown.css";
+import "./blog-detail.css";
 import "./claude-visual.css";
 
 const themeKey = "mira-color-theme";
@@ -27,6 +31,14 @@ const initialTheme =
   savedTheme === "claude" || savedTheme === "apple" || savedTheme === "supabase"
     ? savedTheme
     : defaultTheme;
+
+if (window.location.pathname !== "/" && window.location.pathname.endsWith("/")) {
+  window.history.replaceState(
+    null,
+    "",
+    `${window.location.pathname.replace(/\/+$/, "")}${window.location.search}${window.location.hash}`,
+  );
+}
 
 document.documentElement.dataset.theme = initialTheme;
 

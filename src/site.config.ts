@@ -9,6 +9,12 @@ export const topNavigationOrder = [
   "blogs",
 ] as const;
 
+export const logoUrl = "https://assets.tomz.io/images/mira-logo.png";
+export const siteUrl = "https://tomz.io";
+export const seo = {
+  enabled: true,
+} as const;
+
 export const directoryLabels: Record<string, string> = {
   "视觉/product-design-system": "产品设计系统",
   "视觉/theme": "主题",

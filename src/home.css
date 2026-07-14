@@ -1,0 +1,16 @@
+/* Homepage-only layout values kept outside the shared document styles. */
+.home-hero-grid {
+  padding-top: 80px;
+  padding-bottom: 0;
+}
+
+.home-configure-grid {
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.home-final-section {
+  border-bottom: none;
+}

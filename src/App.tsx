@@ -6,8 +6,10 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
+  type SyntheticEvent,
 } from "react";
 import { marked } from "marked";
+import hljs from "highlight.js/lib/common";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -36,7 +38,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import pageDirectories from "virtual:page-directories";
-import { directoryLabels, topNavigationOrder } from "./site.config";
+import { directoryLabels, logoUrl, topNavigationOrder } from "./site.config";
 import CoreCapabilities from "./CoreCapabilities";
 
 type LinkItem = { label: string; href: string };
@@ -451,10 +453,37 @@ const visibleSections = [
   ...docSections.filter((section) => section.key !== "navigation"),
   ...nonEmptySiteAreas,
 ];
-const logoSrc = `${appBase}mira-logo.png`;
-const miraAvatarUrl = `${appBase}mira-avatar.png`;
+const localLogoSrc = `${appBase}mira-logo.png`;
+const logoSrc = logoUrl.trim() || localLogoSrc;
+function handleLogoError(event: SyntheticEvent<HTMLImageElement>) {
+  if (event.currentTarget.dataset.logoFallbackApplied) return;
+  event.currentTarget.dataset.logoFallbackApplied = "true";
+  event.currentTarget.src = localLogoSrc;
+}
+const localMiraAvatarUrl = `${appBase}mira-avatar.png`;
+const miraAvatarUrl =
+  "https://assets.tomz.io/images/1784065334968-image-20260715054214404.webp";
+function handleMiraAvatarError(event: SyntheticEvent<HTMLImageElement>) {
+  if (event.currentTarget.dataset.avatarFallbackApplied) return;
+  event.currentTarget.dataset.avatarFallbackApplied = "true";
+  event.currentTarget.src = localMiraAvatarUrl;
+}
 const authorAvatarUrl =
   "https://avatars.githubusercontent.com/u/20751798?s=160&v=4";
+const siteTitle = "UIChat Mira";
+const defaultPageTitle = "本地优先的多模型智能体";
+
+function getPageTitle(pathname: string) {
+  if (pathname === "/") return defaultPageTitle;
+  if (pathname === "/sitemap") return "站点地图";
+
+  const doc = allDocs.find((item) => item.path === pathname);
+  if (doc) return doc.title;
+
+  const area = siteAreas.find((item) => item.path === pathname);
+  return area?.title || defaultPageTitle;
+}
+
 const authorProfiles: Record<
   AuthorKey,
   {
@@ -540,12 +569,23 @@ const configuredHeaderNav: ConfiguredNavGroup[] = [
         label: "local-rerank",
         href: "https://github.com/dangjingtao/local-rerank",
       },
-      { label: "myJAVLib", href: "https://github.com/dangjingtao/myJAVLib" },
+      { label: "typora-r2", href: "https://github.com/dangjingtao/typora-r2" },
     ],
   },
 ];
 function homeHref(hash = "") {
   return `${appBase}${hash}`;
+}
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => (
+    {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    }[character] || character
+  ));
 }
 function removeMarkdownH1(source: string) {
   let inFence = false;
@@ -562,19 +602,97 @@ function removeMarkdownH1(source: string) {
 }
 function renderMarkdown(source: string) {
   const withoutTitles = removeMarkdownH1(source);
+  const htmlBlocks: string[] = [];
   const prepared = withoutTitles.replace(
     /::: tip ([\s\S]*?):::/g,
     '<div class="md-custom-block"><strong>提示</strong><p>$1</p></div>',
   ).replace(
     /::: html\s*([\s\S]*?):::/g,
-    (_, html) => html.trim(),
+    (_, html) => {
+      const index = htmlBlocks.push(html.trim()) - 1;
+      return `MIRA_HTML_BLOCK_${index}`;
+    },
   );
-  const html = marked.parse(prepared, { gfm: true }) as string;
+  const renderer = new marked.Renderer();
+  renderer.code = ({ text, lang }) => {
+    const language = lang?.trim().toLowerCase();
+    if (language === "mermaid") {
+      return `<div class="markdown-mermaid" data-mermaid data-mermaid-source="${escapeHtml(text)}"></div>`;
+    }
+    const highlighted = language && hljs.getLanguage(language)
+      ? hljs.highlight(text, { language, ignoreIllegals: true }).value
+      : hljs.highlightAuto(text).value;
+    const languageClass = language && /^[a-z0-9-]+$/.test(language)
+      ? ` language-${language}`
+      : "";
+    return `<pre><code class="hljs${languageClass}">${highlighted}</code></pre>`;
+  };
+  let html = marked.parse(prepared, { gfm: true, renderer }) as string;
+  htmlBlocks.forEach((block, index) => {
+    const placeholder = `MIRA_HTML_BLOCK_${index}`;
+    html = html.replace(new RegExp(`<p>${placeholder}<\\/p>|${placeholder}`, "g"), block);
+  });
   return html.replace(
     /<h([23])>([\s\S]*?)<\/h\1>/g,
     (_, level, text) =>
       `<h${level} id="${slug(text)}">${text}<a class="md-anchor" href="#${slug(text)}">#</a></h${level}>`,
   );
+}
+function RenderedMarkdown({ html, className = "markdown" }: { html: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    let rendering = false;
+    let queued = false;
+    const renderMermaid = async () => {
+      if (rendering) {
+        queued = true;
+        return;
+      }
+      const nodes = Array.from(container.querySelectorAll<HTMLElement>("[data-mermaid]"));
+      if (!nodes.length) return;
+      rendering = true;
+      try {
+        const { default: mermaid } = await import("mermaid");
+        const dark = document.documentElement.classList.contains("dark");
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "strict",
+          theme: dark ? "dark" : "base",
+          themeVariables: dark ? undefined : {
+            fontFamily: "Public Sans, sans-serif",
+            primaryColor: "#efe9de",
+            primaryTextColor: "#141413",
+            lineColor: "#cc785c",
+            secondaryColor: "#f5f0e8",
+            tertiaryColor: "#faf9f5",
+          },
+        });
+        await Promise.all(nodes.map(async (node, index) => {
+          const sourceCode = node.dataset.mermaidSource || "";
+          const result = await mermaid.render(`mira-mermaid-${Date.now()}-${index}`, sourceCode);
+          node.innerHTML = result.svg;
+        }));
+      } catch (error) {
+        console.warn("Mira Mermaid 图表渲染失败，已保留源码。", error);
+        nodes.forEach((node) => {
+          node.textContent = node.dataset.mermaidSource || "";
+        });
+      } finally {
+        rendering = false;
+        if (queued) {
+          queued = false;
+          void renderMermaid();
+        }
+      }
+    };
+    void renderMermaid();
+    const observer = new MutationObserver(() => void renderMermaid());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    return () => observer.disconnect();
+  }, [html]);
+  return <div ref={containerRef} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 const content = {
@@ -772,7 +890,7 @@ function Footer({ className = "" }: { className?: string }) {
       <div className="wrap footer-simple">
         <p className="footer-copy">
           <span className="brand" style={{ color: "#fff" }}>
-            <img className="brand-logo" src={logoSrc} alt="" />
+            <img className="brand-logo" src={logoSrc} onError={handleLogoError} alt="" />
             UIChat Mira
           </span>
           <span>Released under the MIT License.</span>
@@ -948,7 +1066,7 @@ function SiteHeaderBase({
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
       <div className="wrap">
         <Link className="brand" to="/">
-          <img className="brand-logo" src={logoSrc} alt="" />
+          <img className="brand-logo" src={logoSrc} onError={handleLogoError} alt="" />
           UIChat Mira
         </Link>
         <ul className="menu">
@@ -1114,7 +1232,7 @@ function SiteHeader({
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
       <div className="wrap">
         <Link className="brand" to="/">
-          <img className="brand-logo" src={logoSrc} alt="" />
+          <img className="brand-logo" src={logoSrc} onError={handleLogoError} alt="" />
           UIChat Mira
         </Link>
         <ul className="menu">
@@ -1268,8 +1386,7 @@ function HomePage() {
     <div className="site">
       <header>
         <div
-          className="wrap hero-grid"
-          style={{ paddingTop: 80, paddingBottom: 0 }}
+          className="wrap hero-grid home-hero-grid"
         >
           <div>
             <h1 className="hero-title">
@@ -1304,15 +1421,7 @@ function HomePage() {
       </section>
       <CoreCapabilities />
       <section id="configure">
-        <div
-          className="wrap"
-          style={{
-            display: "grid",
-            gridTemplateColumns: ".9fr 1.1fr",
-            gap: 56,
-            alignItems: "center",
-          }}
-        >
+        <div className="wrap home-configure-grid">
           <div>
             <span className="eyebrow">配置示例</span>
             <h2>
@@ -1334,7 +1443,7 @@ function HomePage() {
           </div>
         </div>
       </section>
-      <section style={{ borderBottom: "none" }}>
+      <section className="home-final-section">
         <div className="wrap">
           <div className="cta-band cta-band-coral">
             <h2>从本地的第一次对话开始。</h2>
@@ -1502,6 +1611,9 @@ function RoutedApp() {
   }, [darkMode]);
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [location.pathname]);
+  useEffect(() => {
+    document.title = `${getPageTitle(location.pathname)} · ${siteTitle}`;
   }, [location.pathname]);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -2027,8 +2139,11 @@ function DocsLayout() {
   );
 }
 function BlogListPage({ area }: { area: SiteArea }) {
-  const [activeCategory, setActiveCategory] = useState("全部");
+  const location = useLocation();
+  const navigate = useNavigate();
   const tabs = ["全部", ...blogCategories, "归档"];
+  const requestedCategory = new URLSearchParams(location.search).get("category") || "全部";
+  const activeCategory = tabs.includes(requestedCategory) ? requestedCategory : "全部";
   const isArchiveView = activeCategory === "归档";
   const filteredDocs = (
     activeCategory === "全部"
@@ -2065,7 +2180,12 @@ function BlogListPage({ area }: { area: SiteArea }) {
                   type="button"
                   className={`tab${activeCategory === tab ? " active" : ""}`}
                   key={tab}
-                  onClick={() => setActiveCategory(tab)}
+                  onClick={() => {
+                    const search = tab === "全部"
+                      ? ""
+                      : `?category=${encodeURIComponent(tab)}`;
+                    navigate(`/blogs${search}`, { replace: true });
+                  }}
                 >
                   {tab}
                 </button>
@@ -2083,7 +2203,9 @@ function BlogListPage({ area }: { area: SiteArea }) {
                     className={`blog-archive-dot blog-archive-dot-${index % 5}`}
                   />
                   <h3>
-                    <Link to={doc.path}>{doc.title}</Link>
+                    <Link to={{ pathname: doc.path, search: location.search }}>
+                      {doc.title}
+                    </Link>
                   </h3>
                   <span className="blog-archive-date">{doc.date}</span>
                 </article>
@@ -2104,7 +2226,9 @@ function BlogListPage({ area }: { area: SiteArea }) {
                           <span>{doc.group}</span>
                         </div>
                         <h3>
-                          <Link to={doc.path}>{doc.title}</Link>
+                          <Link to={{ pathname: doc.path, search: location.search }}>
+                            {doc.title}
+                          </Link>
                         </h3>
                         <p className="post-excerpt">{doc.description}</p>
                       </div>
@@ -2140,6 +2264,7 @@ function BlogPostPage({
   previous?: Doc;
   next?: Doc;
 }) {
+  const location = useLocation();
   const html = useMemo(() => renderMarkdown(doc.source), [doc.source]);
   const [activeHeading, setActiveHeading] = useState("");
   const coverSrc = resolveCoverSource(doc);
@@ -2173,7 +2298,7 @@ function BlogPostPage({
           <div aria-hidden="true" className="article-header-visual">
             <img alt="" className="article-header-visual-image" src={coverSrc} />
           </div>
-          <Link className="back-link" to="/blogs">
+          <Link className="back-link" to={{ pathname: "/blogs", search: location.search }}>
             ← 返回博客列表
           </Link>
           <h1>{doc.title}</h1>
@@ -2185,6 +2310,7 @@ function BlogPostPage({
                   className="post-author-avatar"
                   key={author.name}
                   src={author.avatar}
+                  onError={author.name === "Mira" ? handleMiraAvatarError : undefined}
                 />
               ))}
             </span>
@@ -2199,7 +2325,7 @@ function BlogPostPage({
         </article>
         <div className="article-shell">
           <div className="article-body markdown blog-markdown">
-            <div dangerouslySetInnerHTML={{ __html: html }} />
+            <RenderedMarkdown html={html} />
             <div className={`author-signature author-signature-${authorAvatars.length > 1 ? "duo" : "solo"} ${signature.accentClassName || ""}`}>
               <div className={`author-signature-avatars author-signature-avatars-${authorAvatars.length}`}>
                 {authorAvatars.map((author) => (
@@ -2208,6 +2334,7 @@ function BlogPostPage({
                     className="author-signature-avatar"
                     key={author.name}
                     src={author.avatar}
+                    onError={author.name === "Mira" ? handleMiraAvatarError : undefined}
                   />
                 ))}
               </div>
@@ -2232,7 +2359,7 @@ function BlogPostPage({
             </div>
             <div className="post-nav">
               {previous ? (
-                <Link to={previous.path}>
+                <Link to={{ pathname: previous.path, search: location.search }}>
                   <span className="dir">← 上一篇</span>
                   <span className="to">{previous.title}</span>
                 </Link>
@@ -2240,7 +2367,7 @@ function BlogPostPage({
                 <span />
               )}
               {next ? (
-                <Link className="next" to={next.path}>
+                <Link className="next" to={{ pathname: next.path, search: location.search }}>
                   <span className="dir">下一篇 →</span>
                   <span className="to">{next.title}</span>
                 </Link>
@@ -2350,7 +2477,7 @@ function DocPage({ path }: { path: string }) {
         <h1>{doc.title}</h1>
         {doc.description ? <p className="doc-lede">{doc.description}</p> : null}
       </div>
-      <div className="markdown" dangerouslySetInnerHTML={{ __html: html }} />
+      <RenderedMarkdown html={html} />
       {path === "/sitemap" ? (
         <DynamicSitemap />
       ) : (

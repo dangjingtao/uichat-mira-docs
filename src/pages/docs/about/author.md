@@ -13,7 +13,7 @@ reviewedBy: tomz
 
 UIChat Mira 由 **Tomz Dang** 发起并持续构建。
 
-他是一名独立开发者，也是一名长期在产品、前端、桌面应用和智能体工程之间来回穿梭的实践者。Mira 不是公司内部立项，也不是为了追逐某一轮模型热点临时拼出的 Demo；它更接近一项持续多年的个人工程：把人与 AI 的对话、资料、角色、工具和工作状态，放进一个真正属于用户自己的工作空间。
+他是一名独立开发者，也是一名长期在产品、前端、桌面应用和智能体工程之间来回穿梭的实践者。Mira 不是公司内部立项，也不是为了追逐某一轮模型热点临时拼出的 Demo；它更接近一项长期持续的个人工程：把人与 AI 的对话、资料、角色、工具和工作状态，放进一个真正属于用户自己的工作空间。
 
 ## Tomz 在做什么
 
@@ -26,6 +26,7 @@ Tomz 长期关注一个问题：
 它既有聊天界面，也有知识库、评测、角色、模型设置、工具、MCP、微应用和受控 Agent Runtime。Tomz 负责产品判断、架构边界、最终验收和那些很难写进需求文档的直觉；AI 参与研究、写作、代码施工和评审，但不替代作者对产品方向的责任。
 
 ::: html
+
 <div style="margin:28px 0;padding:22px;border:1px solid var(--hairline,#e6dfd8);border-radius:16px;background:var(--surface-soft,#f5f0e8);">
   <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-active,#a9583e);margin-bottom:14px;">PROJECT AUTHORS</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;">

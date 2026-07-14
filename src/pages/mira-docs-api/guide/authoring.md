@@ -50,12 +50,43 @@ order: 2
 
 ## 自定义 HTML 块
 
-需要展示交互组件、视觉参考或独立 HTML 预览时，可以在 Markdown 中使用 `html` 块：
+需要展示自定义组件、视觉参考或独立 HTML 预览时，可以在 Markdown 中使用 `html` 块。块内容会按原始 HTML 插入当前文档：
 
 ```md
 ::: html
-<div class="example-block">自定义 HTML 内容</div>
+<div class="example-block">
+  <h3>自定义 HTML 内容</h3>
+  <p>这里可以放 Markdown 不适合表达的页面结构。</p>
+</div>
 :::
 ```
 
-构建时会把块内容作为原始 HTML 交给 Markdown 页面渲染。复杂页面可以拆成多个 Markdown 文件，用 `merge` 合并为一个页面；Markdown 负责标题、说明和索引，HTML 块负责 Markdown 不适合表达的视觉组件。
+构建时会把块内容作为原始 HTML 交给 Markdown 页面渲染。HTML 块适合静态结构、样式示例和视觉稿；其中的 `<script>` 不会自动变成 React 组件逻辑。需要复杂交互时，应改用 React 组件，或把完整页面作为独立 HTML 文件通过 iframe 嵌入。
+
+复杂页面可以拆成多个 Markdown 文件，用 `merge` 合并为一个页面；Markdown 负责标题、说明和索引，HTML 块负责 Markdown 不适合表达的视觉组件。
+
+## Mermaid 图表
+
+代码围栏使用 `mermaid` 语言标记时，Mira-Docs 会在浏览器中把图表源码渲染为 SVG：
+
+````md
+```mermaid
+flowchart TD
+  A[用户问题] --> B[准备上下文]
+  B --> C[生成答案]
+```
+````
+
+Mermaid 由页面运行时按需加载，不会影响没有图表的普通页面。图表会跟随站点的明暗主题重新渲染；如果图表语法有误，页面会保留 Mermaid 源码，方便定位问题，不会阻塞整篇文档显示。
+
+## 代码高亮
+
+普通代码围栏会根据语言标记使用对应的语法高亮；没有标记或项目不支持该语言时，会尝试自动识别：
+
+````md
+```ts
+const page = "/mira-docs-api/guide/authoring";
+```
+````
+
+语言标记应使用常见名称，例如 `ts`、`tsx`、`js`、`css`、`json`、`bash` 和 `python`。Mermaid 需要单独使用 `mermaid` 标记，不要把图表源码放进普通代码块。
