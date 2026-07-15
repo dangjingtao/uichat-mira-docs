@@ -4,6 +4,40 @@
   padding-bottom: 0;
 }
 
+.home-hero-video-divider {
+  width: 100vw;
+  margin-top: var(--sp-section);
+  border-top: 1px solid var(--hairline);
+}
+
+.home-video-section {
+  padding: var(--sp-section) 0 var(--sp-section);
+}
+
+.home-video-frame {
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  background: #211f1c;
+}
+
+.home-product-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .home-video-section {
+    padding: var(--sp-xl) 0 var(--sp-xxl);
+  }
+
+  .home-video-frame {
+    border-radius: 10px;
+  }
+}
+
 .home-configure-grid {
   display: grid;
   grid-template-columns: .9fr 1.1fr;

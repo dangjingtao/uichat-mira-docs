@@ -1409,11 +1409,20 @@ function HomePage() {
           <ChatMockup />
         </div>
       </header>
-      <div className="hero-divider" aria-hidden="true">
+      <div className="home-hero-video-divider" aria-hidden="true" />
+      <section className="home-video-section" aria-label="Mira 产品介绍视频">
         <div className="wrap">
-          <div className="hero-divider-line" />
+          <div className="home-video-frame">
+            <video
+              className="home-product-video"
+              controls
+              playsInline
+              preload="metadata"
+              src="https://assets.tomz.io/videos/mira-product-intro-en-final-music.mp4"
+            />
+          </div>
         </div>
-      </div>
+      </section>
       <section id="philosophy">
         <div className="wrap">
           <PhilosophySpotlight />

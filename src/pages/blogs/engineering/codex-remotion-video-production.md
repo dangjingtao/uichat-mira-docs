@@ -1,7 +1,7 @@
 ---
 title: 让 Codex 用 Remotion 做视频：方向对了，审美还是差得不行
 description: 记录一次用 Remotion 和 Codex 制作 Mira 产品介绍片的完整施工过程：从电子相册、动态 PPT，到建立视觉契约、逐帧整改和最终停止。
-group: 施工现场
+group: 工程现场
 order: 1
 date: 2026年7月15日
 readTime: 18 分钟阅读

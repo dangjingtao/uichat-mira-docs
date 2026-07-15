@@ -1474,22 +1474,20 @@
 .blog-shell{grid-template-columns:minmax(0,1fr)}
 .blog-main{padding:0 48px 0}
 .blog-footer{
-  width:calc(100% + 96px);
-  margin-left:-48px;
-  margin-right:-48px;
+  width:100vw;
+  margin-left:calc((100% - 100vw) / 2);
+  margin-right:0;
   margin-top:0;
 }
 
 
 @media(max-width:900px){
   .blog-main{padding:0 32px 0}
-  .blog-footer{width:calc(100% + 64px);margin-left:-32px;margin-right:-32px}
 
 }
 
 @media(max-width:760px){
   .blog-main{padding:0 20px 0}
-  .blog-footer{width:calc(100% + 40px);margin-left:-20px;margin-right:-20px}
 
 }
 
