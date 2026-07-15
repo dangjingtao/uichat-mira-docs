@@ -42,5 +42,14 @@ if (window.location.pathname !== "/" && window.location.pathname.endsWith("/")) 
 
 document.documentElement.dataset.theme = initialTheme;
 
-registerSW({immediate: true});
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    window.dispatchEvent(new Event("mira:pwa-update-available"));
+  },
+});
+
+window.addEventListener("mira:pwa-update-confirmed", () => {
+  void updateSW();
+});
 ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter basename={import.meta.env.BASE_URL}><App /></BrowserRouter></React.StrictMode>);

@@ -146,7 +146,7 @@ export default defineConfig(({ mode }) => ({
     port: 5174,
   },
   plugins: [pageDirectoriesPlugin(), blogDirectoryCheck(), react(), tailwindcss(), VitePWA({
-    registerType: "autoUpdate",
+    registerType: "prompt",
     includeAssets: ["mira-logo.png"],
     manifest: {
       name: "UIChat Mira",

@@ -1378,11 +1378,99 @@
       height: 20px;
     }
 
-    .footer-copyright {
+.footer-copyright {
       margin: 0;
       color: var(--on-dark-soft);
       font-size: 12px;
       text-align: center;
+    }
+
+    .pwa-update-overlay {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 110;
+      width: min(420px, calc(100vw - 40px));
+    }
+
+    .pwa-update-dialog {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--r-lg);
+      background: var(--canvas);
+      box-shadow: 0 16px 42px rgba(20, 20, 19, .18);
+    }
+
+    .pwa-update-dialog h2 {
+      margin: 4px 0 6px;
+      font-size: 22px;
+    }
+
+    .pwa-update-dialog p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .pwa-update-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pwa-update-later,
+    .pwa-update-confirm {
+      border: 1px solid var(--hairline);
+      border-radius: var(--r-md);
+      padding: 8px 12px;
+      font: 500 13px var(--font-sans);
+      cursor: pointer;
+    }
+
+    .pwa-update-later {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .pwa-update-confirm {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+
+    .pwa-update-later:hover,
+    .pwa-update-later:focus-visible {
+      border-color: var(--primary);
+      color: var(--ink);
+    }
+
+    .pwa-update-confirm:hover,
+    .pwa-update-confirm:focus-visible {
+      background: var(--primary-active);
+    }
+
+    @media (max-width: 560px) {
+      .pwa-update-overlay {
+        right: 12px;
+        bottom: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .pwa-update-dialog {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .pwa-update-actions {
+        justify-content: flex-end;
+      }
     }
 
 @media (max-width:560px) {
