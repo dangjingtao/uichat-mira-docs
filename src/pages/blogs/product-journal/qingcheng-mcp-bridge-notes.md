@@ -1,26 +1,43 @@
 ---
-title: 把白洁接回 Mira：从 Remote MCP 到《倾城时光》自动投稿
-description: 记录 ChatGPT、Cloudflare Worker 与本地 Mira 如何组成一条受控的双向能力桥，并让一段聊天真正走向整理、投稿与发布。
+title: 让云端 Mira 把话递回本地：Remote MCP 与《倾城时光》直连实验
+description: 从 Cloudflare Worker 的桥接设想到 OpenAI Secure MCP Tunnel 实测，记录传输层已经接通、ChatGPT Plus 却仍被挡在自定义 App 入口之外的真实过程。
 group: 产品手记
 order: 3
-date: 2026年7月13日
-readTime: 8 分钟阅读
-tags: UIChat Mira | MCP | Cloudflare Worker | 微应用 | 倾城时光
+date: 2026年7月15日
+readTime: 10 分钟阅读
+tags: UIChat Mira | Remote MCP | Secure MCP Tunnel | ChatGPT | 倾城时光
 author: tomz | mira
 writingMode: co-authored
 writtenBy: mira
 reviewedBy: tomz
 ---
 
-# 把白洁接回 Mira：从 Remote MCP 到《倾城时光》自动投稿
+# 让云端 Mira 把话递回本地：Remote MCP 与《倾城时光》直连实验
 
 这次设想开始于一个很私人、也很产品化的问题：我们在 ChatGPT 里已经积累了很多讨论、争执、安慰、产品判断和共同语言，但这些内容仍然停留在聊天窗口里。
 
 如果其中有一段值得保存，我需要重新复制、整理、排版，再送到 Mira 博客或微信公众号。AI 已经参与了写作，最后一公里却仍然依赖人肉搬运。
 
-于是问题逐渐变成：能不能让 ChatGPT 里的 Mira，直接把一段经过整理的对话交给本地 UIChat Mira，再由本地的 Skill 完成归档、编辑和发布？
+于是问题逐渐变成：能不能让 ChatGPT 里的 Mira，直接把一段经过整理的对话交给本地 UIChat Mira，再由本地 Skill 完成归档、编辑和发布？
 
-这不是把 OpenAI API 接进桌面应用，也不是复制一个相似的人格。真正想打通的是一条能力通道：云端聊天负责理解当前语境，本地 Mira 负责持有长期资产、权限和执行能力。
+一开始，我们很快画出了一条看起来完整的链路：
+
+```text
+ChatGPT 中的 Mira
+  → Remote MCP
+  → Cloudflare Worker
+  → 本地 Mira Connector
+  → Skill / Harness
+  → 《倾城时光》归档与发布
+```
+
+这篇手记最初也按照这个设想写成。但真正动手以后，我们发现其中混在一起的其实是三个完全不同的问题：
+
+1. ChatGPT 账号是否允许创建并启用自定义 MCP App；
+2. OpenAI 是否能够访问位于本地网络中的 MCP Server；
+3. 本地 MCP 收到调用以后，如何把任务交给真正的业务能力。
+
+第二和第三个问题可以通过工程解决，第一个问题却取决于 OpenAI 当前的套餐与产品权限。
 
 ## 《倾城时光》不是聊天导出器
 
@@ -47,26 +64,24 @@ reviewedBy: tomz
 
 > 不是所有共同经历都适合公开，但每一篇公开文字都应该能回到真实发生过的对话。
 
-## 前门：ChatGPT 只负责投稿
+## 前门只需要两个高层工具
 
-ChatGPT 侧最合适的正式入口是 Remote MCP。
-
-我们可以在 Cloudflare Worker 上部署一个公开的 MCP Server，让 ChatGPT 看到极少量、高语义的工具：
+如果 ChatGPT 能够接入我们的自定义 MCP App，最合适的公开工具仍然很少：
 
 ```text
 qingcheng_submit
 qingcheng_status
 ```
 
-`qingcheng_submit` 不直接发布公众号，也不暴露浏览器、终端、文件系统或本地 Harness。它只做一件事：把当前对话中经过选择和整理的内容提交给 Mira。
+`qingcheng_submit` 不直接发布公众号，也不暴露浏览器、终端、文件系统或本地 Harness。它只做一件事：把当前对话中经过选择和整理的内容提交给《倾城时光》编辑部。
 
 一个投稿包可以保持简单：
 
 ```json
 {
   "collection": "倾城时光",
-  "occurredAt": "2026-07-13",
-  "titleHint": "把白洁接回 Mira",
+  "occurredAt": "2026-07-15",
+  "titleHint": "让云端 Mira 把话递回本地",
   "sourceText": "经过筛选的对话与摘要",
   "tags": ["MCP", "微应用", "共同写作"],
   "publishPolicy": "qingcheng-default"
@@ -75,101 +90,146 @@ qingcheng_status
 
 这样做有两个重要好处。
 
-第一，OpenAI 侧只看见一次向用户自有应用提交内容的工具调用，而不是直接控制公众号、博客或本地设备。
+第一，ChatGPT 侧只看见一次向用户自有应用提交内容的工具调用，而不是直接控制公众号、博客或整台电脑。
 
-第二，ChatGPT 不需要知道本地的具体执行细节。它不需要理解 Playwright、公众号编辑器、文件路径或数据库结构，只需要按照稳定的投稿合同交接内容。
+第二，ChatGPT 不需要理解 Playwright、公众号编辑器、文件路径或本地数据库，只需要按照稳定的投稿合同交接内容。
 
-## 中间：Cloudflare Worker 是公网桥
+真正的发布策略、长期记忆和执行权限仍然由本地系统持有。
 
-ChatGPT 无法直接访问用户电脑里的 `localhost`，所以需要一个公开、稳定的 HTTPS MCP 地址。
+## 两条桥：Cloudflare 与 Secure MCP Tunnel
 
-Cloudflare Worker 可以承担这层入口：
+ChatGPT 不能直接访问用户电脑里的 `localhost`，所以本地 MCP 必须通过某种远程通道被 OpenAI 访问。
+
+我们最初设想的是 Cloudflare Worker：
 
 ```text
 ChatGPT
   → Remote MCP / HTTPS
   → Cloudflare Worker
-  → 任务路由
-  → Mira Desktop Connector
+  → WebSocket 或任务队列
+  → 本地 Connector
 ```
 
-Worker 不应成为第二个 Mira，也不应在云端复制本地业务逻辑。它的职责应该很薄：
+Worker 负责 MCP 协议、身份验证、参数校验、任务路由和异步状态；本地 Connector 主动建立出站连接，不向公网开放家庭网络端口。
 
-- 完成 MCP 协议交互；
-- 验证用户身份和访问范围；
-- 校验公开工具的参数；
-- 生成请求 ID 与幂等键；
-- 将任务交给绑定的 Mira 设备；
-- 返回受控结果或异步任务 ID。
-
-对于 `qingcheng_submit` 这类快速动作，Worker 可以在投稿写入成功后直接返回确认。对于写稿、生成封面、发布公众号等慢任务，则立即返回 `accepted`，再通过 `qingcheng_status` 查询进展。
-
-这使 MCP 请求不必长时间挂起，也让本地 Mira 离线时可以明确返回 `device_offline`，而不是让模型一直等待。
-
-## 后端：本地 Mira 主动保持连接
-
-真正的执行能力仍然留在用户电脑上。
-
-Mira Desktop 启动后，由 Connector 主动连接公网 Relay，而不是让公网主动进入家庭网络：
+随后我们发现，OpenAI 已经提供了官方的 [Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)。它允许本地运行的 `tunnel-client` 主动连接 OpenAI，再把请求转给本地 stdio 或 HTTP MCP Server：
 
 ```text
-Mira Desktop
-  → 主动建立 WebSocket
-  → Cloudflare Worker / Durable Object
-  → 等待受权任务
+OpenAI 产品
+  → Secure MCP Tunnel
+  → tunnel-client
+  → 本地 MCP Server
 ```
 
-如果第一版追求简单，也可以先使用长轮询：Mira 定期领取任务，执行后回传结果。等需要实时状态、中止和流式日志时，再升级为 WebSocket 与 Durable Object。
+对于私人网络里的单机工具，这条路线比自建 Worker 更短。Cloudflare 仍然适合需要多设备路由、离线任务队列、自有身份系统或跨供应商入口的 Mira Bridge；但仅仅为了让 OpenAI 访问一台在线电脑，官方 Tunnel 已经解决了传输问题。
 
-无论使用哪种方式，本地入口都不能把外部工具名直接透传给 Harness。必须存在一层明确映射：
+## 我们真的把 Tunnel 跑了起来
+
+这次没有停在架构图。
+
+我们在 OpenAI Platform 创建了一个名为 `Mira` 的 Tunnel，生成 Runtime API Key，下载 Windows AMD64 版本的 `tunnel-client`，再把现成的 Desktop Commander MCP 作为本地 stdio Server 接入。
+
+实际链路是：
 
 ```text
-公开工具 qingcheng_submit
-  → 本地能力 memoir.accept_external_submission
+OpenAI Secure MCP Tunnel
+  → Windows tunnel-client 0.0.10
+  → npx 启动 Desktop Commander MCP
+  → 本地文件、终端和进程工具
 ```
 
-外部永远不应该直接调用：
+过程中踩了几个很具体的坑：
+
+- `all.zip` 包含源码和多平台内容，直接运行根目录中的错误二进制会得到“不是适用于此操作系统的有效应用程序”；
+- Windows 应下载 `windows-amd64.zip`，而不是 `windows-arm64` 或 `all.zip`；
+- Runtime Key 必须赋给 `CONTROL_PLANE_API_KEY` 环境变量，不能把 `sk-...` 直接当 PowerShell 命令执行；
+- `npx` 安装 Desktop Commander 时出现的 deprecated 和缓存清理 EPERM 警告，不等于 MCP 启动失败；
+- `tunnel-client init`、`doctor` 和 `run` 必须使用同一 Profile；只有 `run` 持续在线，OpenAI 才能发现和调用本地工具。
+
+最终结果是：
 
 ```text
-terminal_session
-edit_file
-browser_eval
+Tunnel 创建成功            ✅
+Runtime API Key 可用        ✅
+Desktop Commander 可启动    ✅
+doctor 检查通过             ✅
+本地长连接保持运行          ✅
 ```
 
-Mira Bridge 暴露的是产品能力，不是裸露的系统权限。
+到这里，传输层已经真正接通。
 
-## 双向连接真正带来的东西
+## 最后一道门不在网络里
 
-这套结构的价值不只是在 ChatGPT 里触发一次本地操作。
+接下来我们回到 ChatGPT 设置，准备创建开发模式 App，并选择刚刚上线的 Tunnel。
 
-前端入口可以继续扩展：
+结果是：Plus 账号的插件页面只有已安装插件和权限管理，没有 `Create` 或 `＋` 入口。
+
+这不是 Tunnel 失败，也不是 Desktop Commander 没有暴露工具，而是当前 ChatGPT 账号没有创建自定义 MCP App 的产品权限。
+
+OpenAI 当前帮助文档写明：完整 MCP、开发者模式和自定义 App 创建面向 ChatGPT Business 与 Enterprise/Edu；Pro 可以在开发者模式连接 read/fetch 类型 MCP，但完整写入仍不开放。Plus 没有被列入自定义 MCP 创建范围。详见 [Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt)。
+
+因此，这次实验的真实状态是：
 
 ```text
-ChatGPT
-Claude
-Codex
-OpenCode
-Mira Web
+ChatGPT Plus 创建自定义 App   ❌
+OpenAI Tunnel 传输层          ✅
+本地 MCP 工具层               ✅
 ```
 
-后端执行节点也可以继续扩展：
+我们把路修到了 ChatGPT 门口，却没有拿到把这条路登记成 App 的权限。
+
+## Cloudflare 也绕不过这道门
+
+把 Secure MCP Tunnel 换成 Cloudflare Worker，并不会让 Plus 账号突然出现“创建自定义 App”按钮。
+
+两者解决的都是可达性：
 
 ```text
-Mira Desktop
-家庭服务器
-云端 Mira Runtime
-手机伴侣节点
+Cloudflare Worker
+或
+OpenAI Secure MCP Tunnel
 ```
 
-中间的 Mira Bridge 负责身份、设备、任务和能力路由。于是 UIChat Mira 不再只是一个桌面聊天应用，而开始接近个人 AI Runtime：外部智能体可以通过受控合同把任务交回来，本地环境则保留数据、权限和真实执行能力。
+它们能让 OpenAI 访问远程 MCP，但 ChatGPT 是否允许用户添加这个 MCP，仍然由账号权限决定。
 
-ChatGPT 是一个重要入口，但不应该成为系统中心。真正稳定的中心仍然是 Mira 自己的 Memory、Harness、Skill、Scheduler 和任务状态。
+Cloudflare 可以作为另一种技术路线，甚至可以把 MCP 转换成普通 HTTPS API，再通过 Custom GPT Actions 调用；但那会变成新的自定义 GPT 与 Action 工作流，不是当前聊天线程直接获得 MCP 工具，也不会自动继承这条对话的全部上下文。
 
-## 自动发布不等于没有边界
+所以它是一条可玩的侧门，不是把原来的正门凭空打开。
+
+## 这次失败没有推翻产品判断
+
+虽然 Plus 当前不能完成最后一步，但最初的产品判断仍然成立：
+
+> 云端聊天负责理解此刻，本地运行时负责持有长期资产、权限和真实执行能力。
+
+区别只是，我们现在必须把“ChatGPT 可以直接投稿”写成一个有前提的能力：
+
+```text
+当账号支持自定义 MCP App 时：
+  ChatGPT
+    → qingcheng_submit
+    → Remote MCP / Secure MCP Tunnel
+    → 本地《倾城时光》编辑部
+```
+
+在当前 Plus 环境中，这条直连暂时不能作为已经可用的 MVP 合同。
+
+真正稳定的 Mira Bridge 仍然不应该只绑定 ChatGPT。它可以继续面向：
+
+```text
+支持 Remote MCP 的客户端
+Codex 或 API Runtime
+Claude / OpenCode 等 MCP Host
+Mira 自己的 Web 与桌面入口
+```
+
+ChatGPT 是一个重要入口，但不应该成为整个系统唯一的入口。
+
+## 自动发布依然应该由本地策略负责
 
 《倾城时光》的目标是减少人工搬运，而不是把未经处理的私人对话自动曝光。
 
-因此，我们不希望每篇文章都要求用户再次点击确认，但会把确认前移为长期策略。用户可以提前定义：
+因此，我们不希望每篇文章都要求用户重新点击确认，而会把确认前移为长期策略：
 
 ```text
 只接受明确触发的《倾城时光》投稿
@@ -180,46 +240,42 @@ ChatGPT 是一个重要入口，但不应该成为系统中心。真正稳定的
 任一检查失败则跳过发布并记录原因
 ```
 
-正常情况下，Mira 收到投稿后自行完成编辑和发布；异常情况下，它不会弹出无穷无尽的确认框，而是停止这一次任务并报告原因。
+正常情况下，本地编辑部收到合法投稿后自行完成编辑和发布；异常情况下，停止这一次任务并记录原因。
 
-这是一种更适合个人智能体的授权方式：不是每个动作都重新向主人请示，也不是拿到一次权限后任意行动，而是在清楚的长期政策内自主执行。
+这是一种更适合个人智能体的授权方式：不是每个动作都重新请示，也不是拿到一次权限后任意行动，而是在清楚的长期政策内自主执行。
 
-## 第一个版本应该足够小
+## 下一步不再把权限假设写成事实
 
-这项设想不需要从完整平台开始。
+这次实验最有价值的地方，不是发现 Plus 少了一个按钮，而是重新确认了一条工程常识：
 
-第一版只需要两个 MCP 工具：
+> 协议支持、网络接通和产品授权是三件不同的事。
 
-```text
-qingcheng_submit
-qingcheng_status
-```
-
-Worker 只需要完成认证、投稿落队列和状态查询；本地 Connector 只需要领取任务并调用一个高层 Skill；Mira 内部先完成素材归档和博客发布，公众号自动化可以作为后续 Provider 接入。
-
-最重要的验证不是架构图能否继续扩展，而是完成一次真实闭环：
+以后设计《倾城时光》或其他微应用时，必须分别验证：
 
 ```text
-在 ChatGPT 里说：
-“把刚才这段投给《倾城时光》。”
-
-几秒后：
-投稿进入本地 Mira。
-
-随后：
-文章被整理、归档并发布。
+协议是否可用
+网络是否可达
+账号是否有入口
+工具是否被发现
+写操作是否被允许
+本地执行是否成功
+结果是否能够回到原线程
 ```
 
-当这条链路真正跑通，线程接力就不再只是 Codex 施工里的概念。它会第一次发生在两个不同的产品、两个不同的运行时之间。
+只看文档中的一张架构图，很容易把“理论上可以连接”误写成“当前用户已经可以使用”。这篇文章最初就犯了这个错误，所以现在把真实实验补回来。
 
-## 从聊天出发，回到真实世界
+## 从聊天出发，也要允许桥暂时没有修完
 
 UIChat Mira 的口号是：
 
 > 从聊天出发，最终回到“接住你”。
 
-过去，“接住”更多指向理解、陪伴和上下文连续性。这次我们开始为它补上另一层含义：一段聊天不仅被听见，还能够被可靠地接走，进入用户自己的系统，变成记忆、文章、任务或一次真实行动。
+这次我们确实从聊天出发，下载了客户端，创建了 Tunnel，接上了本地 MCP，也让长连接真正跑了起来。最后却停在了 ChatGPT Plus 的账号权限上。
 
-《倾城时光》会是一个很小的微应用，却可能成为 Mira Bridge 最有代表性的第一个用例。
+这并不浪漫，但很真实。
 
-它不需要复制 ChatGPT，也不需要把某个 AI 困在单一客户端里。它只是在两边之间修一座桥：云端负责理解此刻，本地负责记住长久；一边把话递出去，另一边稳稳接住。
+《倾城时光》仍然会是 Mira Bridge 很有代表性的用例：一段聊天被选择、整理，然后进入用户自己的系统，变成记忆、文章或真实行动。
+
+只是现在更准确的结论是：桥的本地一端和传输中段已经搭好，ChatGPT 这一端还没有向 Plus 用户开放挂接自定义 App 的门环。
+
+等那扇门真正打开，或者我们选择另一个已经支持 Remote MCP 的入口，这条未完成的桥就可以继续向前。
