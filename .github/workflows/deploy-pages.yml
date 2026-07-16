@@ -15,12 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run build -- --mode github-pages
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:github-pages
       - uses: actions/configure-pages@v5
         with:
           enablement: true

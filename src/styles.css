@@ -1014,6 +1014,12 @@
       flex-wrap: wrap;
     }
 
+    .release-download-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
     .hero-meta {
       display: flex;
       gap: 20px;

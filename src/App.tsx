@@ -17,6 +17,7 @@ import {
   Compass,
   Cpu,
   ChevronUp,
+  Download,
   FileCode2,
   FileQuestion,
   GitBranch,
@@ -774,6 +775,49 @@ function Button({
     </a>
   );
 }
+
+type GitHubRelease = {
+  html_url: string;
+  assets: { name: string; browser_download_url: string }[];
+};
+
+function LatestReleaseButton() {
+  const [releaseUrl, setReleaseUrl] = useState(`${githubUrl}/releases/latest`);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("https://api.github.com/repos/dangjingtao/uichat-mira/releases/latest", {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+        return response.json() as Promise<GitHubRelease>;
+      })
+      .then((release) => {
+        const artifact = release.assets.find((asset) =>
+          /\.(appimage|dmg|exe|msi|pkg|tar\.gz|zip)$/i.test(asset.name),
+        );
+        setReleaseUrl(artifact?.browser_download_url || release.html_url);
+      })
+      .catch(() => {
+        // Keep the stable latest-release page when the API is unavailable.
+      });
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <a
+      className="btn btn-secondary release-download-button"
+      href={releaseUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <Download size={16} aria-hidden="true" />
+      下载 Mira
+    </a>
+  );
+}
 function SectionHead({
   eyebrow,
   title,
@@ -1443,6 +1487,7 @@ function HomePage() {
               <Button href={docHref("/about/origin")} kind="primary">
                 开始认识 Mira
               </Button>
+              <LatestReleaseButton />
             </div>
             <div className="hero-meta">
               {content.meta.map((item) => (
@@ -2321,6 +2366,7 @@ function BlogPostPage({
   const location = useLocation();
   const html = useMemo(() => renderMarkdown(doc.source), [doc.source]);
   const [activeHeading, setActiveHeading] = useState("");
+  const [articleHeaderCollapsed, setArticleHeaderCollapsed] = useState(false);
   const coverSrc = resolveCoverSource(doc);
   const authorAvatars = getDocAuthorAvatars(doc);
   const authorLabel = getDocAuthorLabel(doc);
@@ -2345,10 +2391,69 @@ function BlogPostPage({
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, [doc.path]);
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 760px)");
+    let previousY = window.scrollY;
+    let accumulatedDelta = 0;
+    let headerCollapsed = false;
+    let frame = 0;
+    let pendingY = previousY;
+    let transitionTimer = 0;
+    const lockTransition = () => {
+      if (transitionTimer) window.clearTimeout(transitionTimer);
+      transitionTimer = window.setTimeout(() => {
+        transitionTimer = 0;
+        if (window.scrollY <= 12 && headerCollapsed) {
+          headerCollapsed = false;
+          accumulatedDelta = 0;
+          setArticleHeaderCollapsed(false);
+        }
+      }, 320);
+    };
+    const handleScroll = () => {
+      pendingY = window.scrollY;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        const currentY = pendingY;
+        const delta = currentY - previousY;
+        previousY = currentY;
+        frame = 0;
+
+        if (!mobileQuery.matches || currentY <= 12) {
+          accumulatedDelta = 0;
+          if (headerCollapsed && !transitionTimer) {
+            headerCollapsed = false;
+            setArticleHeaderCollapsed(false);
+          }
+          return;
+        }
+
+        if (transitionTimer) return;
+        accumulatedDelta += delta;
+        if (!headerCollapsed && accumulatedDelta >= 24) {
+          headerCollapsed = true;
+          accumulatedDelta = 0;
+          setArticleHeaderCollapsed(true);
+          lockTransition();
+        } else if (headerCollapsed && accumulatedDelta <= -24) {
+          headerCollapsed = false;
+          accumulatedDelta = 0;
+          setArticleHeaderCollapsed(false);
+          lockTransition();
+        }
+      });
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+      if (transitionTimer) window.clearTimeout(transitionTimer);
+    };
+  }, []);
   return (
     <>
       <div className="blog-post-page">
-        <article className="article-header">
+        <article className={`article-header${articleHeaderCollapsed ? " is-collapsed" : ""}`}>
           <div aria-hidden="true" className="article-header-visual">
             <img alt="" className="article-header-visual-image" src={coverSrc} />
           </div>

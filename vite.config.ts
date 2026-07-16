@@ -6,7 +6,7 @@ import { marked } from "marked";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import {VitePWA} from "vite-plugin-pwa";
-import {logoUrl,seo as seoConfig,siteUrl} from "./src/site.config";
+import {seo as seoConfig,siteUrl} from "./src/site.config";
 
 const projectRoot=dirname(fileURLToPath(import.meta.url));
 const pagesRoot=resolve(projectRoot,"src/pages");
@@ -46,7 +46,7 @@ function blogDirectoryCheck(){
   };
 }
 
-type SeoDoc={path:string;title:string;description:string;group:string;order:number;date?:string;author:string[];source:string;root:string;merge?:string;mergeIndex?:boolean};
+type SeoDoc={path:string;title:string;description:string;group:string;order:number;date?:string;author:string[];cover?:string;source:string;root:string;merge?:string;mergeIndex?:boolean};
 function seoMeta(source:string,key:string){return source.match(new RegExp(`^${key}:\\s*(.+)$`,`m`))?.[1]?.trim()||""}
 function seoDocPath(file:string){
   const relative=file.slice(pagesRoot.length+1).replace(/\\/g,"/").replace(/\.md$/i,"");
@@ -67,6 +67,7 @@ function readSeoDoc(file:string):SeoDoc{
     order:Number(seoMeta(frontmatter,"order")||99),
     date:seoMeta(frontmatter,"date")||undefined,
     author,
+    cover:seoMeta(frontmatter,"cover")||seoMeta(frontmatter,"image")||undefined,
     source,
     root:seoDocPath(file).split("/")[1]||"docs",
     merge:seoMeta(frontmatter,"merge")||undefined,
@@ -98,15 +99,26 @@ function seoAreaBody(root:string,docs:SeoDoc[],base:string){
   return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${seoEscape(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}</ol></section></section></main>`;
 }
 function seoHomeBody(){return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`}
-function seoJsonLd(doc:SeoDoc|undefined,url:string){
+function seoAssetUrl(base:string,path:string){
+  const assetBase=base==="/"?"/":`${base.replace(/\/$/,"")}/`;
+  return `${siteUrl.replace(/\/$/,"")}${assetBase}${path.replace(/^\/+/,"")}`;
+}
+function seoImageUrl(doc:SeoDoc|undefined,base:string){
+  const cover=doc?.cover?.trim();
+  if(!cover)return seoAssetUrl(base,"mira-logo.png");
+  if(/^https?:\/\//i.test(cover))return cover;
+  return seoAssetUrl(base,cover);
+}
+function seoJsonLd(doc:SeoDoc|undefined,url:string,image:string){
   if(!doc)return {"@context":"https://schema.org","@type":"WebSite",name:"UIChat Mira",url};
-  return {"@context":"https://schema.org","@type":doc.root==="blogs"?"Article":"TechArticle",headline:doc.title,description:doc.description,url,datePublished:doc.date,author:doc.author.map(name=>({"@type":"Person",name})),publisher:{"@type":"Organization",name:"UIChat Mira"}};
+  return {"@context":"https://schema.org","@type":doc.root==="blogs"?"Article":"TechArticle",headline:doc.title,description:doc.description,url,image,datePublished:doc.date,author:doc.author.map(name=>({"@type":"Person",name})),publisher:{"@type":"Organization",name:"UIChat Mira"}};
 }
 function seoHtml(template:string,body:string,title:string,description:string,url:string,type:string,doc?:SeoDoc,base:string="/"){
   const safeTitle=seoEscape(`${title} · UIChat Mira`);
   const safeDescription=seoEscape(description);
-  const json=JSON.stringify(seoJsonLd(doc,url)).replace(/</g,"\\u003c");
-  const head=`<meta name="description" content="${safeDescription}"><meta name="robots" content="index,follow"><link rel="canonical" href="${url}"><meta property="og:title" content="${safeTitle}"><meta property="og:description" content="${safeDescription}"><meta property="og:type" content="${type}"><meta property="og:url" content="${url}"><meta property="og:site_name" content="UIChat Mira"><meta property="og:image" content="${seoEscape(logoUrl || seoRouteUrl("/","/mira-logo.png"))}"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="${safeTitle}"><meta name="twitter:description" content="${safeDescription}"><script type="application/ld+json">${json}</script>`;
+  const image=seoImageUrl(doc,base);
+  const json=JSON.stringify(seoJsonLd(doc,url,image)).replace(/</g,"\\u003c");
+  const head=`<meta name="description" content="${safeDescription}"><meta name="robots" content="index,follow"><link rel="canonical" href="${url}"><meta property="og:locale" content="zh_CN"><meta property="og:title" content="${safeTitle}"><meta property="og:description" content="${safeDescription}"><meta property="og:type" content="${type}"><meta property="og:url" content="${url}"><meta property="og:site_name" content="UIChat Mira"><meta property="og:image" content="${seoEscape(image)}"><meta property="og:image:secure_url" content="${seoEscape(image)}"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="940"><meta property="og:image:height" content="760"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${safeTitle}"><meta name="twitter:description" content="${safeDescription}"><meta name="twitter:image" content="${seoEscape(image)}"><script type="application/ld+json">${json}</script>`;
   const assetBase=base==="/"?"/":base;
   const assetTemplate=template.replace(/(href|src)="\/mira-logo\.png"/g,`$1="${assetBase}mira-logo.png"`);
   return assetTemplate.replace(/<title>[\s\S]*?<\/title>/i,`<title>${safeTitle}</title>`).replace(/<meta name="description"[^>]*>/i,"").replace("</head>",`${head}</head>`).replace('<div id="root"></div>',`<div id="root">${body}</div>`);
