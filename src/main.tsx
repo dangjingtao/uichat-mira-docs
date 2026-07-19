@@ -32,24 +32,30 @@ const initialTheme =
     ? savedTheme
     : defaultTheme;
 
-// Do not strip the trailing slash from the deployment root. On GitHub Pages the
-// app is mounted at /uichat-mira-docs/ and BrowserRouter's basename includes that
-// slash. Rewriting it to /uichat-mira-docs before React mounts makes the router
-// fail to match the current location and leaves an empty app shell.
+// Keep the deployment root aligned with BrowserRouter's basename. GitHub Pages
+// mounts the app at /uichat-mira-docs/; stripping that final slash makes the
+// basename fail to match and React renders an empty shell.
 const buildBase = import.meta.env.BASE_URL;
 const normalizedBuildBase = buildBase === "/" ? "/" : buildBase.replace(/\/+$/, "");
-const isDeploymentRoot =
-  window.location.pathname === "/" ||
-  (normalizedBuildBase !== "/" &&
-    (window.location.pathname === normalizedBuildBase ||
-      window.location.pathname === `${normalizedBuildBase}/`));
 
-if (!isDeploymentRoot && window.location.pathname.endsWith("/")) {
+if (normalizedBuildBase !== "/" && window.location.pathname === normalizedBuildBase) {
   window.history.replaceState(
     null,
     "",
-    `${window.location.pathname.replace(/\/+$/, "")}${window.location.search}${window.location.hash}`,
+    `${normalizedBuildBase}/${window.location.search}${window.location.hash}`,
   );
+} else {
+  const isDeploymentRoot =
+    window.location.pathname === "/" ||
+    (normalizedBuildBase !== "/" && window.location.pathname === `${normalizedBuildBase}/`);
+
+  if (!isDeploymentRoot && window.location.pathname.endsWith("/")) {
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname.replace(/\/+$/, "")}${window.location.search}${window.location.hash}`,
+    );
+  }
 }
 
 document.documentElement.dataset.theme = initialTheme;
