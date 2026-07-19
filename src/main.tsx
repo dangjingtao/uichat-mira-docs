@@ -32,7 +32,19 @@ const initialTheme =
     ? savedTheme
     : defaultTheme;
 
-if (window.location.pathname !== "/" && window.location.pathname.endsWith("/")) {
+// Do not strip the trailing slash from the deployment root. On GitHub Pages the
+// app is mounted at /uichat-mira-docs/ and BrowserRouter's basename includes that
+// slash. Rewriting it to /uichat-mira-docs before React mounts makes the router
+// fail to match the current location and leaves an empty app shell.
+const buildBase = import.meta.env.BASE_URL;
+const normalizedBuildBase = buildBase === "/" ? "/" : buildBase.replace(/\/+$/, "");
+const isDeploymentRoot =
+  window.location.pathname === "/" ||
+  (normalizedBuildBase !== "/" &&
+    (window.location.pathname === normalizedBuildBase ||
+      window.location.pathname === `${normalizedBuildBase}/`));
+
+if (!isDeploymentRoot && window.location.pathname.endsWith("/")) {
   window.history.replaceState(
     null,
     "",
@@ -52,4 +64,11 @@ const updateSW = registerSW({
 window.addEventListener("mira:pwa-update-confirmed", () => {
   void updateSW();
 });
-ReactDOM.createRoot(document.getElementById("root")!).render(<React.StrictMode><BrowserRouter basename={import.meta.env.BASE_URL}><App /></BrowserRouter></React.StrictMode>);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter basename={buildBase}>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>,
+);
