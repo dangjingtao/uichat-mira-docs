@@ -111,11 +111,13 @@ export function SitemapGalaxy({
     const canvas = canvasRef.current;
     if (!stage || !canvas) return;
 
-    const scene = new THREE.Scene();
-    const pageCanvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas");
-    const colors = theme === "light"
-      ? { background: cssColorToNumber(pageCanvas, 0xfaf9f5), ring: 0x141413, line: 0x141413, text: "#141413", secondary: "#6c6a64" }
-      : { background: cssColorToNumber(pageCanvas, 0x181715), ring: 0xffffff, line: 0xe8e0d2, text: "#faf9f5", secondary: "#a09d96" };
+    let cleanup: (() => void) | undefined;
+    const frame = requestAnimationFrame(() => {
+      const scene = new THREE.Scene();
+      const pageCanvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas");
+      const colors = theme === "light"
+        ? { background: cssColorToNumber(pageCanvas, 0xfaf9f5), ring: 0x141413, line: 0x141413, text: "#141413", secondary: "#6c6a64" }
+        : { background: cssColorToNumber(pageCanvas, 0x181715), ring: 0xffffff, line: 0xe8e0d2, text: "#faf9f5", secondary: "#a09d96" };
     scene.fog = new THREE.FogExp2(colors.background, theme === "light" ? .006 : .012);
     const camera = new THREE.PerspectiveCamera(50, 1, .1, 200);
     camera.position.set(2, 6, 20);
@@ -299,7 +301,7 @@ export function SitemapGalaxy({
     animate();
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(stage);
-    return () => {
+    cleanup = () => {
       resizeObserver.disconnect();
       canvas.removeEventListener("pointermove", handleMove);
       canvas.removeEventListener("click", handleClick);
@@ -321,6 +323,11 @@ export function SitemapGalaxy({
       });
       glowTexture.dispose();
       renderer.dispose();
+    };
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      cleanup?.();
     };
   }, [sections, theme, onSelectNode]);
 
