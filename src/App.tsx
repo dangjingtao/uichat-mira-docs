@@ -9,6 +9,7 @@ import {
   type SyntheticEvent,
 } from "react";
 import { marked } from "marked";
+import { SitemapGalaxy, type SitemapGalaxyData } from "./components/SitemapGalaxy";
 import hljs from "highlight.js/lib/common";
 import {
   ArrowUpRight,
@@ -40,7 +41,6 @@ import {
 } from "react-router-dom";
 import pageDirectories from "virtual:page-directories";
 import { directoryLabels, logoUrl, topNavigationOrder } from "./site.config";
-import CoreCapabilities from "./CoreCapabilities";
 
 type LinkItem = { label: string; href: string };
 type ConfiguredNavItem = { label: string; href: string };
@@ -100,6 +100,13 @@ const githubUrl = "https://github.com/dangjingtao/uichat-mira";
 const appBase = import.meta.env.BASE_URL;
 function docHref(path: string) {
   return `${appBase}${path.replace(/^\/+/, "")}`;
+}
+function decodedPathname(path: string) {
+  try {
+    return decodeURI(path);
+  } catch {
+    return path;
+  }
 }
 
 const rawDocModules = import.meta.glob("./pages/**/*.md", {
@@ -454,6 +461,50 @@ const visibleSections = [
   ...docSections.filter((section) => section.key !== "navigation"),
   ...nonEmptySiteAreas,
 ];
+const sitemapData: SitemapGalaxyData = {
+  root: "网站地图",
+  sections: visibleSections.map((section) => ({
+  key: section.key,
+  title: section.title,
+  description: section.description,
+  path: section.docs[0]?.path || "/docs",
+  docs: section.docs.map((doc) => ({
+    title: doc.title,
+    path: doc.path,
+    description: doc.description,
+    date: doc.date,
+  })),
+  })),
+};
+type ContextGraphNode = {
+  label: string;
+  kind: "section" | "document";
+  href: string;
+  parent: number;
+};
+const contextGraphNodes: ContextGraphNode[] = [{
+  label: "网站地图",
+  kind: "section",
+  href: "/sitemap",
+  parent: -1,
+}];
+visibleSections.forEach((section) => {
+  const sectionIndex = contextGraphNodes.length;
+  contextGraphNodes.push({
+    label: section.title,
+    kind: "section",
+    href: section.docs[0]?.path || "/sitemap",
+    parent: 0,
+  });
+  section.docs.slice(0, 2).forEach((doc) => {
+    contextGraphNodes.push({
+      label: doc.title,
+      kind: "document",
+      href: doc.path,
+      parent: sectionIndex,
+    });
+  });
+});
 const localLogoSrc = `${appBase}mira-logo.png`;
 const logoSrc = logoUrl.trim() || localLogoSrc;
 function handleLogoError(event: SyntheticEvent<HTMLImageElement>) {
@@ -539,7 +590,7 @@ function getDocSignature(doc: Doc) {
     const links = [{ label: "查看 Mira 来信 →", href: docHref("/blogs") }];
     if (doc.commitUrl) links.push({ label: "查看发布记录 →", href: doc.commitUrl });
     return {
-      title: "来自我最爱的 Mira",
+      title: "来自Mira",
       body: authorProfiles.mira.bio,
       links,
       showKicker: true,
@@ -634,9 +685,16 @@ function renderMarkdown(source: string) {
     html = html.replace(new RegExp(`<p>${placeholder}<\\/p>|${placeholder}`, "g"), block);
   });
   return html.replace(
-    /<h([23])>([\s\S]*?)<\/h\1>/g,
-    (_, level, text) =>
-      `<h${level} id="${slug(text)}">${text}<a class="md-anchor" href="#${slug(text)}">#</a></h${level}>`,
+    /<h([23])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/g,
+    (_, level, attributes, text) => {
+      if (/\bid\s*=\s*["'][^"']+["']/i.test(attributes)) {
+        return `<h${level}${attributes}>${text}</h${level}>`;
+      }
+      const id = slug(text);
+      return id
+        ? `<h${level}${attributes} id="${id}">${text}<a class="md-anchor" href="#${id}">#</a></h${level}>`
+        : `<h${level}${attributes}>${text}</h${level}>`;
+    },
   );
 }
 function RenderedMarkdown({ html, className = "markdown" }: { html: string; className?: string }) {
@@ -775,7 +833,6 @@ function Button({
     </a>
   );
 }
-
 type GitHubRelease = {
   html_url: string;
   assets: { name: string; browser_download_url: string }[];
@@ -927,7 +984,6 @@ function PhilosophySpotlight() {
     </div>
   );
 }
-
 function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={className}>
@@ -1469,7 +1525,7 @@ function SiteHeader({
     </nav>
   );
 }
-function HomePage() {
+function HomePage({ darkMode }: { darkMode: boolean }) {
   return (
     <div className="site">
       <header>
@@ -1498,7 +1554,15 @@ function HomePage() {
           <ChatMockup />
         </div>
       </header>
-      <div className="home-hero-video-divider" aria-hidden="true" />
+      <section className="sitemap-galaxy-home" aria-label="网站地图星图">
+        <div className="wrap">
+          <SitemapGalaxy
+            key={darkMode ? "sitemap-galaxy-dark" : "sitemap-galaxy-light"}
+            data={sitemapData}
+            theme={darkMode ? "dark" : "light"}
+          />
+        </div>
+      </section>
       <section className="home-video-section" aria-label="Mira 产品介绍视频">
         <div className="wrap">
           <div className="home-video-frame">
@@ -1517,7 +1581,6 @@ function HomePage() {
           <PhilosophySpotlight />
         </div>
       </section>
-      <CoreCapabilities />
       <section id="configure">
         <div className="wrap home-configure-grid">
           <div>
@@ -1538,22 +1601,6 @@ function HomePage() {
                 {line}
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-      <section className="home-final-section">
-        <div className="wrap">
-          <div className="cta-band cta-band-coral">
-            <h2>从本地的第一次对话开始。</h2>
-            <p>安装只需要几分钟，你的第一个对话可以完全离线完成。</p>
-            <div className="cta-actions">
-              <Button href={docHref("/about/origin")} kind="coral">
-                立即阅读
-              </Button>
-              <Button href={docHref("/engineering/development")} kind="ghost">
-                阅读开发文档
-              </Button>
-            </div>
           </div>
         </div>
       </section>
@@ -1742,7 +1789,7 @@ function RoutedApp() {
         wide={navIsWide}
       />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HomePage darkMode={darkMode} />} />
         <Route element={<DocsLayout />}>
           <Route path="/sitemap" element={<DocPage path="/sitemap" />} />
           {siteAreas.map((area) => (
@@ -1762,7 +1809,7 @@ function RoutedApp() {
               />
             ))}
         </Route>
-        <Route path="*" element={<HomePage />} />
+        <Route path="*" element={<HomePage darkMode={darkMode} />} />
       </Routes>
       {searchOpen && (
         <SearchOverlay
@@ -2182,7 +2229,8 @@ function Toc({ doc, activeHeading }: { doc?: Doc; activeHeading: string }) {
 }
 function DocsLayout() {
   const location = useLocation();
-  const currentDoc = allDocs.find((item) => item.path === location.pathname);
+  const currentPath = decodedPathname(location.pathname);
+  const currentDoc = allDocs.find((item) => item.path === currentPath);
   const currentArea = siteAreas.find(
     (area) =>
       location.pathname === area.path ||

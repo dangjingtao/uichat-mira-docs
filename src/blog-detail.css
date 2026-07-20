@@ -30,8 +30,6 @@
 .post-meta-tag{font-size:10px;padding:2px 8px;line-height:1.4}
 .author-signature{display:grid;grid-template-columns:72px minmax(0,520px);column-gap:14px;row-gap:12px;align-items:flex-start;max-width:min(100%,606px);margin:32px 0 0;padding-top:32px;border-top:1px solid rgba(216,199,180,.7)}
 .author-signature-duo{grid-template-columns:116px minmax(0,680px);column-gap:18px;max-width:min(100%,798px)}
-.author-signature.is-mira{position:relative}
-.author-signature.is-mira::before{content:"";position:absolute;left:-10px;top:20px;bottom:0;width:2px;border-radius:999px;background:linear-gradient(180deg, rgba(232,165,90,.72), rgba(204,120,92,.08))}
 .author-signature-avatars{display:flex;align-items:flex-start;flex:0 0 auto;min-height:56px}
 .author-signature-avatars-1{width:56px}
 .author-signature-avatars-2{width:104px}
@@ -84,7 +82,6 @@
   .post-author-avatars-2 .post-author-avatar + .post-author-avatar{margin-left:-6px}
   .author-signature{grid-template-columns:68px minmax(0,1fr);column-gap:16px;row-gap:10px}
   .author-signature-duo{grid-template-columns:92px minmax(0,1fr);column-gap:16px;max-width:100%}
-  .author-signature.is-mira::before{left:0;top:0;height:100%;bottom:auto}
   .author-signature-avatars{min-height:48px}
   .author-signature-avatars-1{width:46px}
   .author-signature-avatars-2{width:78px}
