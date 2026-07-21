@@ -83,12 +83,6 @@ function colorString(color: number) {
   return `#${color.toString(16).padStart(6, "0")}`;
 }
 
-function cssColorToNumber(value: string, fallback: number) {
-  const normalized = value.trim().replace(/^#/, "");
-  if (!/^[0-9a-f]{6}$/i.test(normalized)) return fallback;
-  return Number.parseInt(normalized, 16);
-}
-
 export function SitemapGalaxy({
   data,
   theme = "dark",
@@ -111,13 +105,10 @@ export function SitemapGalaxy({
     const canvas = canvasRef.current;
     if (!stage || !canvas) return;
 
-    let cleanup: (() => void) | undefined;
-    const frame = requestAnimationFrame(() => {
-      const scene = new THREE.Scene();
-      const pageCanvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas");
-      const colors = theme === "light"
-        ? { background: cssColorToNumber(pageCanvas, 0xfaf9f5), ring: 0x141413, line: 0x141413, text: "#141413", secondary: "#6c6a64" }
-        : { background: cssColorToNumber(pageCanvas, 0x181715), ring: 0xffffff, line: 0xe8e0d2, text: "#faf9f5", secondary: "#a09d96" };
+    const scene = new THREE.Scene();
+    const colors = theme === "light"
+      ? { background: 0xfaf9f5, ring: 0x141413, line: 0x141413, text: "#141413", secondary: "#6c6a64" }
+      : { background: 0x181715, ring: 0xffffff, line: 0xe8e0d2, text: "#faf9f5", secondary: "#a09d96" };
     scene.fog = new THREE.FogExp2(colors.background, theme === "light" ? .006 : .012);
     const camera = new THREE.PerspectiveCamera(50, 1, .1, 200);
     camera.position.set(2, 6, 20);
