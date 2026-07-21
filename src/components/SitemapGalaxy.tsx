@@ -292,7 +292,7 @@ export function SitemapGalaxy({
     animate();
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(stage);
-    cleanup = () => {
+    return () => {
       resizeObserver.disconnect();
       canvas.removeEventListener("pointermove", handleMove);
       canvas.removeEventListener("click", handleClick);
@@ -314,11 +314,6 @@ export function SitemapGalaxy({
       });
       glowTexture.dispose();
       renderer.dispose();
-    };
-    });
-    return () => {
-      cancelAnimationFrame(frame);
-      cleanup?.();
     };
   }, [sections, theme, onSelectNode]);
 
