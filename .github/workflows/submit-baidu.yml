@@ -1,0 +1,61 @@
+name: Submit URLs to Baidu
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: baidu-url-submit
+  cancel-in-progress: true
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build production sitemap
+        run: pnpm run build
+
+      - name: Submit sitemap URLs to Baidu
+        env:
+          BAIDU_PUSH_TOKEN: ${{ secrets.BAIDU_PUSH_TOKEN }}
+        run: |
+          if [ -z "$BAIDU_PUSH_TOKEN" ]; then
+            echo "BAIDU_PUSH_TOKEN is not configured; skipping Baidu submission."
+            exit 0
+          fi
+
+          URLS=$(grep -oE '<loc>[^<]+</loc>' dist/sitemap.xml | sed -E 's#</?loc>##g')
+          if [ -z "$URLS" ]; then
+            echo "No URLs found in dist/sitemap.xml"
+            exit 1
+          fi
+
+          echo "$URLS" > /tmp/baidu-urls.txt
+          echo "Submitting $(wc -l < /tmp/baidu-urls.txt) URLs to Baidu..."
+
+          RESPONSE=$(curl --fail-with-body --silent --show-error \
+            -H 'Content-Type: text/plain' \
+            --data-binary @/tmp/baidu-urls.txt \
+            "http://data.zz.baidu.com/urls?site=https://tomz.io&token=${BAIDU_PUSH_TOKEN}")
+
+          echo "Baidu response: $RESPONSE"
