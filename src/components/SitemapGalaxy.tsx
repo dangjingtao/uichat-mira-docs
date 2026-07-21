@@ -112,16 +112,31 @@ export function SitemapGalaxy({
     if (!stage || !canvas) return;
 
     const scene = new THREE.Scene();
+    const fallbackBackground = theme === "light" ? 0xfaf9f5 : 0x181715;
     const pageCanvas = getComputedStyle(document.documentElement).getPropertyValue("--canvas");
     const colors = theme === "light"
-      ? { background: cssColorToNumber(pageCanvas, 0xfaf9f5), ring: 0x141413, line: 0x141413, text: "#141413", secondary: "#6c6a64" }
-      : { background: cssColorToNumber(pageCanvas, 0x181715), ring: 0xffffff, line: 0xe8e0d2, text: "#faf9f5", secondary: "#a09d96" };
+      ? { background: cssColorToNumber(pageCanvas, fallbackBackground), ring: 0x141413, line: 0x141413, text: "#141413", secondary: "#6c6a64" }
+      : { background: cssColorToNumber(pageCanvas, fallbackBackground), ring: 0xffffff, line: 0xe8e0d2, text: "#faf9f5", secondary: "#a09d96" };
     scene.fog = new THREE.FogExp2(colors.background, theme === "light" ? .006 : .012);
     const camera = new THREE.PerspectiveCamera(50, 1, .1, 200);
     camera.position.set(2, 6, 20);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(colors.background, 1);
+
+    const syncCanvasBackground = () => {
+      const canvasColor = getComputedStyle(document.documentElement).getPropertyValue("--canvas");
+      const background = cssColorToNumber(canvasColor, fallbackBackground);
+      colors.background = background;
+      if (scene.fog instanceof THREE.FogExp2) scene.fog.color.setHex(background);
+      renderer.setClearColor(background, 1);
+    };
+    const themeSyncFrame = requestAnimationFrame(syncCanvasBackground);
+    const themeObserver = new MutationObserver(syncCanvasBackground);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -300,6 +315,8 @@ export function SitemapGalaxy({
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(stage);
     return () => {
+      themeObserver.disconnect();
+      cancelAnimationFrame(themeSyncFrame);
       resizeObserver.disconnect();
       canvas.removeEventListener("pointermove", handleMove);
       canvas.removeEventListener("click", handleClick);
