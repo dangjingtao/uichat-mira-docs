@@ -44,18 +44,30 @@ jobs:
             exit 0
           fi
 
-          URLS=$(grep -oE '<loc>[^<]+</loc>' dist/sitemap.xml | sed -E 's#</?loc>##g')
-          if [ -z "$URLS" ]; then
-            echo "No URLs found in dist/sitemap.xml"
+          grep -oE '<loc>[^<]+</loc>' dist/sitemap.xml \
+            | sed -E 's#</?loc>##g' \
+            | grep '^https://tomz\.io' \
+            > urls.txt
+
+          if [ ! -s urls.txt ]; then
+            echo "No tomz.io URLs found in dist/sitemap.xml"
             exit 1
           fi
 
-          echo "$URLS" > /tmp/baidu-urls.txt
-          echo "Submitting $(wc -l < /tmp/baidu-urls.txt) URLs to Baidu..."
+          echo "Submitting $(wc -l < urls.txt) URLs to Baidu..."
+          echo "First URLs:"
+          head -n 5 urls.txt
 
-          RESPONSE=$(curl --fail-with-body --silent --show-error \
-            -H 'Content-Type: text/plain' \
-            --data-binary @/tmp/baidu-urls.txt \
+          HTTP_CODE=$(curl -sS -o baidu-response.json -w '%{http_code}' \
+            -H 'Content-Type:text/plain' \
+            --data-binary @urls.txt \
             "http://data.zz.baidu.com/urls?site=https://tomz.io&token=${BAIDU_PUSH_TOKEN}")
 
-          echo "Baidu response: $RESPONSE"
+          echo "Baidu HTTP status: $HTTP_CODE"
+          echo "Baidu response:"
+          cat baidu-response.json
+          echo
+
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            exit 1
+          fi
