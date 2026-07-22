@@ -13,17 +13,25 @@ type GitHubRelease = {
   assets: ReleaseAsset[];
 };
 
+type DownloadSource = "github" | "r2";
+
 type DownloadOption = {
   key: string;
   label: string;
   meta: string;
-  url: string;
+  githubUrl: string;
+  r2Url: string;
 };
 
 const latestReleaseUrl =
   "https://api.github.com/repos/dangjingtao/uichat-mira/releases/latest";
 const fallbackReleaseUrl =
   "https://github.com/dangjingtao/uichat-mira/releases/latest";
+const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
+
+function r2AssetUrl(asset: ReleaseAsset) {
+  return `${r2PublicBaseUrl}/${encodeURIComponent(asset.name)}`;
+}
 
 function classifyDownloads(release: GitHubRelease | null) {
   const assets = (release?.assets || []).filter(
@@ -48,33 +56,30 @@ function classifyDownloads(release: GitHubRelease | null) {
   const recommended = electronSetup || tauriNsis || tauriMsi || fallback;
   const options: DownloadOption[] = [];
 
-  if (electronSetup) {
+  const pushOption = (
+    key: string,
+    label: string,
+    meta: string,
+    asset?: ReleaseAsset,
+  ) => {
+    if (!asset) return;
     options.push({
-      key: "electron",
-      label: "Windows 安装版",
-      meta: "Electron · EXE · 推荐",
-      url: electronSetup.browser_download_url,
+      key,
+      label,
+      meta,
+      githubUrl: asset.browser_download_url,
+      r2Url: r2AssetUrl(asset),
     });
-  }
-  if (tauriNsis) {
-    options.push({
-      key: "tauri-nsis",
-      label: "Tauri 安装版",
-      meta: "轻量实验版 · EXE",
-      url: tauriNsis.browser_download_url,
-    });
-  }
-  if (tauriMsi) {
-    options.push({
-      key: "tauri-msi",
-      label: "Tauri MSI",
-      meta: "企业或批量部署",
-      url: tauriMsi.browser_download_url,
-    });
-  }
+  };
+
+  pushOption("electron", "Windows 安装版", "Electron · EXE · 推荐", electronSetup);
+  pushOption("tauri-nsis", "Tauri 安装版", "轻量实验版 · EXE", tauriNsis);
+  pushOption("tauri-msi", "Tauri MSI", "企业或批量部署", tauriMsi);
 
   return {
-    recommendedUrl: recommended?.browser_download_url || release?.html_url || fallbackReleaseUrl,
+    recommendedGithubUrl:
+      recommended?.browser_download_url || release?.html_url || fallbackReleaseUrl,
+    recommendedR2Url: recommended ? r2AssetUrl(recommended) : fallbackReleaseUrl,
     options,
   };
 }
@@ -96,8 +101,13 @@ export default function ReleaseDownloadEnhancer() {
   const [release, setRelease] = useState<GitHubRelease | null>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
+  const [source, setSource] = useState<DownloadSource>("github");
 
   const downloads = useMemo(() => classifyDownloads(release), [release]);
+  const recommendedUrl =
+    source === "r2"
+      ? downloads.recommendedR2Url
+      : downloads.recommendedGithubUrl;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -136,11 +146,13 @@ export default function ReleaseDownloadEnhancer() {
       }
       if (next === original && host?.isConnected) return;
 
-      if (original) original.hidden = false;
+      if (original) original.style.removeProperty("display");
       host?.remove();
 
       original = next;
-      original.hidden = true;
+      // `.btn { display: inline-flex }` overrides the browser's `[hidden]` rule,
+      // so hide the legacy button explicitly instead of relying on `hidden`.
+      original.style.setProperty("display", "none", "important");
       host = document.createElement("div");
       host.className = "release-download-enhancer-root";
       original.parentElement.insertBefore(host, original.nextSibling);
@@ -154,7 +166,7 @@ export default function ReleaseDownloadEnhancer() {
 
     return () => {
       observer.disconnect();
-      if (original) original.hidden = false;
+      if (original) original.style.removeProperty("display");
       host?.remove();
       setMountNode(null);
     };
@@ -184,8 +196,8 @@ export default function ReleaseDownloadEnhancer() {
     <div className={`release-download-split${open ? " is-open" : ""}`}>
       <a
         className="btn btn-secondary release-download-main"
-        href={downloads.recommendedUrl}
-        aria-label="下载 Mira Windows 推荐版"
+        href={recommendedUrl}
+        aria-label={`下载 Mira Windows 推荐版（${source === "r2" ? "R2 镜像" : "GitHub"}）`}
       >
         <Download size={16} aria-hidden="true" />
         下载 Windows
@@ -193,7 +205,7 @@ export default function ReleaseDownloadEnhancer() {
       <button
         className="btn btn-secondary release-download-toggle"
         type="button"
-        aria-label="选择其他 Mira 下载版本"
+        aria-label="选择下载来源和其他 Mira 安装包"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
@@ -201,16 +213,47 @@ export default function ReleaseDownloadEnhancer() {
       </button>
       {open ? (
         <div className="release-download-menu" role="menu">
-          {downloads.options.length ? (
-            downloads.options.map((option) => (
-              <a key={option.key} href={option.url} role="menuitem">
-                <span>{option.label}</span>
-                <small>{option.meta}</small>
-              </a>
-            ))
-          ) : (
-            <div className="release-download-empty">正在读取最新构建产物…</div>
-          )}
+          <div className="release-download-source" aria-label="下载来源">
+            <span>下载来源</span>
+            <div className="release-download-source-options">
+              <button
+                type="button"
+                className={source === "github" ? "active" : ""}
+                aria-pressed={source === "github"}
+                onClick={() => setSource("github")}
+              >
+                GitHub
+              </button>
+              <button
+                type="button"
+                className={source === "r2" ? "active" : ""}
+                aria-pressed={source === "r2"}
+                onClick={() => setSource("r2")}
+              >
+                R2 镜像
+              </button>
+            </div>
+          </div>
+
+          <div className="release-download-options">
+            {downloads.options.length ? (
+              downloads.options.map((option) => (
+                <a
+                  key={option.key}
+                  href={source === "r2" ? option.r2Url : option.githubUrl}
+                  role="menuitem"
+                >
+                  <span>{option.label}</span>
+                  <small>
+                    {option.meta} · {source === "r2" ? "R2 镜像" : "GitHub"}
+                  </small>
+                </a>
+              ))
+            ) : (
+              <div className="release-download-empty">正在读取最新构建产物…</div>
+            )}
+          </div>
+
           <a
             className="release-download-all"
             href={release?.html_url || fallbackReleaseUrl}
