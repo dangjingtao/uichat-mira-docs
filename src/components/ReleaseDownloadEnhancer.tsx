@@ -94,7 +94,9 @@ function syncDisplayedVersion(tagName?: string) {
     (node) => node.textContent?.trim() === "产品版本",
   );
   const value = versionLabel?.previousElementSibling;
-  if (value instanceof HTMLElement) value.textContent = version;
+  if (value instanceof HTMLElement && value.textContent?.trim() !== version) {
+    value.textContent = version;
+  }
 }
 
 export default function ReleaseDownloadEnhancer() {
