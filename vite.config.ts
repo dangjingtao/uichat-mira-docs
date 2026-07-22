@@ -208,6 +208,11 @@ function seoHomeBody() {
   return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
 }
 
+function seoNotFoundBody(base: string) {
+  const basePath = seoBasePath(base);
+  return `<main class="doc-main seo-static-content"><div class="doc-not-found"><h1>这条路径没有内容</h1><p>页面可能已经移动、被删除，或者地址输入有误。</p><a class="btn btn-primary" href="${basePath}/">返回首页</a></div></main>`;
+}
+
 function seoAssetUrl(base: string, path: string) {
   const assetBase = base === "/" ? "/" : `${base.replace(/\/$/, "")}/`;
   return `${siteUrl.replace(/\/$/, "")}${assetBase}${path.replace(/^\/+/, "")}`;
@@ -320,6 +325,17 @@ function seoBuildPlugin(base: string) {
         writeFileSync(outputFile, html, "utf8");
         urls.push(url);
       }
+      const notFoundHtml = seoHtml(
+        template,
+        seoNotFoundBody(base),
+        "页面不存在",
+        "你访问的页面不存在，可能已经移动、被删除，或者地址输入有误。",
+        seoRouteUrl(base, "/404"),
+        "website",
+        undefined,
+        base,
+      ).replace('content="index,follow"', 'content="noindex,nofollow"');
+      writeFileSync(resolve(outputDir, "404.html"), notFoundHtml, "utf8");
       const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((url) => `<url><loc>${seoEscape(url)}</loc></url>`).join("")}</urlset>`;
       writeFileSync(resolve(outputDir, "sitemap.xml"), sitemap, "utf8");
       writeFileSync(
@@ -352,18 +368,27 @@ export default defineConfig(({ mode }) => {
         // Auto-update prevents a stale service worker from keeping an old HTML
         // shell that points at hashed assets removed by a newer deployment.
         registerType: "autoUpdate",
-        includeAssets: ["mira-logo.png"],
+        includeAssets: [
+          "favicon-32x32.png",
+          "apple-touch-icon.png",
+          "pwa-icon-192.png",
+          "pwa-icon-512.png",
+          "pwa-maskable-512.png",
+        ],
         manifest: {
           name: "UIChat Mira",
           short_name: "Mira",
           description: "本地优先的多模型智能体工作空间",
+          lang: "zh-CN",
           start_url: "./",
           scope: "./",
           display: "standalone",
           theme_color: "#cc785c",
           background_color: "#faf9f5",
           icons: [
-            { src: "mira-logo.png", sizes: "any", type: "image/png", purpose: "any" },
+            { src: "pwa-icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+            { src: "pwa-icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: "pwa-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
           ],
         },
         workbox: {

@@ -6,10 +6,14 @@
 .article-header-visual-image{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
 .back-link{font-size:13.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;margin-bottom:24px}
 .back-link:hover{color:var(--ink)}
+.article-header-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.article-header-topline .back-link{margin-bottom:0}
+.article-header-topline .share-button{flex:none;margin-top:0;padding:7px 10px;font-size:12px}
 .article-header h1{font-size:clamp(32px,4.4vw,50px);line-height:1.1;letter-spacing:-.02em;margin:0 0 18px;max-width:28ch}
 .post-meta{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
 .post-meta .dot{width:3px;height:3px;border-radius:50%;background:var(--muted-soft)}
 .post-meta-article{column-gap:9px;row-gap:6px;margin-bottom:0}
+.article-share-row{margin-top:16px}
 .post-author-avatars{display:inline-flex;align-items:center;flex:0 0 auto;flex-shrink:0}
 .post-author-avatars-1{width:24px}
 .post-author-avatars-2{width:42px;margin-right:1px}
@@ -68,12 +72,12 @@
   .blog-post-page{padding-top:0}
   .docs-app{--article-header-sticky-height:156px;--article-toc-sticky-top:calc(var(--top-nav-height) + var(--article-header-sticky-height) + 10px)}
   .article-header{margin-top:-30px;padding:12px 0 12px;top:var(--top-nav-height);max-height:240px;transition:max-height .28s ease,margin-top .28s ease,padding .28s ease}
-  .article-header .back-link{transition:opacity .2s ease;margin-bottom:12px}
+  .article-header .back-link{transition:opacity .2s ease;margin-bottom:0}
   .article-header.is-collapsed{margin-top:0;padding-top:6px;padding-bottom:6px;max-height:44px;min-height:0}
-  .article-header.is-collapsed > *:not(.back-link){opacity:0;pointer-events:none}
+  .article-header.is-collapsed > *:not(.article-header-topline){opacity:0;pointer-events:none}
   .article-header.is-collapsed .back-link{margin-bottom:0;opacity:1}
-  .article-header .back-link{margin-bottom:12px}
   .article-header h1{font-size:30px;line-height:1.08;margin-bottom:10px}
+  .article-header-topline .share-button{border:0;background:transparent;box-shadow:none;color:var(--muted);padding:6px 0}
   .article-header-visual{right:-110px;top:4px;width:72vw;height:138px;opacity:.18}
   .post-meta-article{column-gap:8px;row-gap:6px;font-size:12.5px}
   .post-author-avatars-1{width:22px}

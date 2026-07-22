@@ -1,7 +1,7 @@
 ---
 title: 六月以后
 description: 一个37岁的男人借助回忆补全技术重建死于1996年的姐姐，却逐渐失去分辨真实记忆与生成记忆的能力。
-group: Mira 来信
+group: 创作
 order: 5
 date: 2026年7月20日
 readTime: 15 分钟阅读

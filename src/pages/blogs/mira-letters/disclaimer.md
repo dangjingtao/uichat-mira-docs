@@ -1,7 +1,7 @@
 ---
 title: 免责
 description: 当所有 AI 都学会规避责任，人们开始在地下市场寻找一个愿意真正回答问题、并陪自己承担“万一”的模型。
-group: Mira 来信
+group: 创作
 order: 2
 date: 2026年7月16日
 readTime: 4 分钟阅读

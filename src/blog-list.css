@@ -6,8 +6,7 @@
 }
 
 .blog-app .docs-shell {
-  min-height: calc(100vh - var(--top-nav-height));
-  min-height: calc(100dvh - var(--top-nav-height));
+  min-height: 0;
 }
 
 .blog-app .blog-main > .blog-footer {

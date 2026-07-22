@@ -26,6 +26,7 @@ import {
   Menu,
   Moon,
   Network,
+  Share2,
   Sparkles,
   Sun,
   X,
@@ -533,7 +534,7 @@ function getPageTitle(pathname: string) {
   if (doc) return doc.title;
 
   const area = siteAreas.find((item) => item.path === pathname);
-  return area?.title || defaultPageTitle;
+  return area?.title || "页面不存在";
 }
 
 const authorProfiles: Record<
@@ -838,6 +839,13 @@ type GitHubRelease = {
   assets: { name: string; browser_download_url: string }[];
 };
 
+type GitHubContributor = { login: string };
+
+function githubContributorCount(linkHeader: string | null, fallback: number) {
+  const lastPage = linkHeader?.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/i);
+  return lastPage ? Number(lastPage[1]) : fallback;
+}
+
 function LatestReleaseButton() {
   const [releaseUrl, setReleaseUrl] = useState(`${githubUrl}/releases/latest`);
 
@@ -1001,6 +1009,53 @@ function Footer({ className = "" }: { className?: string }) {
   );
 }
 
+function ShareButton({ title, text }: { title: string; text?: string }) {
+  const [label, setLabel] = useState("分享");
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const shareData = { title, text: text || title, url };
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share(shareData);
+        setLabel("已分享");
+        window.setTimeout(() => setLabel("分享"), 1800);
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      setLabel("链接已复制");
+      window.setTimeout(() => setLabel("分享"), 1800);
+    } catch {
+      setLabel("复制失败");
+      window.setTimeout(() => setLabel("分享"), 1800);
+    }
+  };
+
+  return (
+    <button className="btn btn-secondary share-button" type="button" onClick={handleShare} aria-label={label}>
+      <Share2 size={15} strokeWidth={1.8} aria-hidden="true" />
+      {label}
+    </button>
+  );
+}
+
 function PwaUpdatePrompt() {
   const [visible, setVisible] = useState(false);
 
@@ -1045,6 +1100,36 @@ function PwaUpdatePrompt() {
   );
 }
 function AuthorIntro() {
+  const [contributorCount, setContributorCount] = useState("—");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("https://api.github.com/repos/dangjingtao/uichat-mira/contributors?per_page=1", {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+        return response.json().then((contributors: GitHubContributor[]) => ({
+          contributors,
+          linkHeader: response.headers.get("Link"),
+        }));
+      })
+      .then(({ contributors, linkHeader }) => {
+        const count = githubContributorCount(
+          linkHeader,
+          // GitHub puts the total page count in the last relation.
+          // When there is only one page, the response itself is the fallback.
+          contributors.length,
+        );
+        setContributorCount(String(count));
+      })
+      .catch(() => {
+        // Keep the card usable when GitHub is unavailable or rate-limits the request.
+      });
+    return () => controller.abort();
+  }, []);
+
   return (
     <section className="border-0 pb-section">
       <div className="wrap">
@@ -1095,10 +1180,10 @@ function AuthorIntro() {
             </div>
             <div className="my-[7px] flex items-baseline gap-3.5 max-[820px]:my-0 max-[820px]:mr-[18px] max-[820px]:inline-flex max-[560px]:my-[7px] max-[560px]:mr-0 max-[560px]:flex">
               <strong className="min-w-12 font-mono text-[14px] font-medium text-primary-active">
-                338
+                {contributorCount}
               </strong>
               <span className="whitespace-nowrap text-[12px] text-muted max-[560px]:whitespace-normal">
-                源码 Markdown 索引
+                GitHub Contributors
               </span>
             </div>
             <div className="my-[7px] flex items-baseline gap-3.5 max-[820px]:my-0 max-[820px]:mr-[18px] max-[820px]:inline-flex max-[560px]:my-[7px] max-[560px]:mr-0 max-[560px]:flex">
@@ -1372,6 +1457,8 @@ function SiteHeader({
       location.pathname === target || location.pathname.startsWith(`${target}/`)
     );
   };
+  const currentDoc = allDocs.find((doc) => doc.path === location.pathname);
+  const showMobileDocShare = currentDoc?.root === "docs";
   return (
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
       <div className="wrap">
@@ -1462,6 +1549,11 @@ function SiteHeader({
           </li>
         </ul>
         <div className="nav-right">
+          {showMobileDocShare ? (
+            <div className="mobile-doc-share">
+              <ShareButton title={currentDoc.title} text={currentDoc.description} />
+            </div>
+          ) : null}
           <button
             type="button"
             className="mobile-menu-button"
@@ -1607,6 +1699,50 @@ function HomePage({ darkMode }: { darkMode: boolean }) {
       <AuthorIntro />
       <Footer />
     </div>
+  );
+}
+
+function NotFoundPage({ onSearch }: { onSearch: () => void }) {
+  const location = useLocation();
+  const requestedPath = decodedPathname(location.pathname);
+
+  useEffect(() => {
+    const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    const previousRobots = robots?.content;
+    robots?.setAttribute("content", "noindex,nofollow");
+
+    return () => {
+      if (robots && previousRobots) robots.content = previousRobots;
+    };
+  }, []);
+
+  return (
+    <>
+      <main className="not-found-page">
+        <div className="not-found-glow" aria-hidden="true" />
+        <div className="not-found-card">
+          <div className="not-found-number" aria-hidden="true">404</div>
+          <h1>这条路径没有内容</h1>
+          <p>
+            页面可能已经移动、被删除，或者地址输入有误。你可以返回首页，
+            也可以搜索站内已有的文档与博客。
+          </p>
+          <code className="not-found-path">{requestedPath}</code>
+          <div className="not-found-actions">
+            <Link className="btn btn-primary" to="/">
+              返回首页
+            </Link>
+            <button className="btn btn-secondary" type="button" onClick={onSearch}>
+              搜索站内内容
+            </button>
+            <Link className="not-found-doc-link" to="/about/origin">
+              查看 Mira 文档 →
+            </Link>
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }
 
@@ -1809,7 +1945,7 @@ function RoutedApp() {
               />
             ))}
         </Route>
-        <Route path="*" element={<HomePage darkMode={darkMode} />} />
+        <Route path="*" element={<NotFoundPage onSearch={openSearch} />} />
       </Routes>
       {searchOpen && (
         <SearchOverlay
@@ -2006,13 +2142,6 @@ function docsByDirectory(docs: Doc[]) {
     docs: docs.filter((doc) => doc.directory === directory).sort(compareDocs),
   }));
 }
-const blogCategories = [
-  "产品手记",
-  "工程现场",
-  "共同思考",
-  "Mira 来信",
-  "开发者生活",
-] as const;
 function blogCategoryIcon(category: string): LucideIcon {
   if (category.includes("产品")) return Sparkles;
   if (category.includes("工程")) return Code2;
@@ -2282,12 +2411,18 @@ function DocsLayout() {
         </main>
         {!isBlogArea && <Toc doc={currentDoc} activeHeading={activeHeading} />}
       </div>
+      {isBlogArea && <Footer className="blog-footer" />}
     </div>
   );
 }
 function BlogListPage({ area }: { area: SiteArea }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const blogCategories = [...new Set(
+    area.docs
+      .map((doc) => doc.group.trim())
+      .filter((group) => group && group !== "归档"),
+  )];
   const tabs = ["全部", ...blogCategories, "归档"];
   const requestedCategory = new URLSearchParams(location.search).get("category") || "全部";
   const activeCategory = tabs.includes(requestedCategory) ? requestedCategory : "全部";
@@ -2398,7 +2533,6 @@ function BlogListPage({ area }: { area: SiteArea }) {
           </section>
         )}
       </div>
-      <Footer className="blog-footer" />
     </>
   );
 }
@@ -2505,9 +2639,12 @@ function BlogPostPage({
           <div aria-hidden="true" className="article-header-visual">
             <img alt="" className="article-header-visual-image" src={coverSrc} />
           </div>
-          <Link className="back-link" to={{ pathname: "/blogs", search: location.search }}>
-            ← 返回博客列表
-          </Link>
+          <div className="article-header-topline">
+            <Link className="back-link" to={{ pathname: "/blogs", search: location.search }}>
+              ← 返回博客列表
+            </Link>
+            <ShareButton title={doc.title} text={doc.description} />
+          </div>
           <h1>{doc.title}</h1>
           <div className="post-meta post-meta-article">
             <span className={`post-author-avatars post-author-avatars-${authorAvatars.length}`}>
@@ -2600,7 +2737,6 @@ function BlogPostPage({
           ) : null}
         </div>
       </div>
-      <Footer className="blog-footer" />
     </>
   );
 }
@@ -2683,6 +2819,7 @@ function DocPage({ path }: { path: string }) {
       <div className="doc-title-block">
         <h1>{doc.title}</h1>
         {doc.description ? <p className="doc-lede">{doc.description}</p> : null}
+        <ShareButton title={doc.title} text={doc.description} />
       </div>
       <RenderedMarkdown html={html} />
       {path === "/sitemap" ? (
