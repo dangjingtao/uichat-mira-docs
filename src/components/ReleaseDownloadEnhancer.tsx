@@ -120,21 +120,45 @@ export default function ReleaseDownloadEnhancer() {
   }, []);
 
   useEffect(() => {
-    const original = document.querySelector<HTMLElement>(".release-download-button");
-    if (!original?.parentElement) return;
+    let original: HTMLElement | null = null;
+    let host: HTMLElement | null = null;
 
-    original.hidden = true;
-    const host = document.createElement("div");
-    host.className = "release-download-enhancer-root";
-    original.parentElement.insertBefore(host, original.nextSibling);
-    setMountNode(host);
+    const attach = () => {
+      syncDisplayedVersion(release?.tag_name);
+      const next = document.querySelector<HTMLElement>(".release-download-button");
+      if (!next?.parentElement) {
+        if (host && !host.isConnected) {
+          host = null;
+          original = null;
+          setMountNode(null);
+        }
+        return;
+      }
+      if (next === original && host?.isConnected) return;
+
+      if (original) original.hidden = false;
+      host?.remove();
+
+      original = next;
+      original.hidden = true;
+      host = document.createElement("div");
+      host.className = "release-download-enhancer-root";
+      original.parentElement.insertBefore(host, original.nextSibling);
+      setMountNode(host);
+    };
+
+    attach();
+    const root = document.getElementById("root");
+    const observer = new MutationObserver(attach);
+    if (root) observer.observe(root, { childList: true, subtree: true });
 
     return () => {
-      original.hidden = false;
-      host.remove();
+      observer.disconnect();
+      if (original) original.hidden = false;
+      host?.remove();
       setMountNode(null);
     };
-  }, []);
+  }, [release?.tag_name]);
 
   useEffect(() => {
     if (!open) return;
