@@ -136,7 +136,8 @@ export default function ReleaseDownloadEnhancer() {
     const attach = () => {
       syncDisplayedVersion(release?.tag_name);
       const next = document.querySelector<HTMLElement>(".release-download-button");
-      if (!next?.parentElement) {
+      const parent = next?.parentElement;
+      if (!next || !parent) {
         if (host && !host.isConnected) {
           host = null;
           original = null;
@@ -155,7 +156,7 @@ export default function ReleaseDownloadEnhancer() {
       original.style.setProperty("display", "none", "important");
       host = document.createElement("div");
       host.className = "release-download-enhancer-root";
-      original.parentElement.insertBefore(host, original.nextSibling);
+      parent.insertBefore(host, original.nextSibling);
       setMountNode(host);
     };
 
