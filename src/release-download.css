@@ -4,20 +4,48 @@
 
 .release-download-split {
   position: relative;
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: auto 38px;
   align-items: stretch;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--canvas);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.release-download-split:hover,
+.release-download-split.is-open {
+  border-color: var(--primary);
+}
+
+.release-download-main,
+.release-download-toggle {
+  height: 40px;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--ink);
+  box-shadow: none !important;
 }
 
 .release-download-main {
   gap: 7px;
   border-radius: var(--r-md) 0 0 var(--r-md);
-  border-right: 0;
+}
+
+.release-download-main:hover {
+  background: var(--surface-card) !important;
 }
 
 .release-download-toggle {
   width: 38px;
   padding: 0;
+  border-left: 1px solid var(--hairline) !important;
   border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+
+.release-download-toggle:hover,
+.release-download-split.is-open .release-download-toggle {
+  background: var(--surface-card) !important;
 }
 
 .release-download-toggle svg {
@@ -33,54 +61,111 @@
   z-index: 40;
   top: calc(100% + 8px);
   right: 0;
-  width: min(300px, calc(100vw - 32px));
-  padding: 6px;
+  width: min(320px, calc(100vw - 32px));
+  padding: 7px;
   border: 1px solid var(--hairline);
   border-radius: var(--r-md);
   background: var(--canvas);
   box-shadow: 0 16px 40px rgba(17, 16, 14, .14);
 }
 
-.release-download-menu > a {
+.release-download-source {
   display: flex;
-  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 7px 9px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.release-download-source > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+.release-download-source-options {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-card);
+}
+
+.release-download-source-options button {
+  min-height: 28px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 12px var(--font-sans);
+  cursor: pointer;
+}
+
+.release-download-source-options button:hover {
+  color: var(--ink);
+}
+
+.release-download-source-options button.active {
+  background: var(--canvas);
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(17, 16, 14, .08);
+  font-weight: 600;
+}
+
+.release-download-options {
+  padding-top: 4px;
+}
+
+.release-download-options > a {
+  display: flex;
+  min-height: 54px;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border-radius: var(--r-sm);
   color: var(--ink);
   text-decoration: none;
 }
 
-.release-download-menu > a:hover {
+.release-download-options > a:hover {
   background: var(--surface-card);
 }
 
-.release-download-menu > a span {
+.release-download-options > a span {
   font-size: 13px;
   font-weight: 600;
 }
 
-.release-download-menu > a small {
+.release-download-options > a small {
   color: var(--muted);
   font-size: 11px;
   font-weight: 400;
 }
 
 .release-download-menu .release-download-all {
-  min-height: 42px;
-  flex-direction: row;
+  display: flex;
+  min-height: 40px;
   align-items: center;
   justify-content: space-between;
   margin-top: 4px;
+  padding: 8px 10px;
   border-top: 1px solid var(--hairline);
-  border-radius: 0 0 var(--r-sm) var(--r-sm);
   color: var(--primary-active);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.release-download-menu .release-download-all:hover {
+  background: var(--surface-card);
 }
 
 .release-download-empty {
-  padding: 12px 11px;
+  padding: 12px 10px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -91,8 +176,12 @@
     width: 100%;
   }
 
+  .release-download-split {
+    grid-template-columns: minmax(0, 1fr) 38px;
+  }
+
   .release-download-main {
-    flex: 1;
+    min-width: 0;
   }
 
   .release-download-menu {
