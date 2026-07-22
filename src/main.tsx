@@ -12,11 +12,13 @@ import "@fontsource/cormorant-garamond/600.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import App from "./App";
+import ReleaseDownloadEnhancer from "./components/ReleaseDownloadEnhancer";
 import "./claude.theme.css";
 import "./apple.theme.css";
 import "./Supabase.theme.css";
 import "./tailwind.css";
 import "./styles.css";
+import "./release-download.css";
 import "./home.css";
 import "./blog-list.css";
 import "./markdown.css";
@@ -75,6 +77,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter basename={buildBase}>
       <App />
+      <ReleaseDownloadEnhancer />
     </BrowserRouter>
   </React.StrictMode>,
 );
