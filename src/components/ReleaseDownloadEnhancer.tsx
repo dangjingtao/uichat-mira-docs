@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Download, ExternalLink } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 type ReleaseAsset = {
   name: string;
@@ -84,22 +85,8 @@ function classifyDownloads(release: GitHubRelease | null) {
   };
 }
 
-function syncDisplayedVersion(tagName?: string) {
-  if (!tagName) return;
-  const version = tagName.replace(/^v/i, "");
-  const labels = Array.from(
-    document.querySelectorAll<HTMLElement>(".author-intro-card span"),
-  );
-  const versionLabel = labels.find(
-    (node) => node.textContent?.trim() === "产品版本",
-  );
-  const value = versionLabel?.previousElementSibling;
-  if (value instanceof HTMLElement && value.textContent?.trim() !== version) {
-    value.textContent = version;
-  }
-}
-
 export default function ReleaseDownloadEnhancer() {
+  const location = useLocation();
   const [release, setRelease] = useState<GitHubRelease | null>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
@@ -121,62 +108,45 @@ export default function ReleaseDownloadEnhancer() {
         if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
         return response.json() as Promise<GitHubRelease>;
       })
-      .then((latest) => {
-        setRelease(latest);
-        syncDisplayedVersion(latest.tag_name);
-      })
+      .then(setRelease)
       .catch(() => {
-        // Keep the stable release-page fallback when GitHub is unavailable.
+        // Keep the stable latest-release fallback when GitHub is unavailable.
       });
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    let original: HTMLElement | null = null;
-    let host: HTMLElement | null = null;
+  // Mount exactly once for each rendered route. The previous implementation
+  // watched the whole React tree with MutationObserver, which could trigger a
+  // feedback loop because attaching the portal mutated the same tree it watched.
+  useLayoutEffect(() => {
+    const original = document.querySelector<HTMLElement>(".release-download-button");
+    const parent = original?.parentElement;
 
-    const attach = () => {
-      syncDisplayedVersion(release?.tag_name);
-      const next = document.querySelector<HTMLElement>(".release-download-button");
-      const parent = next?.parentElement;
-      if (!next || !parent) {
-        if (host && !host.isConnected) {
-          host = null;
-          original = null;
-          setMountNode(null);
-        }
-        return;
-      }
-      if (next === original && host?.isConnected) return;
+    if (!original || !parent) {
+      setMountNode(null);
+      return;
+    }
 
-      if (original) original.style.removeProperty("display");
-      host?.remove();
-
-      original = next;
-      // `.btn { display: inline-flex }` overrides the browser's `[hidden]` rule,
-      // so hide the legacy button explicitly instead of relying on `hidden`.
-      original.style.setProperty("display", "none", "important");
-      host = document.createElement("div");
-      host.className = "release-download-enhancer-root";
-      parent.insertBefore(host, original.nextSibling);
-      setMountNode(host);
-    };
-
-    attach();
-    const root = document.getElementById("root");
-    const observer = new MutationObserver(attach);
-    if (root) observer.observe(root, { childList: true, subtree: true });
+    original.style.setProperty("display", "none", "important");
+    const host = document.createElement("div");
+    host.className = "release-download-enhancer-root";
+    parent.insertBefore(host, original.nextSibling);
+    setMountNode(host);
 
     return () => {
-      observer.disconnect();
-      if (original) original.style.removeProperty("display");
-      host?.remove();
+      original.style.removeProperty("display");
+      host.remove();
       setMountNode(null);
     };
-  }, [release?.tag_name]);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!open) return;
+
     const close = (event: MouseEvent) => {
       const target = event.target;
       if (target instanceof Element && target.closest(".release-download-split")) return;
@@ -185,6 +155,7 @@ export default function ReleaseDownloadEnhancer() {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", closeOnEscape);
     return () => {
@@ -214,6 +185,7 @@ export default function ReleaseDownloadEnhancer() {
       >
         <ChevronDown size={15} aria-hidden="true" />
       </button>
+
       {open ? (
         <div className="release-download-menu" role="menu">
           <div className="release-download-source" aria-label="下载来源">
