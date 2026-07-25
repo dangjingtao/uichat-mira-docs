@@ -1,18 +1,12 @@
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
-import { marked } from "marked";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { miraDocs } from "@mira/docs/vite";
+import { miraDocsStaticBuild } from "./src/mira-docs-static";
 import { seo as seoConfig, siteUrl } from "./src/site.config";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
@@ -60,262 +54,6 @@ function blogDirectoryCheck() {
   };
 }
 
-type SeoDoc = {
-  path: string;
-  title: string;
-  description: string;
-  group: string;
-  order: number;
-  date?: string;
-  author: string[];
-  cover?: string;
-  source: string;
-  root: string;
-  merge?: string;
-  mergeIndex?: boolean;
-};
-
-function seoMeta(source: string, key: string) {
-  return source.match(new RegExp(`^${key}:\\s*(.+)$`, "m"))?.[1]?.trim() || "";
-}
-
-function seoDocPath(file: string) {
-  const relative = file
-    .slice(pagesRoot.length + 1)
-    .replace(/\\/g, "/")
-    .replace(/\.md$/i, "");
-  return relative.startsWith("docs/") ? `/${relative.slice(5)}` : `/${relative}`;
-}
-
-function readSeoDoc(file: string): SeoDoc {
-  const raw = readFileSync(file, "utf8");
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-  const frontmatter = match?.[1] || "";
-  const source = match?.[2] || raw;
-  const authorLine = seoMeta(frontmatter, "author");
-  const author = authorLine
-    ? authorLine
-        .split(/[|,，]/)
-        .map((value) => value.trim())
-        .filter(Boolean)
-    : ["Tomz Dang"];
-  return {
-    path: seoDocPath(file),
-    title: seoMeta(frontmatter, "title") || seoDocPath(file),
-    description: seoMeta(frontmatter, "description"),
-    group: seoMeta(frontmatter, "group") || "文档",
-    order: Number(seoMeta(frontmatter, "order") || 99),
-    date: seoMeta(frontmatter, "date") || undefined,
-    author,
-    cover: seoMeta(frontmatter, "cover") || seoMeta(frontmatter, "image") || undefined,
-    source,
-    root: seoDocPath(file).split("/")[1] || "docs",
-    merge: seoMeta(frontmatter, "merge") || undefined,
-    mergeIndex: seoMeta(frontmatter, "mergeIndex") === "true",
-  };
-}
-
-function seoDocs() {
-  const docs = markdownFiles(pagesRoot)
-    .filter((file) => !/README\.md$/i.test(file))
-    .map(readSeoDoc);
-  return docs
-    .filter((doc) => !doc.merge || doc.mergeIndex)
-    .map((doc) => {
-      if (!doc.merge) return doc;
-      const merged = docs
-        .filter((section) => section.merge === doc.merge)
-        .sort((a, b) => a.order - b.order)
-        .map((section) => section.source)
-        .join("\n\n");
-      return { ...doc, source: merged };
-    });
-}
-
-function seoEscape(value: string) {
-  return value.replace(
-    /[&<>"']/g,
-    (character) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[character] || character,
-  );
-}
-
-function seoRouteUrl(base: string, path: string) {
-  const basePath = base === "/" ? "" : base.replace(/\/$/, "");
-  return `${siteUrl.replace(/\/$/, "")}${basePath}${path === "/" ? "/" : `${path}/`}`;
-}
-
-function seoBasePath(base: string) {
-  return base === "/" ? "" : base.replace(/\/$/, "");
-}
-
-function seoDocumentBody(doc: SeoDoc) {
-  const body = marked.parse(doc.source) as string;
-  return `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${seoEscape(doc.group)}</div><div class="doc-title-block"><h1>${seoEscape(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${seoEscape(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article></main>`;
-}
-
-function seoAreaBody(root: string, docs: SeoDoc[], base: string) {
-  const title = root === "blogs" ? "博客" : docs.find((doc) => doc.root === root)?.title || root;
-  const basePath = seoBasePath(base);
-  const links = docs
-    .filter((doc) => doc.root === root)
-    .map(
-      (doc) =>
-        `<li><a href="${basePath}${doc.path}">${seoEscape(doc.title)}</a><p>${seoEscape(doc.description)}</p></li>`,
-    )
-    .join("");
-  return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${seoEscape(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}</ol></section></section></main>`;
-}
-
-function seoHomeBody() {
-  return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
-}
-
-function seoNotFoundBody(base: string) {
-  const basePath = seoBasePath(base);
-  return `<main class="doc-main seo-static-content"><div class="doc-not-found"><h1>这条路径没有内容</h1><p>页面可能已经移动、被删除，或者地址输入有误。</p><a class="btn btn-primary" href="${basePath}/">返回首页</a></div></main>`;
-}
-
-function seoAssetUrl(base: string, path: string) {
-  const assetBase = base === "/" ? "/" : `${base.replace(/\/$/, "")}/`;
-  return `${siteUrl.replace(/\/$/, "")}${assetBase}${path.replace(/^\/+/, "")}`;
-}
-
-function seoImageUrl(doc: SeoDoc | undefined, base: string) {
-  const cover = doc?.cover?.trim();
-  if (!cover) return seoAssetUrl(base, "mira-logo.png");
-  if (/^https?:\/\//i.test(cover)) return cover;
-  return seoAssetUrl(base, cover);
-}
-
-function seoJsonLd(doc: SeoDoc | undefined, url: string, image: string) {
-  if (!doc) return { "@context": "https://schema.org", "@type": "WebSite", name: "UIChat Mira", url };
-  return {
-    "@context": "https://schema.org",
-    "@type": doc.root === "blogs" ? "Article" : "TechArticle",
-    headline: doc.title,
-    description: doc.description,
-    url,
-    image,
-    datePublished: doc.date,
-    author: doc.author.map((name) => ({ "@type": "Person", name })),
-    publisher: { "@type": "Organization", name: "UIChat Mira" },
-  };
-}
-
-function seoHtml(
-  template: string,
-  body: string,
-  title: string,
-  description: string,
-  url: string,
-  type: string,
-  doc?: SeoDoc,
-  base = "/",
-) {
-  const safeTitle = seoEscape(`${title} · UIChat Mira`);
-  const safeDescription = seoEscape(description);
-  const image = seoImageUrl(doc, base);
-  const json = JSON.stringify(seoJsonLd(doc, url, image)).replace(/</g, "\\u003c");
-  const head = `<meta name="description" content="${safeDescription}"><meta name="robots" content="index,follow"><link rel="canonical" href="${url}"><meta property="og:locale" content="zh_CN"><meta property="og:title" content="${safeTitle}"><meta property="og:description" content="${safeDescription}"><meta property="og:type" content="${type}"><meta property="og:url" content="${url}"><meta property="og:site_name" content="UIChat Mira"><meta property="og:image" content="${seoEscape(image)}"><meta property="og:image:secure_url" content="${seoEscape(image)}"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="940"><meta property="og:image:height" content="760"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${safeTitle}"><meta name="twitter:description" content="${safeDescription}"><meta name="twitter:image" content="${seoEscape(image)}"><script type="application/ld+json">${json}</script>`;
-  const assetBase = base === "/" ? "/" : base;
-  const assetTemplate = template.replace(
-    /(href|src)="\/mira-logo\.png"/g,
-    `$1="${assetBase}mira-logo.png"`,
-  );
-  return assetTemplate
-    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`)
-    .replace(/<meta name="description"[^>]*>/i, "")
-    .replace("</head>", `${head}</head>`)
-    .replace('<div id="root"></div>', `<div id="root">${body}</div>`);
-}
-
-function seoBuildPlugin(base: string) {
-  return {
-    name: "seo-static-pages",
-    writeBundle() {
-      const outputDir = resolve(projectRoot, "dist");
-      const template = readFileSync(resolve(outputDir, "index.html"), "utf8");
-      if (typeof template !== "string") return;
-      const docs = seoDocs();
-      const routes = new Map<
-        string,
-        { body: string; title: string; description: string; type: string; doc?: SeoDoc }
-      >();
-      routes.set("/", {
-        body: seoHomeBody(),
-        title: "本地优先的多模型智能体",
-        description: "UIChat Mira 多模型本地智能体产品文档",
-        type: "website",
-      });
-      const roots = [...new Set(docs.map((doc) => doc.root))];
-      roots.forEach((root) => {
-        const rootDocs = docs.filter((doc) => doc.root === root);
-        if (root !== "docs") {
-          routes.set(`/${root}`, {
-            body: seoAreaBody(root, rootDocs, base),
-            title: root === "blogs" ? "博客" : rootDocs[0]?.title || root,
-            description: rootDocs[0]?.description || "UIChat Mira 文档与博客",
-            type: "website",
-          });
-        }
-      });
-      docs.forEach((doc) =>
-        routes.set(doc.path, {
-          body: seoDocumentBody(doc),
-          title: doc.title,
-          description: doc.description || "UIChat Mira 文档",
-          type: doc.root === "blogs" ? "article" : "article",
-          doc,
-        }),
-      );
-      const urls: string[] = [];
-      for (const [path, page] of routes) {
-        const url = seoRouteUrl(base, path);
-        const html = seoHtml(
-          template,
-          page.body,
-          page.title,
-          page.description,
-          url,
-          page.type,
-          page.doc,
-          base,
-        );
-        const fileName = path === "/" ? "index.html" : `${path.slice(1).replace(/\/+$/g, "")}/index.html`;
-        const outputFile = resolve(outputDir, fileName);
-        mkdirSync(dirname(outputFile), { recursive: true });
-        writeFileSync(outputFile, html, "utf8");
-        urls.push(url);
-      }
-      const notFoundHtml = seoHtml(
-        template,
-        seoNotFoundBody(base),
-        "页面不存在",
-        "你访问的页面不存在，可能已经移动、被删除，或者地址输入有误。",
-        seoRouteUrl(base, "/404"),
-        "website",
-        undefined,
-        base,
-      ).replace('content="index,follow"', 'content="noindex,nofollow"');
-      writeFileSync(resolve(outputDir, "404.html"), notFoundHtml, "utf8");
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((url) => `<url><loc>${seoEscape(url)}</loc></url>`).join("")}</urlset>`;
-      writeFileSync(resolve(outputDir, "sitemap.xml"), sitemap, "utf8");
-      writeFileSync(
-        resolve(outputDir, "robots.txt"),
-        `User-agent: *\nAllow: /\nSitemap: ${seoRouteUrl(base, "/sitemap.xml").replace(/\/$/, "")}\n`,
-        "utf8",
-      );
-    },
-  };
-}
-
 export default defineConfig(({ mode }) => {
   // Cloudflare Pages injects CF_PAGES=1. Treat it as a root deployment even if
   // an external build setting accidentally invokes the github-pages mode.
@@ -336,7 +74,7 @@ export default defineConfig(({ mode }) => {
           description: "本地优先的多模型智能体工作空间",
           siteUrl,
         },
-        staticRoutes: false,
+        staticRoutes: seoConfig.enabled ? miraDocsStaticBuild : false,
         exclude: (sourcePath) => /(^|\/)README\.md$/i.test(sourcePath),
         route: (_sourcePath, doc) => {
           const path = doc.path.replace(/^\/docs(?=\/|$)/, "");
@@ -368,9 +106,24 @@ export default defineConfig(({ mode }) => {
           theme_color: "#cc785c",
           background_color: "#faf9f5",
           icons: [
-            { src: "pwa-icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-            { src: "pwa-icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-            { src: "pwa-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+            {
+              src: "pwa-icon-192.png",
+              sizes: "192x192",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "pwa-icon-512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "any",
+            },
+            {
+              src: "pwa-maskable-512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
           ],
         },
         workbox: {
@@ -378,7 +131,6 @@ export default defineConfig(({ mode }) => {
           cleanupOutdatedCaches: true,
         },
       }),
-      ...(seoConfig.enabled ? [seoBuildPlugin(base)] : []),
     ],
     base,
   };
