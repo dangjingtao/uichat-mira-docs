@@ -34,3 +34,9 @@ jobs:
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
         run: pnpm run build:github-pages
+      - name: Export migration source
+        uses: actions/upload-artifact@v4
+        with:
+          name: mira-docs-migration-source
+          path: src/App.tsx
+          if-no-files-found: error
