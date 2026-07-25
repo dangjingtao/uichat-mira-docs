@@ -14,7 +14,7 @@
     "@fontsource/cormorant-garamond": "^5.2.11",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/public-sans": "^5.2.7",
-    "@mira/docs": "github:dangjingtao/mira-docs#b952d983158b7e213bd856350b4609f43e231075",
+    "@mira/docs": "github:dangjingtao/mira-docs#4649bdf6972805cd733de71d997a4947d17ccea9",
     "highlight.js": "^11.11.1",
     "lucide-react": "^1.24.0",
     "marked": "^15.0.12",
