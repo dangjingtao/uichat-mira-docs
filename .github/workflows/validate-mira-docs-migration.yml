@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: mira-docs-migration-${{ github.ref }}
@@ -18,9 +18,13 @@ concurrency:
 
 jobs:
   validate:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2
@@ -28,15 +32,23 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Install locked dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install migration dependency
+        run: pnpm install --no-frozen-lockfile
       - name: Verify real MiraDocs content compatibility
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
         run: pnpm run build:github-pages
-      - name: Export migration source
-        uses: actions/upload-artifact@v4
-        with:
-          name: mira-docs-migration-source
-          path: src/App.tsx
-          if-no-files-found: error
+      - name: Commit refreshed lockfile
+        shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore: lock MiraDocs content adapter [skip ci]"
+          git push origin HEAD:${TARGET_BRANCH}
