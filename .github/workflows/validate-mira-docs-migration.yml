@@ -1,27 +1,26 @@
 name: Validate MiraDocs migration
 
 on:
+  push:
+    branches:
+      - codex/mira-docs-migration-20260725
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: mira-docs-vite-manifest
+  group: mira-docs-migration-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref }}
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2
@@ -29,23 +28,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Apply guarded Vite manifest migration
-        run: node scripts/apply-mira-docs-vite-manifest.mjs
-      - name: Install updated preview dependency
-        run: pnpm install --no-frozen-lockfile
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Verify real MiraDocs content compatibility
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
         run: pnpm run build:github-pages
-      - name: Commit verified Vite manifest migration
-        shell: bash
-        run: |
-          if git diff --quiet -- src/App.tsx vite.config.ts pnpm-lock.yaml; then
-            echo "Vite manifest migration is already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/App.tsx vite.config.ts pnpm-lock.yaml
-          git commit -m "refactor: let MiraDocs discover site content [skip ci]"
-          git push origin HEAD:codex/mira-docs-migration-20260725
