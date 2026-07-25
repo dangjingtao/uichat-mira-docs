@@ -1,0 +1,48 @@
+name: Validate MiraDocs migration
+
+on:
+  push:
+    branches:
+      - codex/mira-docs-migration-20260725
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mira-docs-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install migration dependency
+        run: pnpm install --no-frozen-lockfile
+      - name: Verify real MiraDocs content compatibility
+        run: pnpm run verify:mira-docs
+      - name: Build existing GitHub Pages site
+        run: pnpm run build:github-pages
+      - name: Commit refreshed lockfile
+        shell: bash
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore: lock MiraDocs migration dependency [skip ci]"
+          git push origin HEAD:${GITHUB_REF_NAME}
