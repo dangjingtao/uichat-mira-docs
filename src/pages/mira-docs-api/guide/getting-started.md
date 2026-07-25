@@ -1,48 +1,104 @@
 ---
 title: 快速开始
-description: 在本地启动、构建和预览 Mira-Docs。
+description: 在当前迁移分支中安装、开发、构建和验证 MiraDocs。
 group: 快速开始
 order: 2
 ---
 
 # 快速开始
 
-Mira-Docs 是当前仓库中的文档层。它不单独运行一个文档服务，开发、构建和预览都使用仓库根目录的 Vite 脚本。
+当前站点已经接入 MiraDocs，但仍处于 Draft PR 的迁移阶段。它通过固定 Git commit 安装 `@mira/docs`，不依赖尚未发布的 npm 版本。
 
 ## 环境
 
-需要已安装 Node.js 和 npm。依赖安装后，以下命令在仓库根目录执行：
+需要：
+
+- Node.js 22
+- pnpm 11.5.2
+- Git
+
+在仓库根目录安装锁定依赖：
 
 ```bash
-npm ci
+pnpm install --frozen-lockfile
 ```
+
+`pnpm-lock.yaml` 已锁定 MiraDocs 预览 commit。除非明确升级运行时，否则不要手动改写这个依赖。
 
 ## 开发
 
-启动开发服务器：
-
 ```bash
-npm run dev
+pnpm run dev
 ```
 
-修改 `src/pages` 下的 Markdown 后，Vite 会重新加载页面。新增或删除顶层目录时，目录虚拟模块会失效并触发整页刷新。
+MiraDocs Vite 插件会监听 `src/pages`。新增、删除或修改 Markdown 时，虚拟内容模块失效并触发页面刷新。
 
 ## 构建
 
-生产构建同时执行 TypeScript 检查和 Vite 构建：
+根路径部署：
 
 ```bash
-npm run build
+pnpm run build
 ```
 
-输出目录是 `dist`。构建还会生成 PWA 的 manifest、service worker 和静态资源清单。
+GitHub Pages 项目路径部署：
+
+```bash
+pnpm run build:github-pages
+```
+
+构建链路包括：
+
+```text
+真实 Markdown 兼容检查
+→ TypeScript
+→ Vite
+→ MiraDocs 静态路由
+→ SEO 与发布文件
+```
+
+输出目录为 `dist`。
+
+## 验证
+
+迁移分支提供两项永久检查：
+
+```bash
+pnpm run verify:mira-docs
+pnpm run verify:static-output
+```
+
+第一项验证所有真实 Markdown、Frontmatter、正文和 URL 唯一性；第二项验证静态 HTML、canonical、JSON-LD、404、Sitemap 和 robots。
+
+完整验证直接运行：
+
+```bash
+pnpm run build:github-pages
+pnpm run verify:static-output
+```
+
+## 当前依赖方式
+
+`package.json` 使用固定 Git commit：
+
+```json
+{
+  "dependencies": {
+    "@mira/docs": "github:dangjingtao/mira-docs#<commit-sha>"
+  }
+}
+```
+
+这是预发布阶段的临时分发方式。稳定顺序是：
+
+```text
+MiraDocs 内核 CI
+→ 生成可安装预览 commit
+→ 旧站锁定 commit
+→ 真实内容与构建验证
+→ npm 正式发布
+```
 
 ## 预览
 
-预览最近一次构建：
-
-```bash
-npm run preview
-```
-
-`preview` 只能验证构建产物，修改 Markdown 不会自动进入产物；改完内容后先重新执行 `npm run build`。
+本分支会生成 Cloudflare Pages 分支预览。GitHub Pages 预览由新的 `mira-docs` 仓库承载，避免覆盖旧站线上根路径。

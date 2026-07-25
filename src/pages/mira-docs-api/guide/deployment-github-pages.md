@@ -1,92 +1,92 @@
 ---
 title: 部署到 GitHub Pages
-description: 使用仓库内置的 GitHub Actions 工作流将 Mira-Docs 部署到 GitHub Pages。
-group: 快速开始
-order: 8
+description: 使用 GitHub Actions 构建 MiraDocs 项目路径站点与迁移预览。
+group: 部署
+order: 10
 ---
 
 # 部署到 GitHub Pages
 
-仓库已经提供 [`.github/workflows/deploy-pages.yml`](/D:/workspace/uichat-mira-docs/.github/workflows/deploy-pages.yml:1)，用于把 Mira-Docs 发布到 GitHub Pages。
+MiraDocs 把 GitHub Pages 作为一等部署目标。项目站点需要同时处理资源 base、BrowserRouter 路径和静态 SEO 地址。
 
-这份流程不是把源码直接丢给 GitHub Pages，而是先在 Actions 中构建，再把 `dist` 产物上传给 Pages。
+## 启用 Pages
 
-## 这份工作流实际做了什么
+仓库第一次部署前，在 GitHub 中进入：
 
-当前工作流顺序如下：
+```text
+Settings → Pages → Build and deployment
+```
 
-1. 检出仓库代码。
-2. 使用 Node.js 22 和 lockfile 安装依赖。
-3. 运行 `npm run build -- --mode github-pages`。
-4. 调用 `actions/configure-pages@v5` 配置 Pages 环境。
-5. 调用 `actions/upload-pages-artifact@v3` 上传 `dist`。
-6. 调用 `actions/deploy-pages@v4` 完成发布。
+Source 选择 `GitHub Actions`。这一步是仓库级设置，工作流中的 `pages: write` 不能代替它。
 
-这里最关键的是第三步。当前工作流明确使用了 `--mode github-pages`，它应该和仓库里的 GitHub Pages 路径策略保持一致。
+## 官方工作流
 
-## 先打开 GitHub Pages
+推荐流程：
 
-在 GitHub 仓库中进入：
+```text
+checkout
+→ 安装锁定依赖
+→ 构建
+→ configure-pages
+→ upload-pages-artifact
+→ deploy-pages
+```
 
-`Settings → Pages`
+权限：
 
-然后确认：
-
-- Source 使用 GitHub Actions
-- 仓库允许 Actions 部署 Pages
-
-如果这里仍然是旧的 branch-based Pages 发布方式，先切换成 GitHub Actions。
-
-## 这套流程依赖什么权限
-
-当前工作流已经声明了这些权限：
-
-```yml
+```yaml
 permissions:
   contents: read
   pages: write
   id-token: write
 ```
 
-通常不需要额外新增 Secrets。和 Cloudflare Pages 不同，GitHub Pages 这套流程默认使用 GitHub 自己的部署能力，不要求你手动提供外部平台 Token。
+当前工作流使用：
 
-## 什么时候会触发部署
+```yaml
+actions/configure-pages@v5
+actions/upload-pages-artifact@v4
+actions/deploy-pages@v4
+```
 
-默认触发条件有两个：
+## 项目路径
 
-- push 到 `main`
-- 手动执行 `workflow_dispatch`
+UIChat Mira 旧站的生产地址使用：
 
-也就是说，只要主分支更新，这份 Pages 工作流就会重新构建并发布站点。
+```text
+/uichat-mira-docs/
+```
 
-## 为什么这里要用 `github-pages` 模式
+构建命令：
 
-当前仓库同时支持本地开发、Cloudflare Pages 和 GitHub Pages。
+```bash
+pnpm run build:github-pages
+```
 
-GitHub Pages 常见的问题不是构建失败，而是资源路径或路由基座不对，结果表现为：
+MiraDocs 会从 Vite `base` 读取项目路径，并同步应用到：
 
-- 静态资源 404
-- 二级页面刷新后回到首页
-- 文档区和博客区的导航状态错乱
+- JS、CSS 与图片。
+- 页面链接。
+- canonical 与 Open Graph URL。
+- Sitemap 与 robots。
+- `404.html`。
 
-因此 GitHub Pages 发布流程必须和仓库的路径基座保持一致。当前工作流已经把这个差异放进 `npm run build -- --mode github-pages`。
+## 迁移预览
+
+旧站仓库的 `github-pages` 环境只允许受信任分支部署，因此迁移分支不直接覆盖旧站 Pages。预览由新的 `mira-docs` 仓库承载在独立子路径：
+
+```text
+/mira-docs/legacy-preview/
+```
+
+这样可以验证真实 GitHub Pages 项目路径，又不会修改旧站线上根目录。
 
 ## 发布前检查
 
-提交前建议先执行：
-
 ```bash
-npm ci
-npm run build
-npm run preview
+pnpm install --frozen-lockfile
+pnpm run build:github-pages
+EXPECTED_BASE=uichat-mira-docs pnpm run verify:static-output
 ```
 
-如果你这次改动涉及路径、导航或路由，再额外检查：
-
-- 首页能否正常打开
-- `/blogs`
-- 某个博客详情页
-- `/mira-docs-api`
-- 某个深层文档页刷新后是否仍然正常
-
-这样可以更早发现 GitHub Pages 路径问题，而不是等线上产物发布后再回滚。
+重点检查深层页面刷新、资源路径、404、canonical、Sitemap 和 PWA scope。
