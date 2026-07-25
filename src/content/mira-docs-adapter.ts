@@ -1,12 +1,16 @@
 import {
   extractHeadings,
-  parseMiraDoc,
   type MiraDoc,
   type MiraHeading,
 } from "@mira/docs";
+import miraDocsContent, {
+  roots as miraDocsRoots,
+} from "virtual:mira-docs/content";
 
 export type AuthorKey = "tomz" | "mira";
 export type WritingMode = "authored" | "co-authored";
+
+export const pageDirectories = miraDocsRoots;
 
 export function slug(value: string): string {
   return value
@@ -32,26 +36,6 @@ export type Doc = Omit<MiraDoc, "body" | "headings" | "path"> & {
   commitUrl?: string;
   headings: { text: string; id: string }[];
 };
-
-type RawDoc = readonly [path: string, source: string, root: string];
-
-const rawDocModules = import.meta.glob("../pages/**/*.md", {
-  eager: true,
-  query: "?raw",
-  import: "default",
-}) as Record<string, string>;
-
-const rawDocs: RawDoc[] = Object.entries(rawDocModules)
-  .filter(([file]) => !/(^|\/)README\.md$/i.test(file))
-  .map(([file, source]) => {
-    const root = file.split("/")[2] || "docs";
-    const path =
-      file
-        .replace(/^\.\.\/pages/, "")
-        .replace(/^\/docs/, "")
-        .replace(/\.md$/, "") || "/";
-    return [path, source, root] as const;
-  });
 
 function dataString(data: Record<string, unknown>, key: string): string | undefined {
   const value = data[key];
@@ -134,8 +118,8 @@ function inferDocAuthors(
 }
 
 function legacyLevelTwoHeadings(source: string): Doc["headings"] {
+  const headings: MiraHeading[] = extractHeadings(source);
   const seen = new Set<string>();
-  const headings = extractHeadings(source) as MiraHeading[];
   return headings
     .filter((heading: MiraHeading) => heading.depth === 2)
     .filter((heading: MiraHeading) => {
@@ -150,20 +134,22 @@ function legacyLevelTwoHeadings(source: string): Doc["headings"] {
     }));
 }
 
-function parseSiteDoc(path: string, raw: string, root: string): Doc {
-  const relativePath = path
-    .replace(new RegExp(`^/${root}/?`), "")
-    .replace(/^\/+/, "");
-  const sourcePath = `${root}/${relativePath || "index"}.md`;
-  const core = parseMiraDoc(sourcePath, raw);
+function adaptSiteDoc(core: MiraDoc): Doc {
+  const root = core.sourcePath.split("/")[0] || "docs";
+  const prefix = `${root}/`;
+  const relativePath = (
+    core.sourcePath.startsWith(prefix)
+      ? core.sourcePath.slice(prefix.length)
+      : core.sourcePath
+  ).replace(/\.md$/i, "");
   const segments = relativePath.split("/");
   const group = core.group || "文档";
-  const authorInfo = inferDocAuthors(path, group, core.data);
+  const authorInfo = inferDocAuthors(core.path, group, core.data);
 
   return {
     ...core,
-    path,
-    title: dataString(core.data, "title") || path,
+    path: core.path,
+    title: dataString(core.data, "title") || core.title || core.path,
     description: core.description || "",
     group,
     order: core.order,
@@ -209,9 +195,7 @@ export function compareBlogDocs(a: Doc, b: Doc): number {
   );
 }
 
-const parsedDocs = rawDocs.map(([path, source, root]) =>
-  parseSiteDoc(path, source, root),
-);
+const parsedDocs = (miraDocsContent as MiraDoc[]).map(adaptSiteDoc);
 
 export const allDocs = parsedDocs
   .filter((doc) => !doc.merge || doc.mergeIndex)
