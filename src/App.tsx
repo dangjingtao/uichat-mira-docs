@@ -42,6 +42,14 @@ import {
 } from "react-router-dom";
 import pageDirectories from "virtual:page-directories";
 import { directoryLabels, logoUrl, topNavigationOrder } from "./site.config";
+import {
+  allDocs,
+  compareBlogDocs,
+  compareDocs,
+  slug,
+  type AuthorKey,
+  type Doc,
+} from "./content/mira-docs-adapter";
 
 type LinkItem = { label: string; href: string };
 type ConfiguredNavItem = { label: string; href: string };
@@ -57,31 +65,6 @@ type CardItem = {
   description: string;
   tag?: string;
   href?: string;
-};
-type AuthorKey = "tomz" | "mira";
-type WritingMode = "authored" | "co-authored";
-type Doc = {
-  path: string;
-  title: string;
-  description: string;
-  group: string;
-  order: number;
-  date?: string;
-  readTime?: string;
-  tags?: string[];
-  cover?: string;
-  source: string;
-  root: string;
-  directory: string;
-  nav?: string;
-  merge?: string;
-  mergeIndex?: boolean;
-  author?: AuthorKey[];
-  writingMode?: WritingMode;
-  writtenBy?: AuthorKey;
-  reviewedBy?: AuthorKey;
-  commitUrl?: string;
-  headings: { text: string; id: string }[];
 };
 type DocSection = {
   key: string;
@@ -110,22 +93,6 @@ function decodedPathname(path: string) {
   }
 }
 
-const rawDocModules = import.meta.glob("./pages/**/*.md", {
-  eager: true,
-  query: "?raw",
-  import: "default",
-}) as Record<string, string>;
-const rawDocs = Object.entries(rawDocModules)
-  .filter(([file]) => !/(^|\/)README\.md$/i.test(file))
-  .map(([file, source]) => {
-    const root = file.split("/")[2] || "docs";
-    const path =
-      file
-        .replace(/^\.\/pages/, "")
-        .replace(/^\/docs/, "")
-        .replace(/\.md$/, "") || "/";
-    return [path, source, root] as const;
-  });
 const sectionInfo: Record<string, { key: string; description: string }> = {
   "认识 Mira": { key: "about", description: "品牌、作者与产品全貌" },
   产品哲学: { key: "philosophy", description: "我们相信什么，又刻意拒绝什么" },
@@ -135,200 +102,6 @@ const sectionInfo: Record<string, { key: string; description: string }> = {
   现状与方向: { key: "status", description: "代码事实与下一段路" },
   导航: { key: "navigation", description: "全站阅读地图" },
 };
-function slug(value: string) {
-  return value
-    .replace(/<[^>]+>/g, "")
-    .replace(/[\s/]+/g, "-")
-    .replace(/[^\w\u4e00-\u9fff-]/g, "")
-    .toLowerCase();
-}
-function extractHeadings(source: string) {
-  const headings = [
-    ...[...source.matchAll(/^##\s+(.+)$/gm)].map((match) => ({
-      index: match.index ?? 0,
-      text: match[1],
-    })),
-    ...[...source.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/gi)].map(
-      (match) => ({
-        index: match.index ?? 0,
-        text: match[1].replace(/<[^>]+>/g, "").trim(),
-      }),
-    ),
-  ].sort((a, b) => a.index - b.index);
-  const seen = new Set<string>();
-  return headings.filter((heading) => {
-    const id = slug(heading.text);
-    if (!id || seen.has(id)) return false;
-    seen.add(id);
-    return true;
-  }).map(({ text }) => ({ text, id: slug(text) }));
-}
-function parseFrontmatter(raw: string) {
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-  const body = match?.[2] || raw;
-  const lines = (match?.[1] || "").split(/\r?\n/);
-  const meta: Record<string, string | string[]> = {};
-  let currentKey = "";
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const listMatch = line.match(/^\s*-\s+(.+)$/);
-    if (listMatch && currentKey) {
-      const currentValue = meta[currentKey];
-      const nextValue = listMatch[1].trim();
-      meta[currentKey] = Array.isArray(currentValue)
-        ? [...currentValue, nextValue]
-        : currentValue
-          ? [String(currentValue), nextValue]
-          : [nextValue];
-      continue;
-    }
-    const index = line.indexOf(":");
-    if (index < 0) continue;
-    currentKey = line.slice(0, index).trim();
-    const value = line.slice(index + 1).trim();
-    meta[currentKey] = value;
-  }
-  return { meta, body };
-}
-function frontmatterString(
-  meta: Record<string, string | string[]>,
-  key: string,
-) {
-  const value = meta[key];
-  if (Array.isArray(value)) return value[0];
-  return value;
-}
-function frontmatterList(
-  meta: Record<string, string | string[]>,
-  key: string,
-) {
-  const value = meta[key];
-  if (Array.isArray(value)) return value.map((item) => item.trim()).filter(Boolean);
-  if (typeof value !== "string") return [];
-  if (!value.trim()) return [];
-  return value
-    .split(/[|,，]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-function normalizeAuthorKey(value?: string) {
-  const lowered = value?.trim().toLowerCase();
-  if (lowered === "tomz" || lowered === "mira") return lowered;
-  return undefined;
-}
-function inferDocAuthors(
-  path: string,
-  group: string,
-  meta: Record<string, string | string[]>,
-) {
-  const explicitAuthors = frontmatterList(meta, "author")
-    .map((item) => normalizeAuthorKey(item))
-    .filter(Boolean) as AuthorKey[];
-  const explicitWritingMode = frontmatterString(meta, "writingMode");
-  const explicitWrittenBy = normalizeAuthorKey(frontmatterString(meta, "writtenBy"));
-  const explicitReviewedBy = normalizeAuthorKey(frontmatterString(meta, "reviewedBy"));
-  const commitUrl = frontmatterString(meta, "commitUrl");
-  if (explicitAuthors.length) {
-    return {
-      author: explicitAuthors,
-      writingMode:
-        explicitWritingMode === "co-authored" ? "co-authored" : "authored",
-      writtenBy: explicitWrittenBy,
-      reviewedBy: explicitReviewedBy,
-      commitUrl,
-    } satisfies Pick<
-      Doc,
-      "author" | "writingMode" | "writtenBy" | "reviewedBy" | "commitUrl"
-    >;
-  }
-  if (group === "Mira 来信") {
-    return {
-      author: ["mira"],
-      writingMode: "authored",
-      writtenBy: "mira",
-      reviewedBy: "tomz",
-      commitUrl,
-    } satisfies Pick<
-      Doc,
-      "author" | "writingMode" | "writtenBy" | "reviewedBy" | "commitUrl"
-    >;
-  }
-  if (group === "共同思考") {
-    return {
-      author: ["tomz", "mira"],
-      writingMode: "co-authored",
-      writtenBy: "mira",
-      reviewedBy: "tomz",
-      commitUrl,
-    } satisfies Pick<
-      Doc,
-      "author" | "writingMode" | "writtenBy" | "reviewedBy" | "commitUrl"
-    >;
-  }
-  return {
-    author: ["tomz"],
-    writingMode: "authored",
-    writtenBy: path.includes("/mira-letters/") ? "mira" : "tomz",
-    reviewedBy: path.includes("/mira-letters/") ? "tomz" : undefined,
-    commitUrl,
-  } satisfies Pick<
-    Doc,
-    "author" | "writingMode" | "writtenBy" | "reviewedBy" | "commitUrl"
-  >;
-}
-function parseDoc(path: string, raw: string, root: string): Doc {
-  const { meta, body: source } = parseFrontmatter(raw);
-  const relativePath = path.replace(new RegExp(`^/${root}/?`), "");
-  const segments = relativePath.split("/");
-  const authorInfo = inferDocAuthors(path, frontmatterString(meta, "group") || "文档", meta);
-  return {
-    path,
-    title: frontmatterString(meta, "title") || path,
-    description: frontmatterString(meta, "description") || "",
-    group: frontmatterString(meta, "group") || "文档",
-    order: Number(frontmatterString(meta, "order") || 99),
-    date: frontmatterString(meta, "date"),
-    readTime:
-      frontmatterString(meta, "readTime") ||
-      frontmatterString(meta, "readtime") ||
-      frontmatterString(meta, "read_time"),
-    tags: frontmatterList(meta, "tags"),
-    cover: frontmatterString(meta, "cover") || frontmatterString(meta, "image"),
-    source,
-    root,
-    directory: segments.slice(0, -1).join("/"),
-    nav: frontmatterString(meta, "nav"),
-    merge: frontmatterString(meta, "merge"),
-    mergeIndex: frontmatterString(meta, "mergeIndex") === "true",
-    author: authorInfo.author,
-    writingMode: authorInfo.writingMode,
-    writtenBy: authorInfo.writtenBy,
-    reviewedBy: authorInfo.reviewedBy,
-    commitUrl: authorInfo.commitUrl,
-    headings: extractHeadings(source),
-  };
-}
-function compareDocs(a: Doc, b: Doc) {
-  return (
-    a.order - b.order ||
-    a.directory.localeCompare(b.directory) ||
-    a.path.localeCompare(b.path)
-  );
-}
-function parseChineseDate(value?: string) {
-  if (!value) return 0;
-  const match = value.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-  if (!match) return 0;
-  const [, year, month, day] = match;
-  return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
-}
-function compareBlogDocs(a: Doc, b: Doc) {
-  return (
-    parseChineseDate(b.date) - parseChineseDate(a.date) ||
-    b.order - a.order ||
-    a.path.localeCompare(b.path)
-  );
-}
 function seedFromString(value: string) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -400,25 +173,6 @@ function resolveCoverSource(doc: Doc) {
   const fallbackSvg = generateOrbitCoverSvg(doc.path || doc.title);
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(fallbackSvg)}`;
 }
-const parsedDocs = rawDocs.map(([path, source, root]) =>
-  parseDoc(path, source, root),
-);
-const allDocs = parsedDocs
-  .filter((doc) => !doc.merge || doc.mergeIndex)
-  .map((doc) => {
-    if (!doc.merge) return doc;
-    const mergedSource = parsedDocs
-      .filter((section) => section.merge === doc.merge)
-      .sort(compareDocs)
-      .map((section) => section.source)
-      .join("\n\n");
-    return {
-      ...doc,
-      source: mergedSource,
-      headings: extractHeadings(mergedSource),
-    };
-  })
-  .sort(compareDocs);
 const docsRootDocs = allDocs.filter((doc) => doc.root === "docs");
 const extraRootDocs = allDocs.filter((doc) => doc.root !== "docs");
 const siteAreaRoots = [

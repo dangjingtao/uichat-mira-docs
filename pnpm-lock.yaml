@@ -18,8 +18,8 @@ importers:
         specifier: ^5.2.7
         version: 5.2.7
       '@mira/docs':
-        specifier: github:dangjingtao/mira-docs#4649bdf6972805cd733de71d997a4947d17ccea9
-        version: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/4649bdf6972805cd733de71d997a4947d17ccea9(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))
+        specifier: github:dangjingtao/mira-docs#7e3943036960e17e31a8a976a9204c278f29edec
+        version: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/7e3943036960e17e31a8a976a9204c278f29edec(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
@@ -826,8 +826,8 @@ packages:
   '@mermaid-js/parser@1.2.0':
     resolution: {integrity: sha512-oYPyv8A4As1yH5Bx+04iQEQxXuIQDe0GKCNSRgao6z8AM9jixXIfP0vsppRLvGf+nKIOb9/LdpWA4YuJiVvESA==}
 
-  '@mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/4649bdf6972805cd733de71d997a4947d17ccea9':
-    resolution: {gitHosted: true, integrity: sha512-gwNoyskHbgVZWfn3vpVqIEoKhhxgFgqVcoFxkkQ+MzzPTX2Z/N30Rdh2UIFnyO8PIpmzQDA3hGl+Q3fsRsbBEA==, tarball: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/4649bdf6972805cd733de71d997a4947d17ccea9}
+  '@mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/7e3943036960e17e31a8a976a9204c278f29edec':
+    resolution: {gitHosted: true, integrity: sha512-BZCOYcgb3THQXsJgROsbtQz8jri7nPidIHU4YF5yg1BIMbf4ZIJf5QJ0lJkjA3puAbWIV1RzG6b3nmHqBTsGNg==, tarball: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/7e3943036960e17e31a8a976a9204c278f29edec}
     version: 0.1.0-dev.20260725
     engines: {node: '>=20'}
     peerDependencies:
@@ -3502,7 +3502,7 @@ snapshots:
     dependencies:
       '@chevrotain/types': 11.1.2
 
-  '@mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/4649bdf6972805cd733de71d997a4947d17ccea9(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))':
+  '@mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/7e3943036960e17e31a8a976a9204c278f29edec(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))':
     dependencies:
       marked: 15.0.12
       react: 19.2.7
