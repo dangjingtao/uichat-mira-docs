@@ -1,3 +1,4 @@
 allowBuilds:
   esbuild: true
-  '@uichat-mira/docs': true
+minimumReleaseAgeExclude:
+  - '@uichat-mira/docs@0.1.0'
