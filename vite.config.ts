@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { miraDocs } from "@mira/docs/vite";
-import { miraDocsStaticBuild } from "./src/mira-docs-static";
+import { miraDocsStaticBuild } from "./mira-docs-static";
 import { seo as seoConfig, siteUrl } from "./src/site.config";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
