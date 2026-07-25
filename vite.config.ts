@@ -12,42 +12,11 @@ import { marked } from "marked";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { miraDocs } from "@mira/docs/vite";
 import { seo as seoConfig, siteUrl } from "./src/site.config";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 const pagesRoot = resolve(projectRoot, "src/pages");
-
-function pageDirectoryManifest() {
-  return existsSync(pagesRoot)
-    ? readdirSync(pagesRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name)
-    : [];
-}
-
-function pageDirectoriesPlugin() {
-  return {
-    name: "page-directories",
-    configureServer(server: any) {
-      server.watcher.add(pagesRoot);
-    },
-    resolveId(id: string) {
-      return id === "virtual:page-directories" ? "\0virtual:page-directories" : undefined;
-    },
-    load(id: string) {
-      if (id !== "\0virtual:page-directories") return;
-      return `export default ${JSON.stringify(pageDirectoryManifest())}`;
-    },
-    handleHotUpdate({ file, server }: any) {
-      const normalized = file.replace(/\\/g, "/");
-      if (!normalized.startsWith(pagesRoot.replace(/\\/g, "/"))) return;
-      const module = server.moduleGraph.getModuleById("\0virtual:page-directories");
-      if (module) server.moduleGraph.invalidateModule(module);
-      server.ws.send({ type: "full-reload" });
-      return [];
-    },
-  };
-}
 
 const blogDirectoryByGroup: Record<string, string> = {
   "产品手记": "product-journal",
@@ -360,7 +329,20 @@ export default defineConfig(({ mode }) => {
       port: 5174,
     },
     plugins: [
-      pageDirectoriesPlugin(),
+      miraDocs({
+        contentDir: "src/pages",
+        config: {
+          title: "UIChat Mira",
+          description: "本地优先的多模型智能体工作空间",
+          siteUrl,
+        },
+        staticRoutes: false,
+        exclude: (sourcePath) => /(^|\/)README\.md$/i.test(sourcePath),
+        route: (_sourcePath, doc) => {
+          const path = doc.path.replace(/^\/docs(?=\/|$)/, "");
+          return path || "/";
+        },
+      }),
       blogDirectoryCheck(),
       react(),
       tailwindcss(),

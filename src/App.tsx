@@ -40,10 +40,10 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import pageDirectories from "virtual:page-directories";
 import { directoryLabels, logoUrl, topNavigationOrder } from "./site.config";
 import {
   allDocs,
+  pageDirectories,
   compareBlogDocs,
   compareDocs,
   slug,
