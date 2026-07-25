@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: mira-docs-migration-${{ github.ref }}
@@ -18,13 +18,9 @@ concurrency:
 
 jobs:
   validate:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref || github.ref_name }}
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2
@@ -32,38 +28,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Apply guarded content adapter
-        run: node scripts/apply-mira-docs-adapter.mjs
-      - name: Install migration dependency
-        run: pnpm install --no-frozen-lockfile
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Verify real MiraDocs content compatibility
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
-        id: build
-        continue-on-error: true
-        shell: bash
-        run: pnpm run build:github-pages > mira-docs-build.log 2>&1
-      - name: Upload build diagnostics
-        if: steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mira-docs-build-log
-          path: mira-docs-build.log
-          if-no-files-found: error
-      - name: Stop after build failure
-        if: steps.build.outcome == 'failure'
-        run: exit 1
-      - name: Commit verified migration output
-        shell: bash
-        env:
-          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
-        run: |
-          if git diff --quiet -- src/App.tsx pnpm-lock.yaml; then
-            echo "Migration output is already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/App.tsx pnpm-lock.yaml
-          git commit -m "refactor: consume MiraDocs content model [skip ci]"
-          git push origin HEAD:${TARGET_BRANCH}
+        run: pnpm run build:github-pages
