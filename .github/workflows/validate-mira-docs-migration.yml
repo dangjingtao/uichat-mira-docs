@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: mira-docs-migration-${{ github.ref }}
@@ -18,13 +18,9 @@ concurrency:
 
 jobs:
   validate:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref || github.ref_name }}
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2
@@ -32,49 +28,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Install migration dependency
-        id: install
-        continue-on-error: true
-        shell: bash
-        run: pnpm install --no-frozen-lockfile --reporter=append-only > mira-docs-install.log 2>&1
-      - name: Upload install diagnostics
-        if: steps.install.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mira-docs-install-log
-          path: mira-docs-install.log
-          if-no-files-found: error
-      - name: Stop after installation failure
-        if: steps.install.outcome == 'failure'
-        run: exit 1
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Verify real MiraDocs content compatibility
-        id: verify
-        continue-on-error: true
-        shell: bash
-        run: pnpm run verify:mira-docs > mira-docs-verify.log 2>&1
-      - name: Upload compatibility diagnostics
-        if: steps.verify.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mira-docs-verify-log
-          path: mira-docs-verify.log
-          if-no-files-found: error
-      - name: Stop after compatibility failure
-        if: steps.verify.outcome == 'failure'
-        run: exit 1
+        run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
         run: pnpm run build:github-pages
-      - name: Commit refreshed lockfile
-        shell: bash
-        env:
-          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
-        run: |
-          if git diff --quiet -- pnpm-lock.yaml; then
-            echo "pnpm-lock.yaml is already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          git commit -m "chore: lock MiraDocs migration dependency [skip ci]"
-          git push origin HEAD:${TARGET_BRANCH}
