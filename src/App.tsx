@@ -840,6 +840,7 @@ type GitHubRelease = {
 };
 
 type GitHubContributor = { login: string };
+type GitHubTag = { name: string };
 
 function githubContributorCount(linkHeader: string | null, fallback: number) {
   const lastPage = linkHeader?.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/i);
@@ -1101,6 +1102,7 @@ function PwaUpdatePrompt() {
 }
 function AuthorIntro() {
   const [contributorCount, setContributorCount] = useState("—");
+  const [productVersion, setProductVersion] = useState("—");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -1126,6 +1128,25 @@ function AuthorIntro() {
       })
       .catch(() => {
         // Keep the card usable when GitHub is unavailable or rate-limits the request.
+      });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("https://api.github.com/repos/dangjingtao/uichat-mira/tags?per_page=1", {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+        return response.json() as Promise<GitHubTag[]>;
+      })
+      .then(([tag]) => {
+        if (tag?.name) setProductVersion(tag.name);
+      })
+      .catch(() => {
+        // Keep the version slot neutral when GitHub is unavailable or rate-limits the request.
       });
     return () => controller.abort();
   }, []);
@@ -1172,7 +1193,7 @@ function AuthorIntro() {
           <div className="min-w-0 border-t border-hairline pt-4 xl:min-w-[230px] xl:border-l xl:border-t-0 xl:pl-7 xl:pt-0">
             <div className="my-[7px] flex items-baseline gap-3.5 max-[820px]:my-0 max-[820px]:mr-[18px] max-[820px]:inline-flex max-[560px]:my-[7px] max-[560px]:mr-0 max-[560px]:flex">
               <strong className="min-w-12 font-mono text-[14px] font-medium text-primary-active">
-                0.7.1
+                {productVersion}
               </strong>
               <span className="whitespace-nowrap text-[12px] text-muted max-[560px]:whitespace-normal">
                 产品版本

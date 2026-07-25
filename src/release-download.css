@@ -171,17 +171,18 @@
 }
 
 @media (max-width: 560px) {
-  .release-download-enhancer-root,
   .release-download-split {
-    width: 100%;
-  }
-
-  .release-download-split {
-    grid-template-columns: minmax(0, 1fr) 38px;
+    grid-template-columns: auto 34px;
+    max-width: 100%;
   }
 
   .release-download-main {
-    min-width: 0;
+    height: 40px;
+    padding: 0 14px;
+  }
+
+  .release-download-toggle {
+    width: 34px;
   }
 
   .release-download-menu {
