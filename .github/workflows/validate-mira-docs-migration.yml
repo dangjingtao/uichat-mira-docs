@@ -1,27 +1,26 @@
 name: Validate MiraDocs migration
 
 on:
+  push:
+    branches:
+      - codex/mira-docs-migration-20260725
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: mira-docs-static-build-migration
+  group: mira-docs-migration-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref }}
       - uses: pnpm/action-setup@v4
         with:
           version: 11.5.2
@@ -29,38 +28,13 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Install updated preview dependency
-        run: pnpm install --no-frozen-lockfile
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
       - name: Verify real MiraDocs content compatibility
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
-        id: build
-        continue-on-error: true
-        shell: bash
-        run: pnpm run build:github-pages > mira-docs-static-build.log 2>&1
-      - name: Upload static build diagnostics
-        if: steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mira-docs-static-build-log
-          path: mira-docs-static-build.log
-          if-no-files-found: error
-      - name: Stop after build failure
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+        run: pnpm run build:github-pages
       - name: Verify generated static output
         env:
           EXPECTED_BASE: uichat-mira-docs
         run: pnpm run verify:static-output
-      - name: Commit refreshed lockfile
-        shell: bash
-        run: |
-          if git diff --quiet -- pnpm-lock.yaml; then
-            echo "pnpm-lock.yaml is already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          git commit -m "chore: lock MiraDocs static build preview [skip ci]"
-          git push origin HEAD:codex/mira-docs-migration-20260725
