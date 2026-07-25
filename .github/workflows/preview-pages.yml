@@ -1,9 +1,9 @@
 name: Deploy MiraDocs migration preview
 
 on:
-  push:
+  pull_request:
     branches:
-      - codex/mira-docs-migration-20260725
+      - main
   workflow_dispatch:
 
 permissions:
