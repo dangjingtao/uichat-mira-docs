@@ -11,10 +11,9 @@ on:
 
 permissions:
   contents: read
-
-concurrency:
-  group: mira-docs-migration-${{ github.ref }}
-  cancel-in-progress: true
+  issues: write
+  pages: write
+  id-token: write
 
 jobs:
   validate:
@@ -38,3 +37,145 @@ jobs:
         env:
           EXPECTED_BASE: uichat-mira-docs
         run: pnpm run verify:static-output
+
+  preview:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: validate
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}preview/
+    steps:
+      - name: Checkout production main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-site
+
+      - name: Checkout migration branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/mira-docs-migration-20260725
+          path: preview-site
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            main-site/pnpm-lock.yaml
+            preview-site/pnpm-lock.yaml
+
+      - name: Build production root from main
+        working-directory: main-site
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build:github-pages
+
+      - name: Build migration branch under preview path
+        working-directory: preview-site
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build -- --mode github-pages --base /uichat-mira-docs/preview/
+
+      - name: Make preview non-indexable and use GitHub Pages URLs
+        working-directory: preview-site
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+          import { resolve } from "node:path";
+
+          const root = resolve("dist");
+          const visit = (directory) => {
+            for (const name of readdirSync(directory)) {
+              const file = resolve(directory, name);
+              if (statSync(file).isDirectory()) {
+                visit(file);
+                continue;
+              }
+              if (!name.endsWith(".html") && name !== "sitemap.xml" && name !== "robots.txt") continue;
+              let source = readFileSync(file, "utf8");
+              source = source.replaceAll(
+                "https://tomz.io/uichat-mira-docs/preview/",
+                "https://dangjingtao.github.io/uichat-mira-docs/preview/",
+              );
+              source = source.replaceAll(
+                '<meta name="robots" content="index,follow">',
+                '<meta name="robots" content="noindex,nofollow">',
+              );
+              writeFileSync(file, source);
+            }
+          };
+          visit(root);
+          NODE
+
+      - name: Assemble root and preview artifact
+        run: |
+          rm -rf main-site/dist/preview
+          mkdir -p main-site/dist/preview
+          cp -a preview-site/dist/. main-site/dist/preview/
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: main-site/dist
+
+      - name: Deploy combined artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Smoke-test deployed preview
+        id: smoke
+        continue-on-error: true
+        env:
+          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}preview/
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location "$PREVIEW_URL" \
+              | grep --quiet 'id="root"'; then
+              echo "Preview is reachable: $PREVIEW_URL"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Preview did not become reachable: $PREVIEW_URL" >&2
+          exit 1
+
+      - name: Report preview result on migration PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}preview/
+          DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        run: |
+          if [ "$DEPLOY_OUTCOME" = "success" ] && [ "$SMOKE_OUTCOME" = "success" ]; then
+            STATUS="✅ GitHub Pages 分支预览已部署并通过在线冒烟检查"
+          elif [ "$DEPLOY_OUTCOME" != "success" ]; then
+            STATUS="❌ GitHub Pages 分支预览构建成功，但 Pages 部署失败"
+          else
+            STATUS="❌ GitHub Pages 分支预览已部署，但在线冒烟检查失败"
+          fi
+          gh api repos/${{ github.repository }}/issues/4/comments \
+            --method POST \
+            --field body="$STATUS
+
+预览地址：$PREVIEW_URL
+
+根路径仍由 main 构建，迁移分支仅位于 /preview/。
+
+工作流：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Fail when deployment or smoke test failed
+        if: steps.deployment.outcome != 'success' || steps.smoke.outcome != 'success'
+        run: exit 1
