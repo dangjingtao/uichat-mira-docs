@@ -2,6 +2,7 @@ import {
   extractHeadings,
   parseMiraDoc,
   type MiraDoc,
+  type MiraHeading,
 } from "@mira/docs";
 
 export type AuthorKey = "tomz" | "mira";
@@ -134,15 +135,19 @@ function inferDocAuthors(
 
 function legacyLevelTwoHeadings(source: string): Doc["headings"] {
   const seen = new Set<string>();
-  return extractHeadings(source)
-    .filter((heading) => heading.depth === 2)
-    .filter((heading) => {
+  const headings = extractHeadings(source) as MiraHeading[];
+  return headings
+    .filter((heading: MiraHeading) => heading.depth === 2)
+    .filter((heading: MiraHeading) => {
       const id = slug(heading.text);
       if (!id || seen.has(id)) return false;
       seen.add(id);
       return true;
     })
-    .map((heading) => ({ text: heading.text, id: slug(heading.text) }));
+    .map((heading: MiraHeading) => ({
+      text: heading.text,
+      id: slug(heading.text),
+    }));
 }
 
 function parseSiteDoc(path: string, raw: string, root: string): Doc {
