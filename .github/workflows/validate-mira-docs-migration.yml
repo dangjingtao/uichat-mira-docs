@@ -32,7 +32,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - name: Install migration dependency
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --reporter=silent
       - name: Verify real MiraDocs content compatibility
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
