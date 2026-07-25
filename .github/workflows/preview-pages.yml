@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pages: write
   id-token: write
 
@@ -110,3 +111,44 @@ jobs:
       - name: Deploy combined production and preview artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Smoke-test deployed preview
+        id: smoke
+        continue-on-error: true
+        env:
+          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}preview/
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --location "$PREVIEW_URL" \
+              | grep --quiet 'id="root"'; then
+              echo "Preview is reachable: $PREVIEW_URL"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Preview did not become reachable: $PREVIEW_URL" >&2
+          exit 1
+
+      - name: Report preview result on migration PR
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.deployment.outputs.page_url }}preview/
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+        run: |
+          if [ "$SMOKE_OUTCOME" = "success" ]; then
+            STATUS="✅ GitHub Pages 分支预览已部署并通过在线冒烟检查"
+          else
+            STATUS="❌ GitHub Pages 分支预览已部署，但在线冒烟检查失败"
+          fi
+          gh api repos/${{ github.repository }}/issues/4/comments \
+            --method POST \
+            --field body="$STATUS
+
+预览地址：$PREVIEW_URL
+
+根路径仍由 main 构建，迁移分支仅位于 /preview/。"
+
+      - name: Fail when preview smoke test failed
+        if: steps.smoke.outcome != 'success'
+        run: exit 1
