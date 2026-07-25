@@ -1,49 +1,68 @@
 ---
-title: Mira-Docs 是什么
-nav: Mira-Docs
+title: MiraDocs 是什么
+nav: MiraDocs
 group: 快速开始
 order: 1
+description: MiraDocs 的产品定位、运行边界和当前生产验证状态。
 ---
 
-# Mira-Docs 是什么
+# MiraDocs 是什么
 
-Mira-Docs 是一个由 Markdown 驱动的文档站。思路借鉴于[vitepress](https://github.com/vuejs/vitepress)，采用vite + react构建。文章是源码，页面、路由、顶部导航和侧边导航由构建阶段读取目录后生成。
+MiraDocs 是一个 **Git-native 的文档、发布与项目门户运行时**。它把仓库中的 Markdown 转换成可导航、可搜索、可静态发布的网站，同时给 UIChat Mira 的 Skill 提供稳定的内容协议。
 
-它解决的是文档站本身的问题：让文件结构成为信息架构，让新增目录可以进入站点，而不是再维护一份导航清单。
+它不是某一个站点皮肤，也不是只服务 UIChat Mira 的一次性脚本。当前这个文档站是 MiraDocs 的第一个生产级消费者，用真实内容反向验证运行时契约。
 
-## 内容边界
+## 它解决什么问题
 
-Mira-Docs 当前包含：
+传统文档站常把内容、导航、路由、SEO 和部署逻辑散落在页面组件与构建脚本里。MiraDocs 把这些职责拆成几层：
 
-- Markdown 文件的编译期索引
-- 基于文件目录的顶部导航
-- 基于 Markdown 所在子目录的侧边导航
-- frontmatter 元数据解析
-- React Router 页面切换
-- 深色主题、站内搜索和 PWA 构建
-- Claude、Apple、Supabase 主题在线切换
-- 顶部导航顺序配置
-- 多 Markdown 合并为单页面
-- Markdown 中的自定义 HTML 块
-- Mermaid 图表运行时渲染
-- 普通代码块语法高亮
+- Markdown 与 Frontmatter 是内容源。
+- `@uichat-mira/docs` 提供统一内容模型和解析能力。
+- `@uichat-mira/docs/vite` 负责内容发现、热更新和静态构建。
+- React 站点决定视觉、交互与品牌表达。
+- GitHub Actions、Cloudflare Pages 等平台负责部署。
+- MiraDocs Skill 通过 GitHub 能力管理内容、分支、PR 与发布流程。
 
-在 Markdown 中使用 `::: html` 块，可以直接嵌入自定义 HTML 结构，用于组件示例、视觉参考和静态 HTML 预览。完整用法见[编写文档](./authoring)。
+## 当前能力
 
-使用 `mermaid` 代码围栏可以编写流程图等图表，页面会将其渲染为 SVG，并在主题切换时同步更新。普通代码围栏会根据语言标记显示语法高亮。具体写法和错误回退行为见[编写文档](./authoring)。
+当前预发布版本已经具备：
 
-Mira-Docs 当前不提供 HTTP API。仓库里没有可供外部调用的 API 服务，因此这里不编写接口、认证或请求示例。
+- 标准 YAML Frontmatter，并兼容旧站宽松格式。
+- `doc`、`article`、`project`、`page` 等统一内容类型。
+- Vite 虚拟模块 `virtual:mira-docs/content`。
+- 内容过滤、URL 映射和 Markdown 热更新。
+- Markdown 与 HTML 标题的统一目录提取。
+- 可配置静态 HTML、canonical、Open Graph、Twitter Card 和 JSON-LD。
+- `404.html`、`sitemap.xml` 与 `robots.txt`。
+- GitHub Pages 项目路径和根路径部署。
+- React 默认运行时，也允许消费者保留自己的 UI。
 
-## 源码位置
+## 当前不是什么
 
-文档内容位于 `src/pages`。其中 `src/pages/docs` 是默认文档区，其他同级目录会成为独立的顶部导航区域。
+MiraDocs 当前不是：
+
+- HTTP API 服务。
+- 强制使用某一套 React 页面或主题的站点生成器。
+- GitHub API 的重新封装。
+- UIChat Mira Skill 的唯一源码位置。
+- 已经发布到 npm 的稳定版本。
+
+正式 Skill 由 UIChat Mira 仓库维护；MiraDocs 仓库中的 `skill-backup` 只是只读备份。当前旧站通过固定 Git commit 使用预览包，契约稳定后再进入 npm 发布。
+
+## 三个仓库的关系
 
 ```text
-src/pages/
-├── docs/                 # 默认文档区
-└── mira-docs-api/        # 独立文档区
-    ├── guide/            # 一个侧边导航分组
-    └── reference/        # 另一个侧边导航分组
+uichat-mira
+└── MiraDocs Skill 的正式来源与执行入口
+
+mira-docs
+├── @uichat-mira/docs 运行时
+├── Vite 与静态构建契约
+├── Schema、Starter 与官方自举站
+└── Skill 只读备份
+
+uichat-mira-docs
+└── 第一个生产级消费者与兼容性基准
 ```
 
-空目录也会生成顶部导航和路由，但页面显示 404 状态；它不会借用 `docs` 的文章或侧边导航。
+下一步从[快速开始](./getting-started)了解如何在当前迁移分支中运行和验证它。

@@ -1,98 +1,99 @@
 ---
-title: SEO 构建 API
-description: 使用可选 SEO 构建模式生成静态页面、页面元信息、Sitemap 和 robots.txt。
+title: 静态构建与 SEO
+description: MiraDocs 的静态路由、元数据、JSON-LD、Sitemap 与 robots 契约。
 group: 参考
 order: 22
 ---
 
-# SEO 构建 API
+# 静态构建与 SEO
 
-Mira-Docs 通过网站配置控制是否生成 SEO 静态页面。开启后，它会在 Vite 构建完成后，为公开路由生成包含正文和 SEO 元信息的静态 `index.html`；浏览器继续加载 React 脚本，接管搜索、主题和其他交互。
+MiraDocs 在 Vite 构建完成后，为公开路由生成目录式 HTML。浏览器加载这些页面后，React 继续接管搜索、主题、PWA 与其他交互。
 
-## 配置 API
-
-配置位于 `src/site.config.ts`：
+## 静态路由
 
 ```ts
-export const siteUrl = "https://tomz.io";
-export const logoUrl = "https://assets.tomz.io/images/mira-logo.png";
-export const seo = {
-  enabled: true,
-} as const;
+type MiraDocsStaticRoute = {
+  path: string
+  title: string
+  description: string
+  body: string
+  type?: string
+  image?: string
+  robots?: string
+  jsonLd?: unknown
+  doc?: MiraDoc
+}
 ```
 
-### `siteUrl`
+消费者可以通过 `routes(context)` 提供首页、栏目页和正文页，通过 `notFound(context)` 提供 404。
 
-生产站点的协议和域名，不要在末尾添加 `/`。SEO 构建使用它生成：
+## 构建选项
 
-- `canonical`
-- Open Graph `og:url`
-- JSON-LD `url`
-- `sitemap.xml` 中的 `<loc>`
-- `robots.txt` 中的 Sitemap 地址
-
-GitHub Pages 的仓库路径不写进 `siteUrl`，由 `github-pages` 构建模式自动追加。
-
-### `logoUrl`
-
-站点 Logo 的线上地址。它同时用于页面页头、页尾和 SEO 的 Open Graph 图片。线上资源加载失败时，页面回退到 `public/mira-logo.png`。
-
-## 构建 API
-
-根路径部署使用：
-
-```bash
-npm run build
+```ts
+type MiraDocsStaticBuildOptions = {
+  routes?: (context) => MiraDocsStaticRoute[]
+  notFound?: (context) => MiraDocsStaticRoute
+  locale?: string
+  siteName?: string
+  defaultImage?: string
+  image?: { type?: string; width?: number; height?: number }
+  twitterCard?: "summary" | "summary_large_image"
+  title?: (route, config) => string
+  transformTemplate?: (template, context) => string
+  rootPlaceholder?: string
+  sitemap?: boolean
+  robots?: boolean
+}
 ```
 
-GitHub Pages 使用：
+MiraDocs 负责通用机制，消费者负责品牌内容。
 
-```bash
-npm run build:github-pages
-```
+## 自动注入
 
-`seo.enabled` 为 `true` 时，构建会先执行 TypeScript 检查和 Vite 构建，再生成 SEO 文件；设为 `false` 时只生成普通 SPA 产物。
+每个静态页面可包含：
 
-## 生成内容
+- `title`
+- `description`
+- `robots`
+- canonical
+- Open Graph
+- Twitter Card
+- JSON-LD
+- 服务端可见正文
 
-SEO 构建会在 `dist` 中生成：
+消费者未提供 JSON-LD 时，MiraDocs 为站点页生成 `WebSite`，为文档生成 `TechArticle`，为文章生成 `Article`。
+
+## 输出
 
 ```text
 dist/
 ├── index.html
-├── blogs/index.html
-├── blogs/<article>/index.html
-├── <document>/index.html
+├── <route>/index.html
+├── 404.html
 ├── sitemap.xml
 └── robots.txt
 ```
 
-文档和博客页面的静态 HTML 会包含：
+`base` 来自 Vite，因此根域名、Cloudflare Pages 和 GitHub Pages 项目路径使用同一套写盘逻辑。
 
-- `title` 和 `description`
-- `canonical`
-- Open Graph 和 Twitter Card
-- 文档 `TechArticle` 或博客 `Article` JSON-LD
-- Markdown 转换后的正文
+## 当前 UIChat Mira 适配
 
-文章标题、摘要、日期、作者和分类均来自 Markdown frontmatter。新增文章后重新运行 SEO 构建即可进入静态产物和 Sitemap。
+当前站点的 `mira-docs-static.ts` 只保留：
 
-## 基础路径
+- UIChat Mira 首页、栏目页和正文 HTML。
+- 作者与合并文章映射。
+- 品牌图与页面文案。
+- `Article`、`TechArticle` 和 `WebSite` JSON-LD 内容。
 
-GitHub Pages 模式生成的地址示例：
+文件写盘、URL 拼接、metadata 注入、404、Sitemap 与 robots 已全部进入 MiraDocs。
 
-```text
-https://tomz.io/uichat-mira-docs/architecture/agent-strategy/
-```
+## 产物验证
 
-资源、静态链接、canonical、Sitemap 和 robots 地址都会使用 `/uichat-mira-docs/`。如果部署仓库或域名发生变化，需要同步检查 `siteUrl` 和构建模式。
+迁移分支永久检查所有公开内容路由，并验证：
 
-## 限制
-
-SEO 构建只处理公开路由和 Markdown 文档，不为博客分类 query 生成重复页面。例如：
-
-```text
-/blogs?category=产品手记
-```
-
-这类页面仍然由 React 在浏览器中筛选，搜索引擎入口统一使用 `/blogs/`。动态搜索结果、主题状态和用户本地偏好不会进入 Sitemap。
+- canonical 带正确 base。
+- description 不重复。
+- JSON-LD 存在。
+- 404 为 `noindex,nofollow`。
+- Sitemap 覆盖内容。
+- robots 指向正确 Sitemap。

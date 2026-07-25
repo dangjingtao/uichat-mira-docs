@@ -1,8 +1,11 @@
 /// <reference types="vite-plugin-pwa/client" />
 
-declare module "virtual:page-directories" {
-  const directories: string[];
-  export default directories;
+declare module "virtual:mira-docs/content" {
+  import type { MiraDoc } from "@uichat-mira/docs";
+
+  const docs: MiraDoc[];
+  export const roots: string[];
+  export default docs;
 }
 
 interface ImportMetaEnv {
@@ -11,5 +14,4 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
-  readonly glob: (pattern: string, options?: { eager?: boolean; query?: string; import?: string }) => Record<string, unknown>;
 }

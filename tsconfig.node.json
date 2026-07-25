@@ -11,6 +11,7 @@
   },
   "include": [
     "vite.config.ts",
+    "mira-docs-static.ts",
     "src/site.config.ts"
   ]
 }

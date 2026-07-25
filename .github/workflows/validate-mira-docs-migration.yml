@@ -1,0 +1,40 @@
+name: Validate MiraDocs migration
+
+on:
+  push:
+    branches:
+      - codex/mira-docs-migration-20260725
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mira-docs-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify real MiraDocs content compatibility
+        run: pnpm run verify:mira-docs
+      - name: Build existing GitHub Pages site
+        run: pnpm run build:github-pages
+      - name: Verify generated static output
+        env:
+          EXPECTED_BASE: uichat-mira-docs
+        run: pnpm run verify:static-output

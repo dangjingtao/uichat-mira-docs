@@ -1,65 +1,60 @@
 ---
 title: 部署到 Cloudflare Pages
-description: 使用 Cloudflare Pages 的 GitHub 集成自动构建和发布 Mira-Docs。
-group: 快速开始
-order: 7
+description: 使用 Cloudflare Pages 发布根站并审查迁移分支预览。
+group: 部署
+order: 9
 ---
 
 # 部署到 Cloudflare Pages
 
-Mira-Docs 是 Vite 单页应用，构建产物位于 `dist`。当前 Cloudflare Pages 项目已经连接 GitHub 仓库，并启用了 `main` 分支自动部署。每次推送到 `main` 时，Cloudflare 会自动执行：
+当前 UIChat Mira 文档站通过 Cloudflare Pages 的 GitHub 集成部署。生产分支与功能分支使用不同地址，因此适合迁移阶段的人工对比。
+
+## 生产部署
+
+生产配置保持：
 
 ```text
-npm ci
-npm run build
+Production branch: main
+Build command: pnpm run build
+Build output: dist
+Node.js: 22
 ```
 
-## Cloudflare 的自动构建
+`main` 更新时，Cloudflare 独立完成检出、锁定依赖安装、Vite 构建和发布。
 
-Cloudflare Pages 项目配置如下：
+## 分支预览
 
-- Production branch: `main`
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Node.js version: `22`
+Draft PR 或功能分支更新后，Cloudflare 会生成：
 
-推送到 `main` 后，Cloudflare 会独立完成检出、依赖安装、构建和发布。
+- 每个提交的临时预览地址。
+- 稳定的分支预览地址。
 
-如果你调整了构建命令、Node 版本或输出目录，部署文档和工作流需要一起更新。
+迁移分支预览不会覆盖生产域名，适合检查页面视觉、导航、搜索、主题与移动端。
 
-## 手动补发部署
+## 构建差异
 
-仓库仍保留 [`.github/workflows/deploy-cloudflare-pages.yml`](/D:/workspace/uichat-mira-docs/.github/workflows/deploy-cloudflare-pages.yml:1)，但它只响应 `workflow_dispatch`，用于 Cloudflare Git 集成异常时手动补发。需要配置：
+Cloudflare Pages 设置 `CF_PAGES=1`。当前 Vite 配置把它视为根路径部署，即使外部设置误用了 `github-pages` mode，也不会追加仓库 base。
 
-| 类型 | 名称 | 值 |
-| --- | --- | --- |
-| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare API Token |
-| Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Account ID |
-| Variable | `CLOUDFLARE_PAGES_PROJECT_NAME` | `uichat-mira-docs` |
+MiraDocs 静态构建仍会生成：
 
-不要同时让 Cloudflare Git 集成和 GitHub Actions 都响应 `main` 推送，否则一次提交会触发两次 Cloudflare 构建。
+- 路由目录下的 `index.html`
+- `404.html`
+- `sitemap.xml`
+- `robots.txt`
+- canonical、社交元数据与 JSON-LD
 
-## 部署触发方式
+因此当前产物不是“只有一个 index.html 的纯 SPA”；React 会在静态 HTML 之后继续接管交互。
 
-自动部署触发条件：
+## 手动补发
 
-- push 到 `main`，由 Cloudflare Pages GitHub 集成触发
-- 手动执行仓库内的 Wrangler 工作流，仅用于补发
+仓库保留手动 Wrangler 工作流，仅在 Cloudflare Git 集成异常时使用。不要同时让两条流程响应 `main`，否则一次提交会产生重复部署。
 
-这意味着你可以把 Cloudflare Pages 部署当成主分支发布流程，也可以在 Actions 页面手动补发一次。
-
-## 路由与刷新行为
-
-项目使用 `BrowserRouter`。Cloudflare Pages 在没有 `404.html` 时会将未知路径回退到 `index.html`，因此 `/docs/...`、`/mira-docs-api/...` 和其他动态文档路由可以直接刷新访问。
-
-## 发布前检查
-
-部署前运行：
+## 发布前验证
 
 ```bash
-npm ci
-npm run build
-npm run preview
+pnpm install --frozen-lockfile
+pnpm run build
+pnpm run verify:static-output
 ```
 
-然后检查首页、文档深层路由、暗色模式、主题切换和 PWA 资源是否正常加载。
+随后检查首页、深层文档、博客详情、搜索、主题切换、PWA 和分享元数据。

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "verify:mira-docs": "node scripts/verify-mira-docs-compat.mjs",
+    "verify:static-output": "node scripts/verify-mira-docs-static-output.mjs",
+    "build": "npm run verify:mira-docs && tsc -b && vite build",
     "build:github-pages": "npm run build -- --mode github-pages",
     "preview": "vite preview"
   },
@@ -13,6 +15,7 @@
     "@fontsource/cormorant-garamond": "^5.2.11",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/public-sans": "^5.2.7",
+    "@uichat-mira/docs": "github:dangjingtao/mira-docs#b5b1bff1aa81074b3a07c107a74195c2ac2af687",
     "highlight.js": "^11.11.1",
     "lucide-react": "^1.24.0",
     "marked": "^15.0.12",

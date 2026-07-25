@@ -1,85 +1,70 @@
 ---
 title: 导航如何生成
-description: Mira-Docs 如何从目录和 Markdown 文件生成页面导航。
+description: MiraDocs 如何通过内容清单与站点适配生成导航。
 group: 快速开始
 order: 5
 ---
 
 # 导航如何生成
 
-Mira-Docs 有两套导航规则。它们服务于不同的内容区，不能混用。
+MiraDocs 不在页面组件里扫描文件。内容发现统一由 Vite 插件完成，React 端只消费生成后的清单。
 
-## 默认文档区
-
-`src/pages/docs` 下的文章根据 frontmatter 的 `group` 进入现有文档分组。这个区域使用文档自己的分组信息。
-
-```text
-src/pages/docs/architecture/runtime.md
-```
-
-它的 URL 是 `/architecture/runtime`，不会把物理目录名 `docs` 暴露到 URL 中。
-
-## 独立文档区
-
-`src/pages` 下与 `docs` 同级的目录拥有自己的导航边界：
-
-```text
-src/pages/mira-docs-api/
-├── guide/what-is-mira-docs.md
-└── reference/frontmatter.md
-```
-
-顶部导航来自 `mira-docs-api` 目录。侧边导航来自 `guide` 和 `reference` 目录，文章列表来自这些目录中的 Markdown 文件。
-
-访问 `/mira-docs-api` 时只显示这个文档区自己的内容。如果目录为空，页面显示 404；不会退回默认文档区。
-
-## 路由生成
-
-构建阶段会读取：
+## 虚拟内容模块
 
 ```ts
-import.meta.glob("./pages/**/*.md", {
-  eager: true,
-  query: "?raw",
-  import: "default",
+import docs, { roots } from "virtual:mira-docs/content"
+```
+
+它导出：
+
+- `docs`：排序后的 `MiraDoc[]`
+- `roots`：内容源中的顶层目录
+
+虚拟模块会随 Markdown 变化失效，开发服务器随后完整刷新。
+
+## 当前站点的导航边界
+
+当前 UIChat Mira 站点仍保留原有信息架构：
+
+```text
+src/pages/
+├── docs/            # 默认文档区，URL 不显示 docs
+├── blogs/           # 博客
+├── mira-docs-api/   # MiraDocs 文档区
+└── ...
+```
+
+Vite 插件负责发现文件，`src/content/mira-docs-adapter.ts` 负责把通用 `MiraDoc` 映射成旧站需要的文档模型。
+
+## URL 兼容
+
+当前配置使用：
+
+```ts
+miraDocs({
+  contentDir: "src/pages",
+  exclude: (sourcePath) => /(^|\/)README\.md$/i.test(sourcePath),
+  route: (_sourcePath, doc) => {
+    const path = doc.path.replace(/^\/docs(?=\/|$)/, "")
+    return path || "/"
+  },
+  // ...
 })
 ```
 
-顶层目录清单由 Vite 的虚拟模块生成。文章路由和目录路由都由这两份数据生成，界面组件不维护文章列表。
+因此迁移前后的历史 URL 保持不变。MiraDocs 不要求消费者采用某一种目录前缀。
 
-## 顶部导航排序
+## 顶部与侧边导航
 
-页面目录由构建阶段动态发现，顺序由 `src/site.config.ts` 控制：
+MiraDocs 提供内容数据，不强制导航 UI。当前站点继续使用：
 
-```ts
-export const topNavigationOrder = [
-  "docs",
-  "mira-docs-api",
-  "design-md",
-  "blogs",
-];
-```
+- `roots` 确定顶层区域。
+- 物理目录和 `group` 生成侧边分组。
+- `src/site.config.ts` 控制顶层顺序和显示名称。
+- 站点适配层保留博客、作者和合并页规则。
 
-数组中的值是 `src/pages` 一级目录名。没有写入配置的新目录不会消失，会按照生成顺序追加到已配置项目之后。配置只改变顶部顺序，不改变路由和侧边导航。
+## 合并页
 
-## 合并文档
+具有相同 `merge` 的旧站内容会在适配层按 `order` 拼接，只有 `mergeIndex: true` 的入口保留路由。合并正文中的 Markdown 与 HTML 标题都会进入统一目录。
 
-一个较大的页面可以拆成多个 Markdown 文件，再通过相同的 `merge` 值合并：
-
-```text
-src/pages/design-md/视觉/
-├── product-design-system.md
-└── product-design-system/
-    ├── overview.md
-    ├── type.md
-    └── components.md
-```
-
-入口文件声明：
-
-```yaml
-merge: product-design-system
-mergeIndex: true
-```
-
-分段文件只声明 `merge`。构建时所有分段按 `order` 拼接，最终只生成入口文件的页面路由；分段中的 Markdown 标题和 HTML `h2` 都会进入页面目录。
+这项规则是兼容扩展，而不是 MiraDocs 对所有消费者的强制约定。

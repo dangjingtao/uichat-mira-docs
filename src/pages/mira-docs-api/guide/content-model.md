@@ -1,45 +1,90 @@
 ---
 title: 内容模型
-description: Mira-Docs 如何把目录、Markdown 和元数据转换成页面。
+description: MiraDocs 如何把 Markdown、Frontmatter 和路径转换成统一的 MiraDoc。
 group: 核心概念
 order: 3
 ---
 
 # 内容模型
 
-Mira-Docs 的内容只有一个来源：`src/pages/**/*.md`。页面导航、URL 和搜索索引都从这些文件计算，不维护第二份文章清单。
+MiraDocs 把每个 Markdown 文件解析为 `MiraDoc`。站点、搜索、导航、静态构建和 Skill 都围绕这一个模型工作，不再分别维护文章清单。
 
-## 文件到页面
+## MiraDoc
 
-文件路径先决定文档区，再决定页面路径：
+核心字段如下：
 
-```text
-src/pages/mira-docs-api/guide/content-model.md
-                    └─ 顶层目录       └─ 文章路径
+```ts
+type MiraDoc = {
+  id: string
+  path: string
+  sourcePath: string
+  type: "doc" | "article" | "project" | "page" | string
+  title: string
+  description: string
+  group: string
+  order: number
+  date?: string
+  tags: string[]
+  status?: string
+  cover?: string
+  body: string
+  headings: MiraHeading[]
+  data: Record<string, unknown>
+}
 ```
 
-对应 URL 是：
+`data` 保留完整 Frontmatter，因此消费者可以增加作者、合并规则或业务字段，而不用修改核心模型。
+
+## 文件到路由
+
+默认情况下，源文件路径转换为页面路径：
 
 ```text
-/mira-docs-api/guide/content-model
+guide/content-model.md
+→ /guide/content-model
+
+guide/index.md
+→ /guide
 ```
 
-`src/pages/docs` 是默认文档区，它的 `docs` 路径不会出现在 URL 中。与 `docs` 同级的其他目录会成为独立文档区，并拥有自己的顶部导航和侧边导航。
+Frontmatter 的 `path` 可以显式覆盖 URL。Vite 插件还提供 `route(sourcePath, doc)`，用于站点级兼容映射。
 
-## 目录到导航
+当前旧站使用这个回调移除默认文档区的 `/docs` 前缀，因此历史 URL 不变。
 
-独立文档区的侧边导航使用 Markdown 的物理目录分组：
+## 类型推断
+
+没有声明 `type` 时，MiraDocs 根据顶层目录推断：
 
 ```text
-mira-docs-api/
-├── guide/
-└── reference/
+blogs/*    → article
+projects/* → project
+其他        → doc
 ```
 
-因此 `guide` 和 `reference` 是两个导航分组。新增一个同级目录并放入 Markdown 后，它会在该文档区新增一个分组，不需要修改 React 页面。
+类型可以在 Frontmatter 中覆盖。它会影响默认分组、排序和静态结构化数据，但不会强制某一种页面组件。
 
-## Markdown 到搜索
+## 排序
 
-构建阶段通过 `import.meta.glob` 读取 Markdown 原文。解析后的标题、描述、分组和路径进入搜索数据；文件名为 `README.md` 的文件会被排除，不会出现在页面、导航或搜索中。
+普通内容按 `order` 排序，再按路径排序。文章类型优先按 `date` 倒序，再使用 `order`。
 
-页面内的 `##` 标题会生成页内导航。当前解析器不把 `#` 一级标题加入右侧目录，因为页面标题由 frontmatter 的 `title` 负责。
+## 标题目录
+
+MiraDocs 同时提取：
+
+- Markdown 的 `##`、`###`、`####`
+- HTML 的 `<h2>`、`<h3>`、`<h4>`
+
+标题按原文顺序合并，并生成稳定且去重的锚点。这个规则让历史 HTML 块和新 Markdown 内容可以共用一套页内目录。
+
+## 旧站扩展
+
+当前 UIChat Mira 文档站在适配层增加：
+
+- `author`
+- `image`
+- `merge`
+- `mergeIndex`
+- 博客日期与作者关系
+- 站点目录显示规则
+
+这些是消费者扩展，不属于 MiraDocs 强制核心字段。
