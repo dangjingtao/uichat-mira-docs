@@ -29,7 +29,7 @@ Skill 不重新实现 GitHub API，也不绕过权限与审批。
 `mira-docs` 仓库维护产品与协议：
 
 ```text
-packages/mira-docs   @mira/docs 运行时
+packages/mira-docs   @uichat-mira/docs 运行时
 apps/site            官方自举站
 schemas              内容与配置 Schema
 starter              可部署起点

@@ -17,9 +17,9 @@ importers:
       '@fontsource/public-sans':
         specifier: ^5.2.7
         version: 5.2.7
-      '@mira/docs':
-        specifier: github:dangjingtao/mira-docs#c0edbcbdb2c7e44ec21697b2c9156ee6421c38f0
-        version: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/c0edbcbdb2c7e44ec21697b2c9156ee6421c38f0(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))
+      '@uichat-mira/docs':
+        specifier: github:dangjingtao/mira-docs#b5b1bff1aa81074b3a07c107a74195c2ac2af687
+        version: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/b5b1bff1aa81074b3a07c107a74195c2ac2af687(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
@@ -826,16 +826,6 @@ packages:
   '@mermaid-js/parser@1.2.0':
     resolution: {integrity: sha512-oYPyv8A4As1yH5Bx+04iQEQxXuIQDe0GKCNSRgao6z8AM9jixXIfP0vsppRLvGf+nKIOb9/LdpWA4YuJiVvESA==}
 
-  '@mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/c0edbcbdb2c7e44ec21697b2c9156ee6421c38f0':
-    resolution: {gitHosted: true, integrity: sha512-K9AwLIkfu64lDVOiHp9n81JvnxkKghE4RNdyntd8Eq8p4o0kSaMhFNUeoTYaYiiMnIozlORl5kX8gKTBYK1aJA==, tarball: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/c0edbcbdb2c7e44ec21697b2c9156ee6421c38f0}
-    version: 0.1.0-dev.20260725
-    engines: {node: '>=20'}
-    peerDependencies:
-      react: ^19.0.0
-      react-dom: ^19.0.0
-      react-router-dom: ^7.0.0
-      vite: ^7.0.0
-
   '@rolldown/pluginutils@1.0.0-rc.3':
     resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
 
@@ -1263,6 +1253,16 @@ packages:
 
   '@types/webxr@0.5.24':
     resolution: {integrity: sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==}
+
+  '@uichat-mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/b5b1bff1aa81074b3a07c107a74195c2ac2af687':
+    resolution: {gitHosted: true, integrity: sha512-M5E6z9TtpcKq24KCx+0jbe/2PZmgEdxm/N0KUYOsmcj2APhLyzo+YqvAywOpUxrCxzZ01Gszp0kvj/yYAkXN6A==, tarball: https://codeload.github.com/dangjingtao/mira-docs/tar.gz/b5b1bff1aa81074b3a07c107a74195c2ac2af687}
+    version: 0.1.0-dev.20260725
+    engines: {node: '>=20'}
+    peerDependencies:
+      react: ^19.0.0
+      react-dom: ^19.0.0
+      react-router-dom: ^7.0.0
+      vite: ^7.0.0
 
   '@upsetjs/venn.js@2.0.0':
     resolution: {integrity: sha512-WbBhLrooyePuQ1VZxrJjtLvTc4NVfpOyKx0sKqioq9bX1C1m7Jgykkn8gLrtwumBioXIqam8DLxp88Adbue6Hw==}
@@ -3502,15 +3502,6 @@ snapshots:
     dependencies:
       '@chevrotain/types': 11.1.2
 
-  '@mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/c0edbcbdb2c7e44ec21697b2c9156ee6421c38f0(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))':
-    dependencies:
-      marked: 15.0.12
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-      react-router-dom: 7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      vite: 7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0)
-      yaml: 2.9.0
-
   '@rolldown/pluginutils@1.0.0-rc.3': {}
 
   '@rollup/plugin-babel@6.1.0(@babel/core@7.29.7)(@types/babel__core@7.20.5)(rollup@4.62.2)':
@@ -3879,6 +3870,15 @@ snapshots:
   '@types/trusted-types@2.0.7': {}
 
   '@types/webxr@0.5.24': {}
+
+  '@uichat-mira/docs@https://codeload.github.com/dangjingtao/mira-docs/tar.gz/b5b1bff1aa81074b3a07c107a74195c2ac2af687(react-dom@19.2.7(react@19.2.7))(react-router-dom@7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)(vite@7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))':
+    dependencies:
+      marked: 15.0.12
+      react: 19.2.7
+      react-dom: 19.2.7(react@19.2.7)
+      react-router-dom: 7.18.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      vite: 7.3.6(@types/node@26.1.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0)
+      yaml: 2.9.0
 
   '@upsetjs/venn.js@2.0.0':
     optionalDependencies:

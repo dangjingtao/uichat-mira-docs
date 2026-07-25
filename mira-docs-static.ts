@@ -1,5 +1,5 @@
 import { marked } from "marked";
-import type { MiraDoc, MiraDocsConfig } from "@mira/docs";
+import type { MiraDoc, MiraDocsConfig } from "@uichat-mira/docs";
 import {
   miraDocsAbsoluteAssetUrl,
   miraDocsAbsoluteRouteUrl,
@@ -7,7 +7,7 @@ import {
   type MiraDocsStaticBuildContext,
   type MiraDocsStaticBuildOptions,
   type MiraDocsStaticRoute,
-} from "@mira/docs/vite";
+} from "@uichat-mira/docs/vite";
 
 type StaticDoc = MiraDoc & {
   root: string;

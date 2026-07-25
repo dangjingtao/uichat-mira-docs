@@ -1,7 +1,7 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 declare module "virtual:mira-docs/content" {
-  import type { MiraDoc } from "@mira/docs";
+  import type { MiraDoc } from "@uichat-mira/docs";
 
   const docs: MiraDoc[];
   export const roots: string[];

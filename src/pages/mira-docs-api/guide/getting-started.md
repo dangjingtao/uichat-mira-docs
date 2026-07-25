@@ -7,7 +7,7 @@ order: 2
 
 # 快速开始
 
-当前站点已经接入 MiraDocs，但仍处于 Draft PR 的迁移阶段。它通过固定 Git commit 安装 `@mira/docs`，不依赖尚未发布的 npm 版本。
+当前站点已经接入 MiraDocs，但仍处于 Draft PR 的迁移阶段。它通过固定 Git commit 安装 `@uichat-mira/docs`，不依赖尚未发布的 npm 版本。
 
 ## 环境
 
@@ -84,7 +84,7 @@ pnpm run verify:static-output
 ```json
 {
   "dependencies": {
-    "@mira/docs": "github:dangjingtao/mira-docs#<commit-sha>"
+    "@uichat-mira/docs": "github:dangjingtao/mira-docs#<commit-sha>"
   }
 }
 ```

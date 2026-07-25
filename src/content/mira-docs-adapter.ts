@@ -2,7 +2,7 @@ import {
   extractHeadings,
   type MiraDoc,
   type MiraHeading,
-} from "@mira/docs";
+} from "@uichat-mira/docs";
 import miraDocsContent, {
   roots as miraDocsRoots,
 } from "virtual:mira-docs/content";

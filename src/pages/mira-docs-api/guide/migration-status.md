@@ -14,7 +14,7 @@ order: 8
 ### 内容模型
 
 - `App.tsx` 不再维护 Frontmatter 解析器。
-- 文档模型、排序和标题提取由 `@mira/docs` 提供。
+- 文档模型、排序和标题提取由 `@uichat-mira/docs` 提供。
 - 标准 YAML 失败时兼容旧站宽松 Frontmatter。
 - 站点适配层保留作者、博客日期、合并页和目录约定。
 

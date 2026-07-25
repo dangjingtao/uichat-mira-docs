@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { parseMiraDoc } from "@mira/docs";
+import { parseMiraDoc } from "@uichat-mira/docs";
 
 const root = process.cwd();
 const pagesRoot = resolve(root, "src/pages");

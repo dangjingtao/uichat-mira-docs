@@ -17,8 +17,8 @@ MiraDocs 是一个 **Git-native 的文档、发布与项目门户运行时**。�
 传统文档站常把内容、导航、路由、SEO 和部署逻辑散落在页面组件与构建脚本里。MiraDocs 把这些职责拆成几层：
 
 - Markdown 与 Frontmatter 是内容源。
-- `@mira/docs` 提供统一内容模型和解析能力。
-- `@mira/docs/vite` 负责内容发现、热更新和静态构建。
+- `@uichat-mira/docs` 提供统一内容模型和解析能力。
+- `@uichat-mira/docs/vite` 负责内容发现、热更新和静态构建。
 - React 站点决定视觉、交互与品牌表达。
 - GitHub Actions、Cloudflare Pages 等平台负责部署。
 - MiraDocs Skill 通过 GitHub 能力管理内容、分支、PR 与发布流程。
@@ -56,7 +56,7 @@ uichat-mira
 └── MiraDocs Skill 的正式来源与执行入口
 
 mira-docs
-├── @mira/docs 运行时
+├── @uichat-mira/docs 运行时
 ├── Vite 与静态构建契约
 ├── Schema、Starter 与官方自举站
 └── Skill 只读备份

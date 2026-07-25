@@ -1,6 +1,6 @@
 ---
 title: Vite 构建集成
-description: 使用 @mira/docs/vite 接管内容发现、热更新和静态输出。
+description: 使用 @uichat-mira/docs/vite 接管内容发现、热更新和静态输出。
 group: 参考
 order: 21
 ---
@@ -10,7 +10,7 @@ order: 21
 MiraDocs 的 Vite 入口是：
 
 ```ts
-import { miraDocs } from "@mira/docs/vite"
+import { miraDocs } from "@uichat-mira/docs/vite"
 ```
 
 ## 基本接入
@@ -58,7 +58,7 @@ import docs, { roots } from "virtual:mira-docs/content"
 当前边界：
 
 ```text
-@mira/docs/vite
+@uichat-mira/docs/vite
 └── 发现、解析、排序、roots、热更新
 
 src/content/mira-docs-adapter.ts
