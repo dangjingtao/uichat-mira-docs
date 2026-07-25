@@ -147,8 +147,44 @@ jobs:
 
 预览地址：$PREVIEW_URL
 
-根路径仍由 main 构建，迁移分支仅位于 /preview/。"
+根路径仍由 main 构建，迁移分支仅位于 /preview/。
+
+工作流：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Fail when preview smoke test failed
         if: steps.smoke.outcome != 'success'
         run: exit 1
+
+  report-build-failure:
+    if: always() && needs.build.result != 'success'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Report build failure on migration PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/4/comments \
+            --method POST \
+            --field body="❌ GitHub Pages 分支预览在组合构建阶段失败。
+
+根站和预览站都没有被部署。
+
+工作流：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  report-deploy-failure:
+    if: always() && needs.build.result == 'success' && needs.deploy.result != 'success'
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - deploy
+    steps:
+      - name: Report deployment failure on migration PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/4/comments \
+            --method POST \
+            --field body="❌ GitHub Pages 分支预览已完成组合构建，但 Pages 部署或在线冒烟阶段失败。
+
+工作流：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
