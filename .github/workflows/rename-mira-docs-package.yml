@@ -1,0 +1,70 @@
+name: Migrate MiraDocs npm scope
+
+on:
+  push:
+    branches:
+      - codex/mira-docs-migration-20260725
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/mira-docs-migration-20260725
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Rename package references
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          import { execFileSync } from "node:child_process";
+
+          const files = execFileSync("git", ["grep", "-l", "@mira/docs", "--", ":(exclude)pnpm-lock.yaml"], {
+            encoding: "utf8",
+          })
+            .trim()
+            .split("\n")
+            .filter(Boolean);
+
+          for (const file of files) {
+            const source = readFileSync(file, "utf8");
+            writeFileSync(file, source.replaceAll("@mira/docs", "@uichat-mira/docs"));
+          }
+
+          const packagePath = "package.json";
+          const packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
+          packageJson.dependencies["@uichat-mira/docs"] =
+            "github:dangjingtao/mira-docs#b5b1bff1aa81074b3a07c107a74195c2ac2af687";
+          delete packageJson.dependencies["@mira/docs"];
+          writeFileSync(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`);
+          NODE
+
+      - name: Refresh locked Git dependency
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Verify renamed production consumer
+        run: |
+          pnpm run verify:mira-docs
+          pnpm run build:github-pages
+          EXPECTED_BASE=uichat-mira-docs pnpm run verify:static-output
+
+      - name: Commit verified migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml src scripts vite.config.ts mira-docs-static.ts src/pages
+          git commit -m "refactor: consume @uichat-mira/docs preview package"
+          git push
