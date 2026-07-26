@@ -1,0 +1,58 @@
+name: Prepare MiraDocs 0.1.1 consumer
+
+on:
+  push:
+    branches:
+      - chore/consume-miradocs-0.1.1
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chore/consume-miradocs-0.1.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Consume the shared Markdown renderer
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("mira-docs-static.ts")
+          source = path.read_text(encoding="utf-8")
+          source = source.replace('import { marked } from "marked";\n', '')
+          source = source.replace(
+              '  extractHeadings,\n  slugify,\n',
+              '  extractHeadings,\n  renderMiraMarkdown,\n',
+          )
+          start = source.index("function removeMarkdownH1")
+          end = source.index("function docHref")
+          source = source[:start] + source[end:]
+          source = source.replace(
+              "renderMarkdown(doc.source)",
+              "renderMiraMarkdown(doc.source, { removeH1: true })",
+          )
+          assert "renderMarkdown(" not in source
+          assert "slugify," not in source
+          assert "renderMiraMarkdown" in source
+          path.write_text(source, encoding="utf-8")
+      - name: Resolve MiraDocs 0.1.1 from npm
+        run: pnpm install --lockfile-only
+      - name: Commit consumer update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mira-docs-static.ts pnpm-lock.yaml
+          git commit -m "chore: consume MiraDocs 0.1.1 renderer"
+          git push origin HEAD:chore/consume-miradocs-0.1.1
