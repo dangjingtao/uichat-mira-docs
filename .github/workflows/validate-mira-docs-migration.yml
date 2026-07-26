@@ -28,15 +28,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Probe current R2 download links
-        run: node scripts/probe-r2-links.mjs
-      - name: Upload R2 probe report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: r2-probe
-          path: r2-probe.json
-          if-no-files-found: error
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Verify real MiraDocs content compatibility
