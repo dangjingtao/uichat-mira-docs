@@ -30,14 +30,39 @@ const fallbackReleaseUrl =
   "https://github.com/dangjingtao/uichat-mira/releases/latest";
 const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
 
-function r2AssetUrl(asset: ReleaseAsset) {
-  return `${r2PublicBaseUrl}/${encodeURIComponent(asset.name)}`;
+function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
+  const version = releaseTag.replace(/^v/i, "");
+
+  // GitHub release uploads normalize spaces in asset basenames to dots, while
+  // the R2 sync keeps the original package filenames. Reconstruct only the
+  // known product-name portion and leave version/extension dots untouched.
+  if (/^electron-win_/i.test(asset.name) && version) {
+    const githubSuffix = `UIChat.Mira.Setup.${version}.exe`;
+    const r2Suffix = `UIChat Mira Setup ${version}.exe`;
+    if (asset.name.endsWith(githubSuffix)) {
+      return `${asset.name.slice(0, -githubSuffix.length)}${r2Suffix}`;
+    }
+  }
+
+  if (/^tauri-windows_/i.test(asset.name)) {
+    return asset.name.replace(
+      /(_tauri_(?:nsis|msi)_)UIChat\.Mira_/i,
+      "$1UIChat Mira_",
+    );
+  }
+
+  return asset.name;
+}
+
+function r2AssetUrl(asset: ReleaseAsset, releaseTag: string) {
+  return `${r2PublicBaseUrl}/${encodeURIComponent(r2AssetName(asset, releaseTag))}`;
 }
 
 function classifyDownloads(release: GitHubRelease | null) {
   const assets = (release?.assets || []).filter(
     (asset) => !/\.blockmap$/i.test(asset.name),
   );
+  const releaseTag = release?.tag_name || "";
 
   const electronSetup = assets.find(
     (asset) =>
@@ -69,7 +94,7 @@ function classifyDownloads(release: GitHubRelease | null) {
       label,
       meta,
       githubUrl: asset.browser_download_url,
-      r2Url: r2AssetUrl(asset),
+      r2Url: r2AssetUrl(asset, releaseTag),
     });
   };
 
@@ -80,7 +105,9 @@ function classifyDownloads(release: GitHubRelease | null) {
   return {
     recommendedGithubUrl:
       recommended?.browser_download_url || release?.html_url || fallbackReleaseUrl,
-    recommendedR2Url: recommended ? r2AssetUrl(recommended) : fallbackReleaseUrl,
+    recommendedR2Url: recommended
+      ? r2AssetUrl(recommended, releaseTag)
+      : fallbackReleaseUrl,
     options,
   };
 }
