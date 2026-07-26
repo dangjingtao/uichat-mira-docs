@@ -1,8 +1,8 @@
 status=1
 
 ? Verifying lockfile against supply-chain policies (577 entries)...
-✗ Lockfile failed supply-chain policy check (577 entries in 2.2s)
+✗ Lockfile failed supply-chain policy check (577 entries in 2.1s)
 [ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION] 1 lockfile entries failed verification:
-  @uichat-mira/docs@0.1.1 was published at 2026-07-26T20:23:32.000Z, within the minimumReleaseAge cutoff (2026-07-25T20:38:28.318Z)
+  @uichat-mira/docs@0.1.1 was published at 2026-07-26T20:23:32.000Z, within the minimumReleaseAge cutoff (2026-07-25T20:39:15.129Z)
 
 The lockfile contains entries that the active policies reject. This can mean the lockfile is stale, or that someone committed a lockfile that bypassed the policy locally — inspect recent changes to pnpm-lock.yaml before trusting it. If the changes look expected, run "pnpm clean --lockfile" and then "pnpm install" to rebuild from a fresh resolution. Alternatively, relax the policy that flagged them.
