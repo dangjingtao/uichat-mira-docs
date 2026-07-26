@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Consume the shared Markdown renderer
+      - name: Consume the shared renderer and restore static article shells
         shell: python
         run: |
           from pathlib import Path
@@ -35,24 +35,168 @@ jobs:
               '  extractHeadings,\n  slugify,\n',
               '  extractHeadings,\n  renderMiraMarkdown,\n',
           )
-          start = source.index("function removeMarkdownH1")
-          end = source.index("function docHref")
-          source = source[:start] + source[end:]
+          if "function removeMarkdownH1" in source:
+              start = source.index("function removeMarkdownH1")
+              end = source.index("function docHref")
+              source = source[:start] + source[end:]
           source = source.replace(
               "renderMarkdown(doc.source)",
               "renderMiraMarkdown(doc.source, { removeH1: true })",
           )
+
+          if "function staticSiteHeader" not in source:
+              helpers = r'''
+          function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
+            const links = [
+              ["首页", "/"],
+              ["文档", "/about/origin"],
+              ["Mira-Docs", "/mira-docs-api"],
+              ["视觉", "/design-md"],
+              ["博客", "/blogs"],
+            ] as const;
+            const navigation = links
+              .map(
+                ([label, path]) =>
+                  `<li><a href="${docHref(path, context)}">${miraDocsEscapeHtml(label)}</a></li>`,
+              )
+              .join("");
+            return `<nav class="top-nav docs-header seo-static-header"><div class="wrap"><a class="brand" href="${docHref("/", context)}"><img class="brand-logo" alt="" src="${docHref("/mira-logo.png", context)}" />UIChat Mira</a><ul class="menu">${navigation}</ul></div></nav>`;
+          }
+
+          function staticDirectory(doc: StaticDoc): string {
+            const parts = doc.path.split("/").filter(Boolean);
+            return parts.slice(1, -1).join("/");
+          }
+
+          function staticDirectoryTitle(directory: string): string {
+            if (!directory) return "文档";
+            return directory
+              .split("/")
+              .filter(Boolean)
+              .map((part) => part.replace(/[-_]+/g, " "))
+              .join(" / ");
+          }
+
+          function staticDocNav(
+            doc: StaticDoc,
+            docs: StaticDoc[],
+            context: MiraDocsStaticBuildContext,
+          ): string {
+            const scoped = docs
+              .filter((candidate) => candidate.root === doc.root)
+              .sort(
+                (left, right) =>
+                  left.order - right.order || left.path.localeCompare(right.path),
+              );
+            const groups = new Map<string, StaticDoc[]>();
+            for (const candidate of scoped) {
+              const directory = staticDirectory(candidate);
+              const group = groups.get(directory) || [];
+              group.push(candidate);
+              groups.set(directory, group);
+            }
+            const rootPath = doc.root === "docs" ? "/" : `/${doc.root}`;
+            const rootTitle = scoped.find((candidate) => candidate.nav)?.nav || doc.root;
+            const sections = [...groups.entries()]
+              .map(([directory, items]) => {
+                const links = items
+                  .map(
+                    (item) =>
+                      `<li><a${item.path === doc.path ? ' class="active" aria-current="page"' : ""} href="${docHref(item.path, context)}">${miraDocsEscapeHtml(item.title)}</a></li>`,
+                  )
+                  .join("");
+                return `<div class="docnav-group"><h5>${miraDocsEscapeHtml(staticDirectoryTitle(directory))}</h5><ul>${links}</ul></div>`;
+              })
+              .join("");
+            return `<nav class="docnav"><h5>目录</h5><div class="docnav-group"><h5><a href="${docHref(rootPath, context)}">${miraDocsEscapeHtml(rootTitle)}</a></h5></div>${sections}</nav>`;
+          }
+
+          function staticDocToc(doc: StaticDoc): string {
+            if (!doc.headings.length) return "";
+            const links = doc.headings
+              .map(
+                (heading) =>
+                  `<li class="toc-depth-${heading.depth}"><a href="#${miraDocsEscapeHtml(heading.id)}">${miraDocsEscapeHtml(heading.text)}</a></li>`,
+              )
+              .join("");
+            return `<aside class="toc"><h5>本页目录</h5><ul>${links}</ul></aside>`;
+          }
+          '''
+              source = source.replace("function documentBody(", helpers + "\nfunction documentBody(", 1)
+
+          document_start = source.index("function documentBody(")
+          document_end = source.index("function articleToc(")
+          document_function = r'''function documentBody(
+            doc: StaticDoc,
+            previous: StaticDoc | undefined,
+            next: StaticDoc | undefined,
+            context: MiraDocsStaticBuildContext,
+            docs: StaticDoc[],
+          ): string {
+            const body = renderMiraMarkdown(doc.source, { removeH1: true });
+            const main = `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)} · ${String(doc.order).padStart(2, "0")}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article>${pageNavigation(previous, next, context)}</main>`;
+            return `${staticSiteHeader(context)}<div class="docs-app seo-static-docs-app"><div class="docs-shell">${staticDocNav(doc, docs, context)}${main}${staticDocToc(doc)}</div></div>`;
+          }
+
+          '''
+          source = source[:document_start] + document_function + source[document_end:]
+
+          article_start = source.index("function articleBody(")
+          article_end = source.index("function areaBody(")
+          article_function = r'''function articleBody(
+            doc: StaticDoc,
+            previous: StaticDoc | undefined,
+            next: StaticDoc | undefined,
+            context: MiraDocsStaticBuildContext,
+            docs: StaticDoc[],
+          ): string {
+            const body = renderMiraMarkdown(doc.source, { removeH1: true });
+            const authors = doc.authors.join(" × ");
+            const meta = [authors, doc.date, doc.readTime, doc.group]
+              .filter(Boolean)
+              .map((item) => `<span>${miraDocsEscapeHtml(String(item))}</span>`)
+              .join('<span class="dot"></span>');
+            const visual = doc.image
+              ? `<div aria-hidden="true" class="article-header-visual"><img alt="" class="article-header-visual-image" src="${imageUrl(doc, context)}" /></div>`
+              : "";
+            const authorAvatars = doc.authors
+              .map(
+                (name) =>
+                  `<img alt="" class="author-signature-avatar" src="${authorAvatar(name)}" />`,
+              )
+              .join("");
+            const authorCountClass = doc.authors.length > 1 ? "duo" : "solo";
+            const main = `<main class="doc-main seo-static-content blog-post-page"><article class="article-header">${visual}<h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}<div class="post-meta post-meta-article">${meta}</div></article><div class="article-shell"><div class="article-body markdown blog-markdown">${body}<section class="author-signature author-signature-${authorCountClass}"><div class="author-signature-avatars author-signature-avatars-${doc.authors.length}">${authorAvatars}</div><div class="author-signature-copy"><h4>${miraDocsEscapeHtml(authors)}</h4></div></section>${pageNavigation(previous, next, context)}</div>${articleToc(doc)}</div></main>`;
+            return `${staticSiteHeader(context)}<div class="docs-app blog-app seo-static-docs-app"><div class="docs-shell blog-shell">${main}</div></div>`;
+          }
+
+          '''
+          source = source[:article_start] + article_function + source[article_end:]
+
+          source = source.replace(
+              "articleBody(doc, previous, next, context)",
+              "articleBody(doc, previous, next, context, docs)",
+          )
+          source = source.replace(
+              "documentBody(doc, previous, next, context)",
+              "documentBody(doc, previous, next, context, docs)",
+          )
           assert "renderMarkdown(" not in source
           assert "slugify," not in source
-          assert "renderMiraMarkdown" in source
+          assert "function staticSiteHeader" in source
+          assert "staticDocNav(doc, docs, context)" in source
           path.write_text(source, encoding="utf-8")
       - name: Resolve MiraDocs 0.1.1 from npm
         run: pnpm install --lockfile-only
       - name: Commit consumer update
         shell: bash
         run: |
+          if git diff --quiet -- mira-docs-static.ts pnpm-lock.yaml; then
+            echo "Consumer source and lockfile already prepared."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add mira-docs-static.ts pnpm-lock.yaml
-          git commit -m "chore: consume MiraDocs 0.1.1 renderer"
+          git commit -m "fix: restore complete static document shells"
           git push origin HEAD:chore/consume-miradocs-0.1.1
