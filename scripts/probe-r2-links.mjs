@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { writeFileSync } from "node:fs";
 
 const releaseUrl = "https://api.github.com/repos/dangjingtao/uichat-mira/releases/latest";
 const r2Base = "https://assets.tomz.io/mira/latest";
@@ -75,19 +76,14 @@ const entries = [
   return { key, asset: asset.name, url, ...probe(url) };
 });
 
-console.log("R2_PROBE_REPORT_START");
-console.log(
-  JSON.stringify(
-    {
-      tag: release.tag_name,
-      release: release.html_url,
-      entries,
-    },
-    null,
-    2,
-  ),
-);
-console.log("R2_PROBE_REPORT_END");
+const report = {
+  tag: release.tag_name,
+  release: release.html_url,
+  generatedAt: new Date().toISOString(),
+  entries,
+};
+writeFileSync("r2-probe.json", `${JSON.stringify(report, null, 2)}\n`);
+console.log(JSON.stringify(report, null, 2));
 
 if (entries.some((entry) => entry.status < 200 || entry.status >= 400)) {
   process.exitCode = 1;
