@@ -42,13 +42,16 @@ function routeUrl(route) {
 
 const failures = [];
 const visibleRoutes = new Set(["/"]);
+const docsByRoute = new Map();
 for (const file of markdownFiles(pagesRoot)) {
   const sourcePath = relative(pagesRoot, file).replace(/\\/g, "/");
   const doc = parseMiraDoc(sourcePath, readFileSync(file, "utf8"));
   const merge = dataString(doc.data, "merge");
   const mergeIndex = dataString(doc.data, "mergeIndex") === "true";
   if (merge && !mergeIndex) continue;
-  visibleRoutes.add(routeFor(sourcePath, doc));
+  const route = routeFor(sourcePath, doc);
+  visibleRoutes.add(route);
+  docsByRoute.set(route, doc);
 }
 
 for (const route of visibleRoutes) {
@@ -87,6 +90,50 @@ if (existsSync(notFoundPath)) {
   }
 }
 
+const designSystemRoute = "/design-md/视觉/product-design-system";
+const designSystemPath = routeFile(designSystemRoute);
+if (existsSync(designSystemPath)) {
+  const html = readFileSync(designSystemPath, "utf8");
+  if (html.includes("::: html")) {
+    failures.push("产品设计系统静态页泄漏了 ::: html 容器标记");
+  }
+  if (!html.includes('class="claude-visual"')) {
+    failures.push("产品设计系统静态页没有恢复原始 HTML 视觉内容");
+  }
+  if (!html.includes("Mira 的设计系统")) {
+    failures.push("产品设计系统静态页缺少合并后的正文内容");
+  }
+  if ((html.match(/<h1>产品设计系统<\/h1>/g) || []).length !== 1) {
+    failures.push("产品设计系统静态页标题重复或缺失");
+  }
+}
+
+const blogEntry = [...docsByRoute.entries()].find(([route]) =>
+  route.startsWith("/blogs/"),
+);
+if (blogEntry) {
+  const [route, doc] = blogEntry;
+  const file = routeFile(route);
+  if (existsSync(file)) {
+    const html = readFileSync(file, "utf8");
+    if (!html.includes('class="article-header"')) {
+      failures.push(`博客静态页缺少文章头: ${route}`);
+    }
+    if (!html.includes("post-meta post-meta-article")) {
+      failures.push(`博客静态页缺少作者、日期和分类信息: ${route}`);
+    }
+    if (!html.includes("author-signature")) {
+      failures.push(`博客静态页缺少作者署名区: ${route}`);
+    }
+    if (doc.date && !html.includes(String(doc.date))) {
+      failures.push(`博客静态页缺少发布日期: ${route}`);
+    }
+    if (doc.group && !html.includes(String(doc.group))) {
+      failures.push(`博客静态页缺少文章分类: ${route}`);
+    }
+  }
+}
+
 if (existsSync(sitemapPath)) {
   const sitemap = readFileSync(sitemapPath, "utf8");
   for (const route of visibleRoutes) {
@@ -110,5 +157,5 @@ if (failures.length) {
 }
 
 console.log(
-  `MiraDocs static output passed: ${visibleRoutes.size} routes, canonical/JSON-LD/404/sitemap/robots verified.`,
+  `MiraDocs static output passed: ${visibleRoutes.size} routes, article rendering/canonical/JSON-LD/404/sitemap/robots verified.`,
 );
