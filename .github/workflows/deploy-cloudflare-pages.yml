@@ -2,6 +2,12 @@ name: Deploy Cloudflare Pages
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/cloudflare-deploy-trigger
+      - .github/workflows/deploy-cloudflare-pages.yml
 
 concurrency:
   group: cloudflare-pages
