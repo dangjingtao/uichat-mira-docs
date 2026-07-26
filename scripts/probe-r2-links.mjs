@@ -4,9 +4,22 @@ import { writeFileSync } from "node:fs";
 const releaseUrl = "https://api.github.com/repos/dangjingtao/uichat-mira/releases/latest";
 const r2Base = "https://assets.tomz.io/mira/latest";
 
-function r2Url(asset) {
-  const encodedName = new URL(asset.browser_download_url).pathname.split("/").pop();
-  return `${r2Base}/${encodedName}`;
+function r2AssetName(asset, tag) {
+  const version = tag.replace(/^v/i, "");
+  if (/electron/i.test(asset.name)) {
+    return asset.name.replace(
+      `UIChat.Mira.Setup.${version}.exe`,
+      `UIChat Mira Setup ${version}.exe`,
+    );
+  }
+  if (/tauri/i.test(asset.name)) {
+    return asset.name.replace("UIChat.Mira_", "UIChat Mira_");
+  }
+  return asset.name;
+}
+
+function r2Url(asset, tag) {
+  return `${r2Base}/${encodeURIComponent(r2AssetName(asset, tag))}`;
 }
 
 function probe(url) {
@@ -72,8 +85,14 @@ const entries = [
   if (!asset) {
     return { key, asset: null, url: null, status: 0, error: "asset not found" };
   }
-  const url = r2Url(asset);
-  return { key, asset: asset.name, url, ...probe(url) };
+  const url = r2Url(asset, release.tag_name);
+  return {
+    key,
+    asset: asset.name,
+    r2Asset: r2AssetName(asset, release.tag_name),
+    url,
+    ...probe(url),
+  };
 });
 
 const report = {
