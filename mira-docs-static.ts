@@ -1,5 +1,10 @@
 import { marked } from "marked";
-import type { MiraDoc, MiraDocsConfig } from "@uichat-mira/docs";
+import {
+  extractHeadings,
+  slugify,
+  type MiraDoc,
+  type MiraDocsConfig,
+} from "@uichat-mira/docs";
 import {
   miraDocsAbsoluteAssetUrl,
   miraDocsAbsoluteRouteUrl,
@@ -13,6 +18,7 @@ type StaticDoc = MiraDoc & {
   root: string;
   source: string;
   authors: string[];
+  readTime?: string;
   image?: string;
   merge?: string;
   mergeIndex?: boolean;
@@ -37,18 +43,36 @@ function dataList(data: Record<string, unknown>, key: string): string[] {
     .filter(Boolean);
 }
 
+function authorName(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "tomz") return "Tomz Dang";
+  if (normalized === "mira") return "Mira";
+  return value;
+}
+
+function authorAvatar(name: string): string {
+  return name === "Mira"
+    ? "https://assets.tomz.io/images/1784065334968-image-20260715054214404.webp"
+    : "https://avatars.githubusercontent.com/u/20751798?s=160&v=4";
+}
+
 function staticDocs(docs: MiraDoc[]): StaticDoc[] {
-  const parsed: StaticDoc[] = docs.map((doc: MiraDoc) => ({
-    ...doc,
-    root: doc.path.split("/")[1] || "docs",
-    source: doc.body,
-    authors: dataList(doc.data, "author").length
-      ? dataList(doc.data, "author")
-      : ["Tomz Dang"],
-    image: doc.cover || dataString(doc.data, "image"),
-    merge: dataString(doc.data, "merge"),
-    mergeIndex: dataString(doc.data, "mergeIndex") === "true",
-  }));
+  const parsed: StaticDoc[] = docs.map((doc: MiraDoc) => {
+    const explicitAuthors = dataList(doc.data, "author").map(authorName);
+    return {
+      ...doc,
+      root: doc.path.split("/")[1] || "docs",
+      source: doc.body,
+      authors: explicitAuthors.length ? explicitAuthors : ["Tomz Dang"],
+      readTime:
+        dataString(doc.data, "readTime") ||
+        dataString(doc.data, "readtime") ||
+        dataString(doc.data, "read_time"),
+      image: doc.cover || dataString(doc.data, "image"),
+      merge: dataString(doc.data, "merge"),
+      mergeIndex: dataString(doc.data, "mergeIndex") === "true",
+    };
+  });
 
   return parsed
     .filter((doc: StaticDoc) => !doc.merge || doc.mergeIndex)
@@ -59,7 +83,12 @@ function staticDocs(docs: MiraDoc[]): StaticDoc[] {
         .sort((left: StaticDoc, right: StaticDoc) => left.order - right.order)
         .map((section: StaticDoc) => section.source)
         .join("\n\n");
-      return { ...doc, source, body: source };
+      return {
+        ...doc,
+        source,
+        body: source,
+        headings: extractHeadings(source),
+      };
     });
 }
 
@@ -67,9 +96,127 @@ function basePath(base: string): string {
   return base === "/" ? "" : base.replace(/\/$/, "");
 }
 
-function documentBody(doc: StaticDoc): string {
-  const body = marked.parse(doc.source) as string;
-  return `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article></main>`;
+function removeMarkdownH1(source: string): string {
+  let inFence = false;
+  return source
+    .split(/\r?\n/)
+    .filter((line) => {
+      if (/^\s*```/.test(line)) {
+        inFence = !inFence;
+        return true;
+      }
+      return inFence || !/^#\s+/.test(line);
+    })
+    .join("\n");
+}
+
+function renderMarkdown(source: string): string {
+  const htmlBlocks: string[] = [];
+  const prepared = removeMarkdownH1(source)
+    .replace(
+      /::: tip\s+([\s\S]*?):::/g,
+      '<div class="md-custom-block"><strong>提示</strong><p>$1</p></div>',
+    )
+    .replace(/::: html\s*([\s\S]*?):::/g, (_, html: string) => {
+      const index = htmlBlocks.push(html.trim()) - 1;
+      return `MIRA_HTML_BLOCK_${index}`;
+    });
+
+  const renderer = new marked.Renderer();
+  renderer.code = ({ text, lang }) => {
+    const language = lang?.trim().toLowerCase();
+    if (language === "mermaid") {
+      return `<pre class="markdown-mermaid-source"><code class="language-mermaid">${miraDocsEscapeHtml(text)}</code></pre>`;
+    }
+    const languageClass =
+      language && /^[a-z0-9-]+$/.test(language) ? ` class="language-${language}"` : "";
+    return `<pre><code${languageClass}>${miraDocsEscapeHtml(text)}</code></pre>`;
+  };
+
+  let html = marked.parse(prepared, { gfm: true, renderer }) as string;
+  htmlBlocks.forEach((block, index) => {
+    const placeholder = `MIRA_HTML_BLOCK_${index}`;
+    html = html.replace(new RegExp(`<p>${placeholder}<\\/p>|${placeholder}`, "g"), block);
+  });
+
+  return html.replace(
+    /<h([23])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/g,
+    (_, level: string, attributes: string, text: string) => {
+      if (/\bid\s*=\s*["'][^"']+["']/i.test(attributes)) {
+        return `<h${level}${attributes}>${text}</h${level}>`;
+      }
+      const id = slugify(text);
+      return id
+        ? `<h${level}${attributes} id="${id}">${text}<a class="md-anchor" href="#${id}">#</a></h${level}>`
+        : `<h${level}${attributes}>${text}</h${level}>`;
+    },
+  );
+}
+
+function docHref(path: string, context: MiraDocsStaticBuildContext): string {
+  return `${basePath(context.base)}${path}`;
+}
+
+function pageNavigation(
+  previous: StaticDoc | undefined,
+  next: StaticDoc | undefined,
+  context: MiraDocsStaticBuildContext,
+): string {
+  if (!previous && !next) return "";
+  const previousLink = previous
+    ? `<a href="${docHref(previous.path, context)}"><span class="dir">上一篇</span><span class="to">← ${miraDocsEscapeHtml(previous.title)}</span></a>`
+    : "<span></span>";
+  const nextLink = next
+    ? `<a class="next" href="${docHref(next.path, context)}"><span class="dir">下一篇</span><span class="to">${miraDocsEscapeHtml(next.title)} →</span></a>`
+    : "";
+  return `<div class="page-nav">${previousLink}${nextLink}</div>`;
+}
+
+function documentBody(
+  doc: StaticDoc,
+  previous: StaticDoc | undefined,
+  next: StaticDoc | undefined,
+  context: MiraDocsStaticBuildContext,
+): string {
+  const body = renderMarkdown(doc.source);
+  return `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)} · ${String(doc.order).padStart(2, "0")}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article>${pageNavigation(previous, next, context)}</main>`;
+}
+
+function articleToc(doc: StaticDoc): string {
+  const headings = doc.headings.filter((heading) => heading.depth === 2);
+  if (!headings.length) return "";
+  const items = headings
+    .map(
+      (heading) =>
+        `<li><a href="#${miraDocsEscapeHtml(heading.id)}">${miraDocsEscapeHtml(heading.text)}</a></li>`,
+    )
+    .join("");
+  return `<aside class="article-toc"><h5>本文目录</h5><ul>${items}</ul></aside>`;
+}
+
+function articleBody(
+  doc: StaticDoc,
+  previous: StaticDoc | undefined,
+  next: StaticDoc | undefined,
+  context: MiraDocsStaticBuildContext,
+): string {
+  const body = renderMarkdown(doc.source);
+  const authors = doc.authors.join(" × ");
+  const meta = [authors, doc.date, doc.readTime, doc.group]
+    .filter(Boolean)
+    .map((item) => `<span>${miraDocsEscapeHtml(String(item))}</span>`)
+    .join('<span class="dot"></span>');
+  const visual = doc.image
+    ? `<div aria-hidden="true" class="article-header-visual"><img alt="" class="article-header-visual-image" src="${imageUrl(doc, context)}" /></div>`
+    : "";
+  const authorAvatars = doc.authors
+    .map(
+      (name) =>
+        `<img alt="" class="author-signature-avatar" src="${authorAvatar(name)}" />`,
+    )
+    .join("");
+  const authorCountClass = doc.authors.length > 1 ? "duo" : "solo";
+  return `<main class="doc-main seo-static-content blog-post-page"><article class="article-header">${visual}<h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}<div class="post-meta post-meta-article">${meta}</div></article><div class="article-shell"><div class="article-body markdown blog-markdown">${body}<section class="author-signature author-signature-${authorCountClass}"><div class="author-signature-avatars author-signature-avatars-${doc.authors.length}">${authorAvatars}</div><div class="author-signature-copy"><h4>${miraDocsEscapeHtml(authors)}</h4></div></section>${pageNavigation(previous, next, context)}</div>${articleToc(doc)}</div></main>`;
 }
 
 function areaBody(
@@ -85,7 +232,7 @@ function areaBody(
     .filter((doc: StaticDoc) => doc.root === root)
     .map(
       (doc: StaticDoc) =>
-        `<li><a href="${basePath(context.base)}${doc.path}">${miraDocsEscapeHtml(doc.title)}</a><p>${miraDocsEscapeHtml(doc.description)}</p></li>`,
+        `<li><a href="${docHref(doc.path, context)}">${miraDocsEscapeHtml(doc.title)}</a><p>${miraDocsEscapeHtml(doc.description)}</p></li>`,
     )
     .join("");
   return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${miraDocsEscapeHtml(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}</ol></section></section></main>`;
@@ -150,6 +297,23 @@ function documentJsonLd(
   };
 }
 
+function siblingDocs(
+  doc: StaticDoc,
+  docs: StaticDoc[],
+): { previous?: StaticDoc; next?: StaticDoc } {
+  const scoped = docs
+    .filter((candidate) => candidate.root === doc.root)
+    .sort(
+      (left, right) =>
+        left.order - right.order || left.path.localeCompare(right.path),
+    );
+  const index = scoped.findIndex((candidate) => candidate.path === doc.path);
+  return {
+    previous: index > 0 ? scoped[index - 1] : undefined,
+    next: index >= 0 ? scoped[index + 1] : undefined,
+  };
+}
+
 function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
   const docs = staticDocs(context.docs);
   const result: MiraDocsStaticRoute[] = [
@@ -179,11 +343,15 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
   }
 
   for (const doc of docs) {
+    const { previous, next } = siblingDocs(doc, docs);
     result.push({
       path: doc.path,
       title: doc.title,
       description: doc.description || "UIChat Mira 文档",
-      body: documentBody(doc),
+      body:
+        doc.root === "blogs"
+          ? articleBody(doc, previous, next, context)
+          : documentBody(doc, previous, next, context),
       type: "article",
       image: doc.image,
       jsonLd: documentJsonLd(doc, context),
