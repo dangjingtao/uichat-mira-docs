@@ -15,7 +15,7 @@
     "@fontsource/cormorant-garamond": "^5.2.11",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/public-sans": "^5.2.7",
-    "@uichat-mira/docs": "github:dangjingtao/mira-docs#b5b1bff1aa81074b3a07c107a74195c2ac2af687",
+    "@uichat-mira/docs": "^0.1.0",
     "highlight.js": "^11.11.1",
     "lucide-react": "^1.24.0",
     "marked": "^15.0.12",
