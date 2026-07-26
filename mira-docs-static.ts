@@ -1,7 +1,6 @@
-import { marked } from "marked";
 import {
   extractHeadings,
-  slugify,
+  renderMiraMarkdown,
   type MiraDoc,
   type MiraDocsConfig,
 } from "@uichat-mira/docs";
@@ -96,63 +95,6 @@ function basePath(base: string): string {
   return base === "/" ? "" : base.replace(/\/$/, "");
 }
 
-function removeMarkdownH1(source: string): string {
-  let inFence = false;
-  return source
-    .split(/\r?\n/)
-    .filter((line) => {
-      if (/^\s*```/.test(line)) {
-        inFence = !inFence;
-        return true;
-      }
-      return inFence || !/^#\s+/.test(line);
-    })
-    .join("\n");
-}
-
-function renderMarkdown(source: string): string {
-  const htmlBlocks: string[] = [];
-  const prepared = removeMarkdownH1(source)
-    .replace(
-      /::: tip\s+([\s\S]*?):::/g,
-      '<div class="md-custom-block"><strong>提示</strong><p>$1</p></div>',
-    )
-    .replace(/::: html\s*([\s\S]*?):::/g, (_, html: string) => {
-      const index = htmlBlocks.push(html.trim()) - 1;
-      return `MIRA_HTML_BLOCK_${index}`;
-    });
-
-  const renderer = new marked.Renderer();
-  renderer.code = ({ text, lang }) => {
-    const language = lang?.trim().toLowerCase();
-    if (language === "mermaid") {
-      return `<pre class="markdown-mermaid-source"><code class="language-mermaid">${miraDocsEscapeHtml(text)}</code></pre>`;
-    }
-    const languageClass =
-      language && /^[a-z0-9-]+$/.test(language) ? ` class="language-${language}"` : "";
-    return `<pre><code${languageClass}>${miraDocsEscapeHtml(text)}</code></pre>`;
-  };
-
-  let html = marked.parse(prepared, { gfm: true, renderer }) as string;
-  htmlBlocks.forEach((block, index) => {
-    const placeholder = `MIRA_HTML_BLOCK_${index}`;
-    html = html.replace(new RegExp(`<p>${placeholder}<\\/p>|${placeholder}`, "g"), block);
-  });
-
-  return html.replace(
-    /<h([23])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/g,
-    (_, level: string, attributes: string, text: string) => {
-      if (/\bid\s*=\s*["'][^"']+["']/i.test(attributes)) {
-        return `<h${level}${attributes}>${text}</h${level}>`;
-      }
-      const id = slugify(text);
-      return id
-        ? `<h${level}${attributes} id="${id}">${text}<a class="md-anchor" href="#${id}">#</a></h${level}>`
-        : `<h${level}${attributes}>${text}</h${level}>`;
-    },
-  );
-}
-
 function docHref(path: string, context: MiraDocsStaticBuildContext): string {
   return `${basePath(context.base)}${path}`;
 }
@@ -178,7 +120,7 @@ function documentBody(
   next: StaticDoc | undefined,
   context: MiraDocsStaticBuildContext,
 ): string {
-  const body = renderMarkdown(doc.source);
+  const body = renderMiraMarkdown(doc.source, { removeH1: true });
   return `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)} · ${String(doc.order).padStart(2, "0")}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article>${pageNavigation(previous, next, context)}</main>`;
 }
 
@@ -200,7 +142,7 @@ function articleBody(
   next: StaticDoc | undefined,
   context: MiraDocsStaticBuildContext,
 ): string {
-  const body = renderMarkdown(doc.source);
+  const body = renderMiraMarkdown(doc.source, { removeH1: true });
   const authors = doc.authors.join(" × ");
   const meta = [authors, doc.date, doc.readTime, doc.group]
     .filter(Boolean)
