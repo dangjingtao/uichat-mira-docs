@@ -165,7 +165,9 @@ function staticDocNav(
   }
   const rootPath = doc.root === "docs" ? "/" : `/${doc.root}`;
   const rootTitle =
-    scoped.find((candidate) => candidate.nav)?.nav || doc.group || doc.root;
+    scoped.map((candidate) => dataString(candidate.data, "nav")).find(Boolean) ||
+    doc.group ||
+    doc.root;
   const sections = [...groups.entries()]
     .map(([directory, items]) => {
       const links = items
