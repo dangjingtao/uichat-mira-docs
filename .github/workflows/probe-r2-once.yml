@@ -1,0 +1,85 @@
+name: Probe current R2 downloads
+
+on:
+  push:
+    branches: [fix/r2-download-links-20260726]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.event.head_commit.message != 'chore: record R2 probe'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve and probe four R2 entry points
+        run: |
+          node <<'NODE'
+          const { spawnSync } = require('node:child_process');
+          const { writeFileSync } = require('node:fs');
+
+          const releaseUrl = 'https://api.github.com/repos/dangjingtao/uichat-mira/releases/latest';
+          const base = 'https://assets.tomz.io/mira/latest';
+
+          function r2Url(asset) {
+            const encodedName = new URL(asset.browser_download_url).pathname.split('/').pop();
+            return `${base}/${encodedName}`;
+          }
+
+          function probe(url) {
+            const result = spawnSync('curl', [
+              '--silent', '--show-error', '--location', '--head',
+              '--output', '/dev/null', '--write-out', '%{http_code}', url,
+            ], { encoding: 'utf8' });
+            return {
+              status: Number(result.stdout.trim() || 0),
+              error: result.status === 0 ? null : (result.stderr.trim() || `curl exit ${result.status}`),
+            };
+          }
+
+          const response = await fetch(releaseUrl, {
+            headers: {
+              Accept: 'application/vnd.github+json',
+              'User-Agent': 'uichat-mira-docs-r2-probe',
+            },
+          });
+          if (!response.ok) throw new Error(`GitHub release API returned ${response.status}`);
+          const release = await response.json();
+          const assets = (release.assets || []).filter((asset) => !/\.blockmap$/i.test(asset.name));
+          const electron = assets.find((asset) => /electron/i.test(asset.name) && /setup.*\.exe$/i.test(asset.name));
+          const tauriNsis = assets.find((asset) => /tauri/i.test(asset.name) && /(?:nsis|setup)/i.test(asset.name) && /\.exe$/i.test(asset.name));
+          const tauriMsi = assets.find((asset) => /tauri/i.test(asset.name) && /\.msi$/i.test(asset.name));
+          const fallback = assets.find((asset) => /\.(exe|msi)$/i.test(asset.name));
+          const recommended = electron || tauriNsis || tauriMsi || fallback;
+
+          const entries = [
+            ['recommended', recommended],
+            ['electron', electron],
+            ['tauri-nsis', tauriNsis],
+            ['tauri-msi', tauriMsi],
+          ].map(([key, asset]) => {
+            if (!asset) return { key, asset: null, url: null, status: 0, error: 'asset not found' };
+            const url = r2Url(asset);
+            return { key, asset: asset.name, url, ...probe(url) };
+          });
+
+          const report = {
+            tag: release.tag_name,
+            release: release.html_url,
+            generatedAt: new Date().toISOString(),
+            entries,
+          };
+          writeFileSync('r2-probe.json', `${JSON.stringify(report, null, 2)}\n`);
+          console.log(JSON.stringify(report, null, 2));
+          NODE
+      - name: Commit probe report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add r2-probe.json
+          git commit -m "chore: record R2 probe"
+          git push
