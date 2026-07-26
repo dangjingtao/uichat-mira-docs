@@ -40,6 +40,31 @@ function routeUrl(route) {
   return `${siteUrl}${expectedBase}${route === "/" ? "/" : `${route}/`}`;
 }
 
+function verifyDocumentShell(route, expectedTitle) {
+  const file = routeFile(route);
+  if (!existsSync(file)) return;
+  const html = readFileSync(file, "utf8");
+  const requiredClasses = [
+    'class="top-nav docs-header seo-static-header"',
+    'class="docs-app seo-static-docs-app"',
+    'class="docs-shell"',
+    'class="docnav"',
+    'class="toc"',
+    'class="page-nav"',
+  ];
+  for (const marker of requiredClasses) {
+    if (!html.includes(marker)) {
+      failures.push(`静态文档页缺少完整页面壳 ${marker}: ${route}`);
+    }
+  }
+  if ((html.match(new RegExp(`<h1>${expectedTitle}<\\/h1>`, "g")) || []).length !== 1) {
+    failures.push(`静态文档页标题重复或缺失: ${route}`);
+  }
+  if (/\b(?:src|href)="\.\.?\/assets\//.test(html)) {
+    failures.push(`深层路由包含相对 assets 地址: ${route}`);
+  }
+}
+
 const failures = [];
 const visibleRoutes = new Set(["/"]);
 const docsByRoute = new Map();
@@ -103,10 +128,24 @@ if (existsSync(designSystemPath)) {
   if (!html.includes("Mira 的设计系统")) {
     failures.push("产品设计系统静态页缺少合并后的正文内容");
   }
-  if ((html.match(/<h1>产品设计系统<\/h1>/g) || []).length !== 1) {
-    failures.push("产品设计系统静态页标题重复或缺失");
+}
+verifyDocumentShell(designSystemRoute, "产品设计系统");
+
+const claudeRoute = "/design-md/视觉/theme/claude";
+const claudePath = routeFile(claudeRoute);
+if (existsSync(claudePath)) {
+  const html = readFileSync(claudePath, "utf8");
+  if (html.includes("<h1>Claude 的 DESIGN.md</h1>")) {
+    failures.push("Claude 静态页仍显示正文中的重复一级标题");
+  }
+  if (!html.includes("DESIGN.md 原始元数据")) {
+    failures.push("Claude 静态页正文信息缺失");
+  }
+  if (!html.includes("本页目录")) {
+    failures.push("Claude 静态页缺少本页目录");
   }
 }
+verifyDocumentShell(claudeRoute, "Claude");
 
 const blogEntry = [...docsByRoute.entries()].find(([route]) =>
   route.startsWith("/blogs/"),
@@ -124,6 +163,9 @@ if (blogEntry) {
     }
     if (!html.includes("author-signature")) {
       failures.push(`博客静态页缺少作者署名区: ${route}`);
+    }
+    if (!html.includes('class="top-nav docs-header seo-static-header"')) {
+      failures.push(`博客静态页缺少站点导航: ${route}`);
     }
     if (doc.date && !html.includes(String(doc.date))) {
       failures.push(`博客静态页缺少发布日期: ${route}`);
@@ -157,5 +199,5 @@ if (failures.length) {
 }
 
 console.log(
-  `MiraDocs static output passed: ${visibleRoutes.size} routes, article rendering/canonical/JSON-LD/404/sitemap/robots verified.`,
+  `MiraDocs static output passed: ${visibleRoutes.size} routes, complete article shells/Markdown rendering/canonical/JSON-LD/404/sitemap/robots verified.`,
 );
