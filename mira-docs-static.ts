@@ -114,14 +114,93 @@ function pageNavigation(
   return `<div class="page-nav">${previousLink}${nextLink}</div>`;
 }
 
+function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
+  const links = [
+    ["首页", "/"],
+    ["文档", "/about/origin"],
+    ["Mira-Docs", "/mira-docs-api"],
+    ["视觉", "/design-md"],
+    ["博客", "/blogs"],
+  ] as const;
+  const navigation = links
+    .map(
+      ([label, path]) =>
+        `<li><a href="${docHref(path, context)}">${miraDocsEscapeHtml(label)}</a></li>`,
+    )
+    .join("");
+  return `<nav class="top-nav docs-header seo-static-header"><div class="wrap"><a class="brand" href="${docHref("/", context)}"><img class="brand-logo" alt="" src="${docHref("/mira-logo.png", context)}" />UIChat Mira</a><ul class="menu">${navigation}</ul></div></nav>`;
+}
+
+function staticDirectory(doc: StaticDoc): string {
+  const parts = doc.path.split("/").filter(Boolean);
+  return parts.slice(1, -1).join("/");
+}
+
+function staticDirectoryTitle(directory: string): string {
+  if (!directory) return "文档";
+  return directory
+    .split("/")
+    .filter(Boolean)
+    .map((part) => part.replace(/[-_]+/g, " "))
+    .join(" / ");
+}
+
+function staticDocNav(
+  doc: StaticDoc,
+  docs: StaticDoc[],
+  context: MiraDocsStaticBuildContext,
+): string {
+  const scoped = docs
+    .filter((candidate) => candidate.root === doc.root)
+    .sort(
+      (left, right) =>
+        left.order - right.order || left.path.localeCompare(right.path),
+    );
+  const groups = new Map<string, StaticDoc[]>();
+  for (const candidate of scoped) {
+    const directory = staticDirectory(candidate);
+    const group = groups.get(directory) || [];
+    group.push(candidate);
+    groups.set(directory, group);
+  }
+  const rootPath = doc.root === "docs" ? "/" : `/${doc.root}`;
+  const rootTitle =
+    scoped.find((candidate) => candidate.nav)?.nav || doc.group || doc.root;
+  const sections = [...groups.entries()]
+    .map(([directory, items]) => {
+      const links = items
+        .map(
+          (item) =>
+            `<li><a${item.path === doc.path ? ' class="active" aria-current="page"' : ""} href="${docHref(item.path, context)}">${miraDocsEscapeHtml(item.title)}</a></li>`,
+        )
+        .join("");
+      return `<div class="docnav-group"><h5>${miraDocsEscapeHtml(staticDirectoryTitle(directory))}</h5><ul>${links}</ul></div>`;
+    })
+    .join("");
+  return `<nav class="docnav"><h5>目录</h5><div class="docnav-group"><h5><a href="${docHref(rootPath, context)}">${miraDocsEscapeHtml(rootTitle)}</a></h5></div>${sections}</nav>`;
+}
+
+function staticDocToc(doc: StaticDoc): string {
+  if (!doc.headings.length) return "";
+  const links = doc.headings
+    .map(
+      (heading) =>
+        `<li class="toc-depth-${heading.depth}"><a href="#${miraDocsEscapeHtml(heading.id)}">${miraDocsEscapeHtml(heading.text)}</a></li>`,
+    )
+    .join("");
+  return `<aside class="toc"><h5>本页目录</h5><ul>${links}</ul></aside>`;
+}
+
 function documentBody(
   doc: StaticDoc,
   previous: StaticDoc | undefined,
   next: StaticDoc | undefined,
   context: MiraDocsStaticBuildContext,
+  docs: StaticDoc[],
 ): string {
   const body = renderMiraMarkdown(doc.source, { removeH1: true });
-  return `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)} · ${String(doc.order).padStart(2, "0")}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article>${pageNavigation(previous, next, context)}</main>`;
+  const main = `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)} · ${String(doc.order).padStart(2, "0")}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article>${pageNavigation(previous, next, context)}</main>`;
+  return `${staticSiteHeader(context)}<div class="docs-app seo-static-docs-app"><div class="docs-shell">${staticDocNav(doc, docs, context)}${main}${staticDocToc(doc)}</div></div>`;
 }
 
 function articleToc(doc: StaticDoc): string {
@@ -158,7 +237,8 @@ function articleBody(
     )
     .join("");
   const authorCountClass = doc.authors.length > 1 ? "duo" : "solo";
-  return `<main class="doc-main seo-static-content blog-post-page"><article class="article-header">${visual}<h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}<div class="post-meta post-meta-article">${meta}</div></article><div class="article-shell"><div class="article-body markdown blog-markdown">${body}<section class="author-signature author-signature-${authorCountClass}"><div class="author-signature-avatars author-signature-avatars-${doc.authors.length}">${authorAvatars}</div><div class="author-signature-copy"><h4>${miraDocsEscapeHtml(authors)}</h4></div></section>${pageNavigation(previous, next, context)}</div>${articleToc(doc)}</div></main>`;
+  const main = `<main class="doc-main seo-static-content blog-post-page"><article class="article-header">${visual}<h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}<div class="post-meta post-meta-article">${meta}</div></article><div class="article-shell"><div class="article-body markdown blog-markdown">${body}<section class="author-signature author-signature-${authorCountClass}"><div class="author-signature-avatars author-signature-avatars-${doc.authors.length}">${authorAvatars}</div><div class="author-signature-copy"><h4>${miraDocsEscapeHtml(authors)}</h4></div></section>${pageNavigation(previous, next, context)}</div>${articleToc(doc)}</div></main>`;
+  return `${staticSiteHeader(context)}<div class="docs-app blog-app seo-static-docs-app"><div class="docs-shell blog-shell">${main}</div></div>`;
 }
 
 function areaBody(
@@ -177,15 +257,18 @@ function areaBody(
         `<li><a href="${docHref(doc.path, context)}">${miraDocsEscapeHtml(doc.title)}</a><p>${miraDocsEscapeHtml(doc.description)}</p></li>`,
     )
     .join("");
-  return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${miraDocsEscapeHtml(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}</ol></section></section></main>`;
+  const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${miraDocsEscapeHtml(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}</ol></section></section></main>`;
+  return `${staticSiteHeader(context)}<div class="docs-app seo-static-docs-app"><div class="docs-shell">${main}</div></div>`;
 }
 
-function homeBody(): string {
-  return `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
+function homeBody(context: MiraDocsStaticBuildContext): string {
+  const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
+  return `${staticSiteHeader(context)}${main}`;
 }
 
 function notFoundBody(context: MiraDocsStaticBuildContext): string {
-  return `<main class="doc-main seo-static-content"><div class="doc-not-found"><h1>这条路径没有内容</h1><p>页面可能已经移动、被删除，或者地址输入有误。</p><a class="btn btn-primary" href="${basePath(context.base)}/">返回首页</a></div></main>`;
+  const main = `<main class="doc-main seo-static-content"><div class="doc-not-found"><h1>这条路径没有内容</h1><p>页面可能已经移动、被删除，或者地址输入有误。</p><a class="btn btn-primary" href="${basePath(context.base)}/">返回首页</a></div></main>`;
+  return `${staticSiteHeader(context)}${main}`;
 }
 
 function imageUrl(
@@ -263,7 +346,7 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
       path: "/",
       title: "本地优先的多模型智能体",
       description: "UIChat Mira 多模型本地智能体产品文档",
-      body: homeBody(),
+      body: homeBody(context),
       type: "website",
       jsonLd: websiteJsonLd(context, "/"),
     },
@@ -293,7 +376,7 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
       body:
         doc.root === "blogs"
           ? articleBody(doc, previous, next, context)
-          : documentBody(doc, previous, next, context),
+          : documentBody(doc, previous, next, context, docs),
       type: "article",
       image: doc.image,
       jsonLd: documentJsonLd(doc, context),
