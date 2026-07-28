@@ -177,8 +177,9 @@
   }
 
   .release-download-menu {
-    left: 0;
+    left: 50%;
     right: auto;
-    width: 100%;
+    width: min(320px, calc(100vw - 32px));
+    transform: translateX(-50%);
   }
 }
