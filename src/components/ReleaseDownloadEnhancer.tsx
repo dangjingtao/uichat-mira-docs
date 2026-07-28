@@ -29,6 +29,10 @@ const latestReleaseUrl =
 const fallbackReleaseUrl =
   "https://github.com/dangjingtao/uichat-mira/releases/latest";
 const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
+const mobileGithubApkUrl =
+  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/dev-latest/uichat-mira-mobile-dev.apk";
+const mobileR2ApkUrl =
+  "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-dev.apk";
 
 function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
   const version = releaseTag.replace(/^v/i, "");
@@ -101,6 +105,13 @@ function classifyDownloads(release: GitHubRelease | null) {
   pushOption("electron", "Windows 安装版", "Electron · EXE · 推荐", electronSetup);
   pushOption("tauri-nsis", "Tauri 安装版", "轻量实验版 · EXE", tauriNsis);
   pushOption("tauri-msi", "Tauri MSI", "企业或批量部署", tauriMsi);
+  options.push({
+    key: "android-dev",
+    label: "Android 测试版",
+    meta: "React Native · APK · dev",
+    githubUrl: mobileGithubApkUrl,
+    r2Url: mobileR2ApkUrl,
+  });
 
   return {
     recommendedGithubUrl:
