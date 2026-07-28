@@ -209,10 +209,10 @@ export default function ReleaseDownloadEnhancer() {
       <a
         className="btn btn-secondary release-download-main"
         href={recommendedUrl}
-        aria-label={`下载 Mira Windows 推荐版（${source === "r2" ? "R2 镜像" : "GitHub"}）`}
+        aria-label={`下载 Mira 推荐版本（${source === "r2" ? "R2 镜像" : "GitHub"}）`}
       >
         <Download size={16} aria-hidden="true" />
-        下载 Windows
+        下载
       </a>
       <button
         className="btn btn-secondary release-download-toggle"
@@ -227,7 +227,6 @@ export default function ReleaseDownloadEnhancer() {
       {open ? (
         <div className="release-download-menu" role="menu">
           <div className="release-download-source" aria-label="下载来源">
-            <span>下载来源</span>
             <div className="release-download-source-options">
               <button
                 type="button"
