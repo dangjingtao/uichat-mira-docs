@@ -1,30 +1,77 @@
 ---
 title: 当前实现快照
-description: 以 dev 分支 c6c2c098 为准的产品与工程事实。
+description: 以 2026-07-30 的 dev 分支为准，说明产品能力、Agent 运行时与已知边界。
 group: 现状与方向
 order: 17
 ---
 
 # 当前实现快照
 
-本站内容核对的是 UIChat Mira dev 分支提交 c6c2c098，提交主题为 “review agent v1.5 T05 shadow decider removal”。
+> 本页核对日期为 2026 年 7 月 30 日。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
 
 ## 版本与定位
 
-package.json 版本为 0.7.1，描述为 “An intelligent agent cabin that starts with a chat and returns to your side.” 作者为 Tomz Dang。
+当前根包版本为 `0.99.6`，项目描述仍是：
+
+> An intelligent agent cabin that starts with a chat and returns to your side.
+
+Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核心定位。聊天是入口，模型、知识、角色、工具、任务与产物在同一个工作环境里协作。
 
 ## 已有产品域
 
-源码已经覆盖聊天工作区、模型与 Provider、知识库、评测、角色、工具、MCP、集成和微应用。设置路由为这些域提供统一入口。
+当前源码已经覆盖：
 
-## 已有微应用
+- 对话工作区；
+- Provider 与模型管理；
+- 知识库、检索与评测；
+- 角色与提示词原型；
+- MCP、内置工具与 Harness；
+- Agent 任务执行与 execution trace；
+- 微应用及专用 Runtime；
+- 桌面端构建、调试与发布链路。
 
-Image Generation、Computer Use、Mail Center、News Hub、TTS 与 CodeGraph Studio 均能在桌面路由与后端路由中找到对应实现入口。
+不同页面或后端入口已经存在，不等于每项能力都达到同样成熟度。公开说明会继续区分稳定、部分可用、实验中与方向性能力。
 
-## Agent 当前重点
+## Agent 当前运行时
 
-V1.5 处于稳定化阶段：Planner 是唯一语义决策中心，Retrieve 与 ToolNode 返回 evidence，Normalize、Policy 和 Approval 各自承担明确职责。
+当前 Agent 不能再简单描述成一张 LangGraph 流程图。
+
+更准确的口径是：
+
+- `AgentRun` 保存一次任务的状态、Evidence、审批、checkpoint 与最终交付；
+- `AgentGraph` 是稳定运行时门面；
+- `Pi Loop` 是应用默认 Main Agent 运行时；
+- `LangGraph` 保留为显式兼容、历史测试与回归对照运行时；
+- Main Planner 维护用户全局目标，并决定下一步与最终完成；
+- Harness 负责具体工具的暴露、冻结调用、Policy、审批、执行与审计。
+
+## 三类执行路径
+
+当前存在三类受控路径：
+
+1. **Main Agent 直接执行**：回答、检索或调用一个具体工具；
+2. **通用工作包委派**：Main Planner 通过 `delegate_task` 把边界清楚的局部任务交给 Generic SubAgent；
+3. **Skill-owned SubAgent**：命中执行 Profile 的任务型 Skill 在受限工具面和可选私有 Runtime 中完成领域施工。
+
+SubAgent 只拥有局部任务。Parent 仍保留用户对话、全局目标、审批、恢复、Evidence 收口和最终交付。当前不是开放式多 Agent 自治平台，也不支持递归委派或 Agent 群体自由协作。
+
+## 已知实现偏差
+
+Settled recoverable contract 是：恢复预算耗尽后生成 guarded answer，Graph 以 `completed` 收口，并明确说明未完成项和失败影响。
+
+截至本次核对，`dev` 当前实现仍会在该场景直接进入 `error`，使 Graph `failed` 并跳过 Generate。这个行为被记录为高优先级实现漂移，不是新的目标合同。
+
+## 当前阶段
+
+2026 年 8 月起，Mira 进入功能稳定迭代阶段。Agent 侧优先级是：
+
+- 修复合同漂移；
+- 减少提前收尾和错误工具选择；
+- 稳定审批与 checkpoint resume；
+- 提高 Evidence、Artifact 与 execution trace 的可信度；
+- 用回归测试保护已经形成的边界；
+- 控制新增能力的范围，不重开 Agent Graph。
 
 ## 文档边界
 
-源码含 338 篇 Markdown，其中大量是项目控制、迁移和任务材料。本站只精选公共认知，并在“已实现”“实验中”“方向”之间保持明确区分。
+公开站负责解释产品和架构；主仓库 `dev` 分支中的当前真相、协议、测试与代码仍是最终核验依据。历史文章可以解释为什么曾经这样设计，但不能覆盖当前实现。
