@@ -1,6 +1,6 @@
 ---
 title: 产品地图
-description: 从聊天工作区到知识、受控 Agent、动态工具面与微应用。
+description: 从聊天工作区到知识、受控 Agent、动态工具面、MicroApps Hub 与独立 Runtime。
 group: 认识 Mira
 order: 3
 ---
@@ -17,7 +17,7 @@ Mira 当前可以按五个相互协作的产品域理解。
 
 模型配置、Provider connection 和模型能力画像在后端统一管理。当前主要通过 OpenAI-compatible 契约吸收供应商差异，同时保留 LM Studio、Ollama、Cloudflare、火山等不同接入路径。
 
-聊天、任务模型、Embedding、Rerank、评测和图像能力不必绑定同一个 Provider。
+聊天、任务模型、Embedding、Rerank、评测、语音和图像能力不必绑定同一个 Provider。
 
 ## 知识与评测
 
@@ -62,14 +62,47 @@ Registry
 
 `delegate_task` 是 Planner-only 委派协议，不是普通 Harness Tool。Skill-private Runtime 也不会自动进入 Main Planner 的公共工具面。
 
-## 微应用与集成
+## MicroApps Hub 与集成
 
-Mira 用微应用承载相对独立的专业能力，例如图像、语音、邮件、新闻、Computer Use、CodeGraph Studio 与文档处理。
+设置页中的 MicroApps Hub 是一个宽产品能力中心，而不是一套统一 Runtime。它同时容纳：
 
-微应用可以拥有自己的 UI 和 Runtime；当它们进入 Agent 主线时，必须通过明确的 Skill、工具或执行 Profile 接入，而不是把业务细节直接塞进 Main Planner。
+- Image Generation、Computer Use、TTS、News Hub、CodeGraph 等独立 Studio；
+- 文枢这样的 Domain Runtime 与 Skill；
+- Mail Center、GitHub、问策等领域服务和连接入口；
+- 企业集成 MicroAPP；
+- Notion、智识进化库等部分实现或实验能力。
 
-企业微信、飞书等集成继续通过 Platform → Instance → AccessPoint → MicroAPP 的模型，把平台协议、连接配置与业务工作流分离。
+判断一项能力时需要分别确认：
+
+```text
+产品入口
+共享 Definition
+领域 Runtime
+Integration Invoke
+Agent Tool / Skill Access
+```
+
+这几层不能互相代替。
+
+代码中的严格 Integration MicroAPP 目前只有 `knowledge_query` 完成外部调用闭环，并且只支持企业微信智能机器人。Image Generation、Computer Use、TTS、News Hub、CodeGraph 与智识进化库虽然有共享 Definition 和真实 Studio / Service，但统一 External Invoke 尚未完成。
+
+Mail Center、文枢、GitHub 与问策并不属于当前严格 Registry：
+
+- Mail Center 通过 `mail_query`；
+- 文枢通过 Skill-owned SubAgent 与 Private Runtime；
+- GitHub 通过四个领域工具；
+- 问策通过 External Expert Bridge 与独立 Tool。
+
+企业集成继续通过 Platform → Instance → AccessPoint → MicroAPP，把平台协议、连接配置与业务工作流分离；这只是集成子模型，不是整个 MicroApps Hub 的统一架构。
 
 ## 当前边界
 
-Mira 当前不是开放式多 Agent 平台，也不是通用 durable workflow engine。产品正在进入稳定迭代阶段，优先保护已经形成的运行时边界、Tool Exposure、审批恢复、Evidence 和真实产物交付。
+Mira 当前不是开放式多 Agent 平台，也不是所有应用共享一种 Runtime 的微应用操作系统，更不是通用 durable workflow engine。
+
+产品正在进入稳定迭代阶段，优先保护已经形成的运行时边界、Tool Exposure、审批恢复、Evidence 和真实产物交付。
+
+延伸阅读：
+
+- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [当前实现快照](/docs/status/current)
+- [Mira 的微应用现在到底是什么](/blogs/engineering/mira-microapps-current-truth)
