@@ -1233,7 +1233,9 @@ function SiteHeader({
     setOpenMenu(null);
     setMobileOpen(false);
   }, [location.pathname]);
-  const currentDoc = allDocs.find((doc) => doc.path === location.pathname);
+  const currentDoc = allDocs.find(
+    (doc) => doc.path === decodedPathname(location.pathname),
+  );
   const isActive = (item: LinkItem) => {
     const target = item.href.slice(Math.max(appBase.length - 1, 0));
     if (item.label === "文档")
