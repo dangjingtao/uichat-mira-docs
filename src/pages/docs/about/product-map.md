@@ -1,6 +1,6 @@
 ---
 title: 产品地图
-description: 从聊天工作区到知识、受控 Agent、工具与微应用。
+description: 从聊天工作区到知识、受控 Agent、动态工具面与微应用。
 group: 认识 Mira
 order: 3
 ---
@@ -27,13 +27,13 @@ Mira 当前可以按五个相互协作的产品域理解。
 
 ## Agent 与工具
 
-Agent 不是把所有工具一次性丢给模型，而是一条受治理的任务执行链：
+Agent 通过受治理的任务执行链使用工具：
 
 ```text
 AgentRun
 → Main Planner
 → direct action / governed delegation
-→ Harness / Skill-private Runtime
+→ concrete Tool / Skill-private Runtime
 → Evidence / Artifact
 → Generate / Finalize
 ```
@@ -44,9 +44,23 @@ AgentRun
 - `delegate_task` 把一个可独立验收的工作包交给 Generic SubAgent；
 - 任务型 Skill 可以启动 Skill-owned SubAgent，在受限能力面内完成领域施工。
 
-Main Planner 始终维护用户全局目标。SubAgent 只负责局部任务，不能递归创建新的 SubAgent，也不能绕过 Policy、审批、workspace 和 Evidence 合同。
+Main Planner 始终维护用户全局目标。SubAgent 只负责局部任务，不能递归创建新的 SubAgent，也不能绕过 Policy、审批、Workspace 和 Evidence 合同。
 
-Harness 管理 concrete tool 的候选、模型暴露、冻结调用、风险判断、执行与审计。`delegate_task` 是 Planner-only 委派协议，不是一个可以绕过 Harness 的万能工具。
+工具系统不是固定清单。Harness 会分别处理：
+
+```text
+Registry
+→ Public Surface
+→ Availability
+→ Tool Exposure
+→ Invocation / Approval
+```
+
+当前核心公共工具覆盖文件发现、正文搜索、打开、代码关系探索、写入、替换、删除、移动、公网搜索、本地新闻搜索和完整 Terminal Runtime。Browser、Mail、GitHub、External Expert 与 External MCP 则根据真实连接和运行时动态加入。
+
+公共且可用工具不超过 20 个时，Planner 会看到全部工具；超过 20 个才通过 embedding / rerank 压缩到前 20。排名只控制上下文，不代替审批，也不替 Planner 决定下一步。
+
+`delegate_task` 是 Planner-only 委派协议，不是普通 Harness Tool。Skill-private Runtime 也不会自动进入 Main Planner 的公共工具面。
 
 ## 微应用与集成
 
@@ -58,4 +72,4 @@ Mira 用微应用承载相对独立的专业能力，例如图像、语音、邮
 
 ## 当前边界
 
-Mira 当前不是开放式多 Agent 平台，也不是通用 durable workflow engine。产品正在进入稳定迭代阶段，优先保护已经形成的运行时边界、审批恢复、Evidence 和真实产物交付。
+Mira 当前不是开放式多 Agent 平台，也不是通用 durable workflow engine。产品正在进入稳定迭代阶段，优先保护已经形成的运行时边界、Tool Exposure、审批恢复、Evidence 和真实产物交付。

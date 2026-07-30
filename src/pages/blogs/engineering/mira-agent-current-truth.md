@@ -86,7 +86,7 @@ Parent 始终保留用户对话、全局目标、Policy、审批、恢复、终�
 
 `delegate_task` 不是普通 Harness Invocation，也不是一个可以绕过 Policy 的超级工具。它是 Main Planner 可见的委派协议，用来启动受控 Child execution。
 
-Child 真正调用的 `read_open`、`edit_file`、`terminal_session` 或其他 concrete tools，仍然受到工具注册、schema、Policy、审批、workspace 和 Evidence 约束。
+Child 真正调用的 `read_open`、`write_file`、`replace_block`、`terminal_session` 或其他 concrete tools，仍然受到工具注册、公共工具面、schema、Policy、审批、Workspace 和 Evidence 约束。
 
 Skill-private Runtime 也不是隐藏后门。它不会因为写在 Skill manifest 里就自动获得权限，更不会进入 Main Planner 的全局工具面。它只能在对应 execution profile 中工作，并把结果交回 Parent。
 
@@ -133,4 +133,6 @@ Settled recoverable contract 是：某次工具失败可以进入 Planner recove
 - [Agent 当前运行真相](/docs/architecture/agent)
 - [Agent 策略](/docs/architecture/agent-strategy)
 - [Harness 与工具边界](/docs/architecture/harness)
+- [工具工作台](/docs/configuration/tools)
+- [Mira 的工具现在到底是什么](/blogs/engineering/mira-tool-current-truth)
 - [可控的自主](/docs/philosophy/controlled-agency)

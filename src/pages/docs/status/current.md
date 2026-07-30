@@ -1,6 +1,6 @@
 ---
 title: 当前实现快照
-description: 以 2026-07-30 的 dev 分支为准，说明产品能力、Agent 运行时与已知边界。
+description: 以 2026-07-30 的 dev 分支为准，说明产品能力、Agent、Tool Runtime 与已知边界。
 group: 现状与方向
 order: 17
 ---
@@ -43,7 +43,7 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 - `Pi Loop` 是应用默认 Main Agent 运行时；
 - `LangGraph` 保留为显式兼容、历史测试与回归对照运行时；
 - Main Planner 维护用户全局目标，并决定下一步与最终完成；
-- Harness 负责具体工具的暴露、冻结调用、Policy、审批、执行与审计。
+- Harness 负责具体工具的公共工具面、暴露、冻结调用、Policy、审批、执行与审计。
 
 ## 三类执行路径
 
@@ -55,22 +55,78 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 
 SubAgent 只拥有局部任务。Parent 仍保留用户对话、全局目标、审批、恢复、Evidence 收口和最终交付。当前不是开放式多 Agent 自治平台，也不支持递归委派或 Agent 群体自由协作。
 
+## Tool Runtime 当前快照
+
+当前核心公共工具面是：
+
+```text
+Read
+├─ read_discover
+├─ grep
+├─ read_open
+└─ codebase_explore
+
+Edit
+├─ write_file
+├─ replace_block
+├─ delete_path
+└─ move_path
+
+Search
+├─ web_search
+└─ news_search
+
+Terminal
+└─ terminal_session
+```
+
+旧的六个 `read_*` primitive、`edit_file` 和 `workspace_mutation` 仍可能保留在 Runtime 中，但已经不是 Main Planner 的公共工具合同。
+
+工具面也不是固定四格。Managed Browser、Attached Browser、Mail、GitHub、External Expert 和 External MCP 会根据真实连接、用户身份、运行时与产品配置动态进入可用能力面。
+
+Tool Exposure 当前规则：
+
+- 公共且可用工具不超过 20 个时，全部暴露，不运行 embedding / rerank；
+- 超过 20 个时，只为控制模型上下文而排名并暴露前 20；
+- 排名不是授权；风险由具体 Invocation 的 Policy / Approval 处理；
+- 工具包选择只提供偏好，不直接改变权限或触发调用。
+
+`terminal_session` 当前是完整 Host shell / PTY Runtime。Workspace 是默认执行上下文，但不是不可突破的假沙箱；工作空间外的 `cwd` 必须在显示真实目标后获得具体审批。
+
 ## 已知实现偏差
+
+### Recoverable 终止漂移
 
 Settled recoverable contract 是：恢复预算耗尽后生成 guarded answer，Graph 以 `completed` 收口，并明确说明未完成项和失败影响。
 
 截至本次核对，`dev` 当前实现仍会在该场景直接进入 `error`，使 Graph `failed` 并跳过 Generate。这个行为被记录为高优先级实现漂移，不是新的目标合同。
 
+### Approval 身份漂移
+
+Settled exact-invocation 合同使用：
+
+```text
+toolId + toolCallId + inputHash
+```
+
+当前 `dev` 的 frozen call 和审批请求会保存 `toolCallId`，但核心 approval grant matcher 实际仍只匹配：
+
+```text
+toolId + inputHash
+```
+
+这意味着当前实现尚未把 `toolCallId` 纳入 grant 身份判断。该问题已经被记录，但本轮公开文档更新没有修改 Runtime。
+
 ## 当前阶段
 
-2026 年 8 月起，Mira 进入功能稳定迭代阶段。Agent 侧优先级是：
+2026 年 8 月起，Mira 进入功能稳定迭代阶段。当前优先级是：
 
-- 修复合同漂移；
+- 修复已经确认的合同漂移；
 - 减少提前收尾和错误工具选择；
 - 稳定审批与 checkpoint resume；
 - 提高 Evidence、Artifact 与 execution trace 的可信度；
-- 用回归测试保护已经形成的边界；
-- 控制新增能力的范围，不重开 Agent Graph。
+- 用回归测试保护已经形成的工具公共面和暴露规则；
+- 控制新增能力范围，不重开 Agent Graph 或 Harness。
 
 ## 文档边界
 

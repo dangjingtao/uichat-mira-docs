@@ -9,7 +9,7 @@ order: 14
 
 Mira 主要作为 MCP Host 使用。
 
-MCP 页面负责管理市场中的第三方 MCP Server、已安装服务，以及后续非核心内置 MCP 包。当前界面重点是市场浏览、安装状态、连接配置和能力发现，不会在安装后自动把全部工具注入聊天。
+MCP 页面负责管理市场中的第三方 MCP Server、已安装服务，以及后续非核心内置 MCP 包。当前界面重点是市场浏览、安装状态、连接配置、能力发现与 Agent Access，不会在安装后自动把全部工具注入聊天。
 
 ## MCP Server 是什么
 
@@ -45,13 +45,17 @@ MCP 不是模型 Provider。Provider 负责模型推理请求，MCP Server 负�
 → 启用
 → 配置
 → 连接
-→ Discover 能力
+→ 接受免责声明
+→ Discover Tools
 → 允许 Agent 使用
+→ 进入公共可用工具面
+→ 本轮 Tool Exposure
+→ 具体调用审批
 ```
 
 其中任一步失败，都不应伪装成「可用」。
 
-页面会显示已连接状态、发现到的能力数量、协议版本和服务描述，帮助用户判断问题发生在哪一层。
+页面会显示连接状态、发现到的能力数量、协议版本和服务描述，帮助用户判断问题发生在哪一层。
 
 ## 配置与连接
 
@@ -65,7 +69,7 @@ MCP 不是模型 Provider。Provider 负责模型推理请求，MCP Server 负�
 - 超时时间；
 - 其他服务专属参数。
 
-配置保存后，还需要实际连接。连接成功说明 Host 能够与 Server 通信，但不代表所有 Tool 都一定适合暴露给 Agent。
+配置保存后，还需要实际连接。连接成功说明 Host 能够与 Server 通信，但不代表所有 Tool 都已经发现、允许 Agent 使用或适合当前任务。
 
 ## Discover
 
@@ -73,37 +77,70 @@ MCP 不是模型 Provider。Provider 负责模型推理请求，MCP Server 负�
 
 服务升级、配置变化或远端能力调整后，可以重新 Discover。页面会显示已发现的数量和名称，便于核对服务声明与实际能力是否一致。
 
+当前进入 Agent Tool Runtime 的是已发现并成功投影的 Tool。投影后的稳定 ID 形式是：
+
+```text
+mcp:<serverId>:tool:<toolName>
+```
+
+这避免外部 Tool 与 Mira 内置 Tool 重名，也阻止 Provider 私有命令直接穿透到 Planner。
+
 ## 允许 Agent 使用
 
 「允许 Agent 使用」是单独的权限开关。
 
-关闭时，MCP Server 仍然可以保持安装和连接状态，但它的能力不会自动进入 Agent 可选集合。
+关闭时，MCP Server 仍然可以保持安装和连接状态，但它的能力不会进入 Agent 可用集合。
 
-打开后也不是无条件暴露。Mira 仍可通过 Harness、能力筛选和 Policy 决定某次任务真正看到和执行哪些工具。
+打开后也不是无条件暴露。External MCP Tool 要进入 Agent 公共能力面，还必须同时满足：
+
+- Server 已启用并连接；
+- Transport 配置有效；
+- 免责声明已接受；
+- Discover 已获得 Tool；
+- canonical projected implementation 仍存在；
+- 当前用户显式打开 Agent Access。
+
+随后 Harness 才会把它与其他公共工具一起形成 Tool Exposure。
+
+```text
+公共且可用工具 <= 20
+→ 全部暴露
+
+公共且可用工具 > 20
+→ embedding / rerank
+→ 暴露前 20
+```
+
+排名只控制模型上下文，不代表已经批准执行。External MCP 的每次真实 Tool Invocation 仍需要审批。
 
 这层分离很重要：
 
 - **已安装**回答「设备上有没有」；
 - **已连接**回答「当前能不能通信」；
 - **已发现**回答「服务声称提供什么」；
-- **允许 Agent 使用**回答「是否允许进入智能体能力面」；
-- **Policy / Approval**回答「这一次是否允许真实执行」。
+- **允许 Agent 使用**回答「是否允许进入公共可用能力面」；
+- **Tool Exposure**回答「模型本轮能否看见」；
+- **Policy / Approval**回答「这一次具体调用是否允许真实执行」。
 
 ## 本地与远程 MCP
 
-Mira 可以面对两种常见服务：
+Mira 可以面对两种常见服务。
 
 ### 本地进程
 
 通常通过命令、包名和环境变量启动，例如基于 Node.js、Python 或本地二进制的 MCP Server。
 
-它依赖本机运行时、工作目录和依赖安装情况。
+它依赖本机运行时、工作目录和依赖安装情况。配置本地命令意味着 Mira 会管理一个真实进程，不应把安装成功等同于运行时健康。
 
 ### 远程服务
 
-通常通过 Streamable HTTP 或其他远程 Endpoint 连接。
+通常通过 Streamable HTTP Endpoint 连接。
 
-它依赖网络、认证、服务可用性和远端协议兼容性。远程 MCP 获得的数据范围应由工具参数和用户授权控制。
+它依赖网络、认证、服务可用性和远端协议兼容性。远程 MCP 获得的数据范围应由工具参数、Server 配置和用户授权共同控制。
+
+## 会话恢复
+
+当已持久化的 MCP 会话失效时，Runtime 可以尝试一次重新初始化，再重试当前调用。恢复不是无限重连；第二次仍失败时，会返回结构化失败并停止继续尝试。
 
 ## 常见问题排查
 
@@ -112,9 +149,16 @@ Mira 可以面对两种常见服务：
 3. 所需运行时和依赖是否存在；
 4. 环境变量和认证信息是否完整；
 5. 连接是否成功；
-6. Discover 是否拿到能力；
-7. Agent 使用开关是否打开；
-8. 当前任务的 Harness 是否实际暴露了对应能力；
-9. Policy 或审批是否阻止了本次调用。
+6. 是否已接受免责声明；
+7. Discover 是否拿到 Tool；
+8. Agent Access 是否打开；
+9. 当前工具是否仍成功投影到 Registry；
+10. 本轮 Tool Exposure 是否包含它；
+11. Policy 或审批是否阻止了本次调用。
 
-不要把「Agent 没有选择这个工具」直接判断为 MCP 连接失败。工具选择、能力暴露和真实执行是三个不同层级。
+不要把「Agent 没有选择这个工具」直接判断为 MCP 连接失败。连接、Discover、公共可用性、模型暴露、Planner 选择和真实执行是不同层级。
+
+进一步阅读：
+
+- [工具工作台](/docs/configuration/tools)
+- [Harness 与工具边界](/docs/architecture/harness)
