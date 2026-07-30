@@ -1,6 +1,6 @@
 ---
 title: 当前实现快照
-description: 以 2026-07-30 的 dev 分支为准，说明产品能力、Agent、Tool Runtime 与已知边界。
+description: 以 2026-07-30 的 dev 分支为准，说明产品能力、Agent、Tool Runtime、MicroApps Hub 与已知边界。
 group: 现状与方向
 order: 17
 ---
@@ -27,7 +27,7 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 - 角色与提示词原型；
 - MCP、内置工具与 Harness；
 - Agent 任务执行与 execution trace；
-- 微应用及专用 Runtime；
+- MicroApps Hub、独立 Studio 与专用 Runtime；
 - 桌面端构建、调试与发布链路。
 
 不同页面或后端入口已经存在，不等于每项能力都达到同样成熟度。公开说明会继续区分稳定、部分可用、实验中与方向性能力。
@@ -93,6 +93,53 @@ Tool Exposure 当前规则：
 
 `terminal_session` 当前是完整 Host shell / PTY Runtime。Workspace 是默认执行上下文，但不是不可突破的假沙箱；工作空间外的 `cwd` 必须在显示真实目标后获得具体审批。
 
+## MicroApps 当前快照
+
+设置页中的 MicroApps Hub 是宽产品能力中心，不等于代码中的严格 Integration MicroAPP Registry。
+
+当前判断需要拆成五层：
+
+```text
+产品入口
+共享 Definition
+领域 Runtime
+Integration Invoke
+Agent Tool / Skill Access
+```
+
+严格 Registry 当前有七种 Definition：
+
+```text
+knowledge_query
+news_hub
+image_generation
+computer_use
+tts
+codegraph
+evolving_knowledge
+```
+
+其中只有 `knowledge_query` 完成统一 External AccessPoint Invoke，并且当前只支持企业微信智能机器人。
+
+其他能力的当前状态：
+
+- Image Generation：有任务、实时进度、Artifact、Provider / ComfyUI Studio；没有统一 External Invoke；
+- Computer Use：有 Managed Browser、持久任务与 Evidence、模型执行器、审批和 Browser Tools；不是宿主桌面万能遥控；
+- TTS：有 Windows、Piper、GPT-SoVITS 与 API Provider；并非所有 Voice Pack 或 Provider 都已验证；
+- News Hub：有多来源拉取、缓存和 `news_search`；不等于实时公网搜索；
+- CodeGraph：有 Studio 与 `codebase_explore`；原生命令不直接暴露给 Planner；
+- 智识进化库：有真实 Service / Studio，但仍属实验能力。
+
+MicroApps Hub 中还有不属于严格 Registry 的真实入口：
+
+- Mail Center 通过 `mail_query` 进入 Agent；
+- 文枢通过 Skill-owned Execution 与 Private Runtime；
+- GitHub 通过连接入口和四个领域工具；
+- 问策通过 External Expert Bridge；
+- Notion 当前是连接与部分 AccessPoint 已实现，完整 Agent / Sync 仍未全部完成。
+
+页面卡片、Definition、Runtime、External Invoke 和 Agent Access 不能互相代替。
+
 ## 已知实现偏差
 
 ### Recoverable 终止漂移
@@ -126,8 +173,14 @@ toolId + inputHash
 - 稳定审批与 checkpoint resume；
 - 提高 Evidence、Artifact 与 execution trace 的可信度；
 - 用回归测试保护已经形成的工具公共面和暴露规则；
-- 控制新增能力范围，不重开 Agent Graph 或 Harness。
+- 逐项验证 Studio、Integration Invoke 与 Agent 接入，不用新卡片掩盖能力未收稳；
+- 控制新增能力范围，不重开 Agent Graph、Harness 或 Universal MicroApp Runtime。
 
 ## 文档边界
 
 公开站负责解释产品和架构；主仓库 `dev` 分支中的当前真相、协议、测试与代码仍是最终核验依据。历史文章可以解释为什么曾经这样设计，但不能覆盖当前实现。
+
+延伸阅读：
+
+- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [Mira 的微应用现在到底是什么](/blogs/engineering/mira-microapps-current-truth)
