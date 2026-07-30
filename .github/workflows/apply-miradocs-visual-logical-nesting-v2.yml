@@ -27,6 +27,7 @@ jobs:
           rm .github/workflows/apply-miradocs-visual-logical-nesting.yml
           rm .github/workflows/apply-miradocs-visual-logical-nesting-v2.yml
           rm .github/workflows/README-visual-logical-nesting.tmp
+          rm .github/workflows/README-visual-logical-nesting-2.tmp
       - name: Commit patched source
         run: |
           git config user.name "github-actions[bot]"
