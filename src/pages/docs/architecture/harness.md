@@ -1,41 +1,81 @@
 ---
 title: Harness 与工具边界
-description: 从能力匹配、模型暴露、具体调用到受控委派的执行边界。
+description: 从注册、公共工具面、模型暴露、具体调用到受控委派的执行边界。
 group: 架构
 order: 12
 ---
 
 # Harness 与工具边界
 
-Harness 负责把“系统拥有的能力”转换成“本轮允许模型使用并可以被审计的具体工具”。它是 concrete tool 的治理与执行控制面，不是所有 Agent 行为的总称。
+Harness 是 concrete tool 的治理与执行控制面。
 
-## 三层工具契约
+它负责把“系统已经注册的能力”整理成“当前真实可用、可以被模型选择、并能够被审计执行的具体工具”，但它不是 Planner、SubAgent 编排器，也不负责判断用户目标是否完成。
 
-### CapabilityMatch
+## 五层工具事实
 
-CapabilityMatch 是内部候选结果。它回答某项需求可能由哪些能力满足，用于召回、压缩、策略与诊断。
+讨论一个工具是否“存在”时，必须拆成五个问题。
 
-它不是执行入口，也不能直接越过 Planner 触发工具。
+### Registry
+
+工具实现是否已经注册到 Harness Runtime。
+
+Registry 中可以同时存在：
+
+- 当前公共工具；
+- 内部 primitive；
+- 历史兼容实现；
+- 由微应用或连接状态动态注册的能力；
+- External MCP 投影工具。
+
+注册存在，不等于 Planner 可见。
+
+### Public Surface
+
+这个注册实现是否属于当前 Agent 公共工具面。
+
+例如旧的 `read_list`、`read_locate`、`read_extract`、`read_slice`、`read`、`edit_file` 和 `workspace_mutation` 仍可能保留在 Runtime 中，但已经从 Main Planner 的公共 surface 隐藏。
+
+### Availability
+
+工具在当前用户和当前设备上是否真的可用。
+
+这可能取决于：
+
+- Workspace；
+- 微应用 Runtime；
+- 邮箱或 GitHub 连接；
+- 已连接浏览器；
+- 外部专家配置；
+- MCP Server 的连接、Discover 和 Agent Access；
+- Provider 或本地进程状态。
 
 ### ToolExposure
 
-ToolExposure 是 Main Planner 本轮真正可见的 concrete tool 集合。
+ToolExposure 是 Main Planner 本轮真正看到的 concrete tool 集合。
 
-系统会综合：
+当前规则是：
 
-- 当前任务与会话上下文；
-- Provider 的 tool schema 能力；
-- workspace 与连接状态；
-- Policy、权限和产品配置；
-- 候选能力的匹配结果。
+```text
+公共且可用工具 <= 20
+→ 全部暴露
+→ 不运行 embedding / rerank
 
-候选匹配只帮助缩小工具面，不替 Planner 决定下一步。
+公共且可用工具 > 20
+→ embedding recall
+→ rerank
+→ toolId 去重
+→ 暴露前 20
+```
+
+排名只解决模型上下文预算，不是权限机制，也不是 Harness 在猜“当前任务阶段只需要哪些工具”。
+
+用户选中的工具包目前只提供排名偏好、可用性状态和 trace，不会直接改变权限或触发执行。
 
 ### Invocation
 
-Invocation 是一次具体执行请求。它必须包含可解析的 `toolId`、参数和调用身份，并在 Normalize 后冻结为 `pendingToolCall`。
+Invocation 是一次具体执行请求。
 
-能力 ID、embedding 命中、rerank 结果或 UI 选中状态都不能直接充当 Invocation，否则语义匹配会绕过注册表、Policy 和审批边界。
+它必须包含可解析的 `toolId`、参数和调用身份，并在 Normalize 后冻结为 `pendingToolCall`。能力匹配、embedding 命中、rerank 结果、工具包或 UI 选中状态都不能直接充当 Invocation。
 
 ## Normalize、Policy 与 Approval
 
@@ -44,35 +84,57 @@ Invocation 是一次具体执行请求。它必须包含可解析的 `toolId`、
 ```text
 Planner decision
 → Normalize
+→ schema validation
 → frozen pendingToolCall
-→ Policy
-→ allow / deny / waiting_approval
-→ Tool
+→ Policy / Approval
+→ Harness Invocation
+→ Tool Result
+→ Evidence
 ```
 
-Normalize 负责校验 schema、参数和工具身份；Policy 只判断已经冻结的调用。
+Normalize 负责校验工具身份、schema 和参数，并生成稳定的输入摘要。Policy 只判断已经冻结的具体调用。
 
-审批绑定：
+产品的 settled exact-invocation 合同使用：
 
-- `toolId`；
-- `toolCallId`；
-- `inputHash`。
+```text
+toolId + toolCallId + inputHash
+```
 
-命令、参数、cwd、env、timeout 或目标资源发生变化后，必须重新判断。批准某一次调用，不等于永久授权该工具。
+命令、参数、`cwd`、环境变量、超时或目标资源发生变化后，都必须重新判断。批准一次调用，不等于永久授权某项工具。
+
+### 当前实现说明
+
+截至 2026 年 7 月 30 日，`dev` 中 frozen call 和审批请求都会保存 `toolCallId`，但核心 approval grant matcher 实际仍只匹配：
+
+```text
+toolId + inputHash
+```
+
+这是一处已经公开记录的审批身份漂移，不代表目标合同已经改成二元匹配。
+
+## 风险不等于隐藏工具
+
+工具有风险，不应该通过“假装工具不存在”解决。
+
+- Edit 和 Terminal 的公开定义会要求审批；
+- External MCP 投影调用要求审批；
+- GitHub 读操作可以直接执行，但远程写 operation 会动态提出审批；
+- `mail_query` 默认缓存查询不需要审批，强制同步会要求审批；
+- Browser 的观察、导航、交互和传输具有不同风险等级。
+
+因此，Eligibility、Exposure 和 Approval 是三层不同问题。
 
 ## `delegate_task` 不是普通 Harness Tool
 
 Main Planner 可以通过 `delegate_task` 启动 Generic SubAgent，但它是 Planner-only 的运行时委派协议：
 
-- 不来自 Harness capability ranking；
+- 不来自 Harness ranking；
 - 不代表一个外部工具实现；
 - 不走 Main Agent 的普通 Normalize / Policy / ToolNode 路径；
 - 只启动一个受控、单层的局部执行器；
-- 不能出现在 Child 的工具面里，避免递归委派。
+- 不会出现在 Child 的工具面，避免递归委派。
 
-Generic SubAgent 内部真正调用的 concrete tools，仍然必须经过各自的工具绑定、Policy、审批、workspace 和 Evidence 合同。
-
-因此，委派没有绕开 Harness；它只是把局部施工的控制权暂时交给 Child，而 concrete action 仍受治理。
+Generic SubAgent 内部真正调用的 `read_open`、`write_file`、`terminal_session` 或其他 concrete tools，仍然必须经过各自的工具绑定、Policy、审批、Workspace 和 Evidence 合同。
 
 ## Skill-private Runtime 不是全局工具
 
@@ -85,7 +147,26 @@ Generic SubAgent 内部真正调用的 concrete tools，仍然必须经过各自
 - 仍受 Parent 的审批、恢复、Evidence 和最终交付治理；
 - 只能在对应 execution profile 和任务边界内使用。
 
-这让文档、报表、专业解析等领域能力可以保留自己的运行时，而不会把 Main Planner 的工具面膨胀成一整套业务 API。
+这让文档、报表、专业解析等领域能力可以保留自己的 Runtime，而不会把 Main Planner 的公共工具面膨胀成一整套业务 API。
+
+## External MCP 的边界
+
+External MCP Tool 只有在以下条件都成立时，才可能进入 Agent 公共能力面：
+
+- Server 已启用并连接；
+- Transport 配置有效；
+- 用户已接受免责声明；
+- Discover 已获得 Tool；
+- 用户显式开启 Agent Access；
+- 对应 canonical projected implementation 仍在 Registry。
+
+投影工具使用稳定 ID：
+
+```text
+mcp:<serverId>:tool:<toolName>
+```
+
+每次真实调用仍要形成 concrete Invocation 并经过审批。External MCP 不能通过 Provider 私有命令或旧 ID 绕过 Harness。
 
 ## Tool 结果先成为 Evidence
 
@@ -93,7 +174,7 @@ ToolNode 不宣布用户任务已经完成。它只返回真实结果：
 
 - 调用了什么；
 - 输入是什么；
-- 返回了哪些原始事实；
+- 返回了哪些事实；
 - 是否失败、超时、被拒绝或等待审批；
 - 是否产生 Artifact；
 - 结果能够证明什么。
@@ -104,12 +185,18 @@ Evidence 将这些事实累计到 AgentRun，再由 Main Planner 判断全局目
 
 这套边界把几个问题分开测试：
 
-- 系统是否拥有某项能力；
-- 模型本轮能否看见某个具体工具；
-- Planner 是否决定使用它；
+- 系统是否注册了某项能力；
+- 它是否属于公共工具面；
+- 当前环境是否真的可用；
+- 模型本轮是否能看见；
+- Planner 是否决定使用；
 - 参数是否已经冻结；
 - 这次调用是否允许；
 - 实际执行了什么；
 - 结果是否足以完成用户目标。
 
-内置工具、MCP、企业集成、Generic SubAgent 和 Skill-owned SubAgent 因此可以共享治理原则，但不会被错误地压成同一种执行路径。
+进一步阅读：
+
+- [工具工作台](/docs/configuration/tools)
+- [MCP](/docs/configuration/mcp)
+- [Mira 的工具现在到底是什么](/blogs/engineering/mira-tool-current-truth)
