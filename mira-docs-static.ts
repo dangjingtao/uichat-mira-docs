@@ -99,6 +99,13 @@ function docHref(path: string, context: MiraDocsStaticBuildContext): string {
   return `${basePath(context.base)}${path}`;
 }
 
+const MIRA_DOCS_AREA_KEY = "mira-docs-api";
+const VISUAL_CONTENT_ROOT = "design-md";
+const VISUAL_NAV_DIRECTORY = "视觉";
+function logicalStaticAreaKey(root: string): string {
+  return root === VISUAL_CONTENT_ROOT ? MIRA_DOCS_AREA_KEY : root;
+}
+
 function pageNavigation(
   previous: StaticDoc | undefined,
   next: StaticDoc | undefined,
@@ -118,8 +125,7 @@ function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
   const links = [
     ["首页", "/"],
     ["文档", "/about/origin"],
-    ["Mira-Docs", "/mira-docs-api"],
-    ["视觉", "/design-md"],
+    ["MiraDocs", "/mira-docs-api"],
     ["博客", "/blogs"],
   ] as const;
   const navigation = links
@@ -136,6 +142,12 @@ function staticDirectory(doc: StaticDoc): string {
   return parts.slice(1, -1).join("/");
 }
 
+function staticNavigationDirectory(doc: StaticDoc): string {
+  return doc.root === VISUAL_CONTENT_ROOT
+    ? VISUAL_NAV_DIRECTORY
+    : staticDirectory(doc);
+}
+
 function staticDirectoryTitle(directory: string): string {
   if (!directory) return "文档";
   return directory
@@ -150,25 +162,36 @@ function staticDocNav(
   docs: StaticDoc[],
   context: MiraDocsStaticBuildContext,
 ): string {
+  const logicalRoot = logicalStaticAreaKey(doc.root);
   const scoped = docs
-    .filter((candidate) => candidate.root === doc.root)
+    .filter((candidate) => logicalStaticAreaKey(candidate.root) === logicalRoot)
     .sort(
       (left, right) =>
         left.order - right.order || left.path.localeCompare(right.path),
     );
   const groups = new Map<string, StaticDoc[]>();
   for (const candidate of scoped) {
-    const directory = staticDirectory(candidate);
+    const directory = staticNavigationDirectory(candidate);
     const group = groups.get(directory) || [];
     group.push(candidate);
     groups.set(directory, group);
   }
-  const rootPath = doc.root === "docs" ? "/" : `/${doc.root}`;
+  const rootPath = logicalRoot === "docs" ? "/" : `/${logicalRoot}`;
   const rootTitle =
-    scoped.map((candidate) => dataString(candidate.data, "nav")).find(Boolean) ||
-    doc.group ||
-    doc.root;
+    logicalRoot === MIRA_DOCS_AREA_KEY
+      ? "MiraDocs"
+      : scoped
+          .filter((candidate) => candidate.root === logicalRoot)
+          .map((candidate) => dataString(candidate.data, "nav"))
+          .find(Boolean) ||
+        doc.group ||
+        logicalRoot;
   const sections = [...groups.entries()]
+    .sort(([left], [right]) => {
+      if (left === VISUAL_NAV_DIRECTORY) return 1;
+      if (right === VISUAL_NAV_DIRECTORY) return -1;
+      return 0;
+    })
     .map(([directory, items]) => {
       const links = items
         .map(
@@ -251,9 +274,11 @@ function areaBody(
   const title =
     root === "blogs"
       ? "博客"
-      : docs.find((doc: StaticDoc) => doc.root === root)?.title || root;
+      : root === MIRA_DOCS_AREA_KEY
+        ? "MiraDocs"
+        : docs.find((doc: StaticDoc) => doc.root === root)?.title || root;
   const links = docs
-    .filter((doc: StaticDoc) => doc.root === root)
+    .filter((doc: StaticDoc) => logicalStaticAreaKey(doc.root) === root)
     .map(
       (doc: StaticDoc) =>
         `<li><a href="${docHref(doc.path, context)}">${miraDocsEscapeHtml(doc.title)}</a><p>${miraDocsEscapeHtml(doc.description)}</p></li>`,
@@ -265,6 +290,12 @@ function areaBody(
 
 function homeBody(context: MiraDocsStaticBuildContext): string {
   const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
+  return `${staticSiteHeader(context)}${main}`;
+}
+
+function visualRootRedirectBody(context: MiraDocsStaticBuildContext): string {
+  const target = docHref(`/${MIRA_DOCS_AREA_KEY}`, context);
+  const main = `<main class="doc-main seo-static-content"><div class="doc-not-found"><div class="doc-eyebrow">MIRADOCS · VISUAL</div><h1>视觉文档已归入 MiraDocs</h1><p>产品设计系统与主题参考仍保留原有文章地址，现在统一由 MiraDocs 导航承载。</p><a class="btn btn-primary" href="${target}">前往 MiraDocs</a></div><script>window.location.replace(${JSON.stringify(target)});</script></main>`;
   return `${staticSiteHeader(context)}${main}`;
 }
 
@@ -352,12 +383,25 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
       type: "website",
       jsonLd: websiteJsonLd(context, "/"),
     },
+    {
+      path: `/${VISUAL_CONTENT_ROOT}`,
+      title: "视觉文档已归入 MiraDocs",
+      description: "产品设计系统与主题参考现由 MiraDocs 统一导航。",
+      body: visualRootRedirectBody(context),
+      type: "website",
+      robots: "noindex,follow",
+      jsonLd: websiteJsonLd(context, `/${VISUAL_CONTENT_ROOT}`),
+    },
   ];
 
-  const roots = [...new Set(docs.map((doc: StaticDoc) => doc.root))];
+  const roots = [
+    ...new Set(docs.map((doc: StaticDoc) => logicalStaticAreaKey(doc.root))),
+  ];
   for (const root of roots) {
     if (root === "docs") continue;
-    const rootDocs = docs.filter((doc: StaticDoc) => doc.root === root);
+    const rootDocs = docs.filter(
+      (doc: StaticDoc) => logicalStaticAreaKey(doc.root) === root,
+    );
     const title = root === "blogs" ? "博客" : rootDocs[0]?.title || root;
     result.push({
       path: `/${root}`,

@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import {
   Link,
+  Navigate,
   Outlet,
   Route,
   Routes,
@@ -82,6 +83,15 @@ type SiteArea = {
 };
 const githubUrl = "https://github.com/dangjingtao/uichat-mira";
 const appBase = import.meta.env.BASE_URL;
+const MIRA_DOCS_AREA_KEY = "mira-docs-api";
+const VISUAL_CONTENT_ROOT = "design-md";
+const VISUAL_NAV_DIRECTORY = "视觉";
+function logicalSiteAreaKey(root: string) {
+  return root === VISUAL_CONTENT_ROOT ? MIRA_DOCS_AREA_KEY : root;
+}
+function navigationDirectory(doc: Doc) {
+  return doc.root === VISUAL_CONTENT_ROOT ? VISUAL_NAV_DIRECTORY : doc.directory;
+}
 function docHref(path: string) {
   return `${appBase}${path.replace(/^\/+/, "")}`;
 }
@@ -176,32 +186,36 @@ function resolveCoverSource(doc: Doc) {
 const docsRootDocs = allDocs.filter((doc) => doc.root === "docs");
 const extraRootDocs = allDocs.filter((doc) => doc.root !== "docs");
 const siteAreaRoots = [
-  ...new Set([
-    ...pageDirectories.filter((root) => root !== "docs"),
-    ...extraRootDocs.map((doc) => doc.root),
-  ]),
+  ...new Set(
+    [
+      ...pageDirectories.filter((root) => root !== "docs"),
+      ...extraRootDocs.map((doc) => doc.root),
+    ].map(logicalSiteAreaKey),
+  ),
 ];
-const siteAreas: SiteArea[] = siteAreaRoots.map((root) => {
-  const docs = extraRootDocs
-    .filter((doc) => doc.root === root)
-    .sort(compareDocs);
-  const first = docs[0];
-  const path = `/${root}`;
-  return {
-    key: root,
-    title:
-      first?.nav ||
-      (root === "blogs"
-        ? "博客"
-        : root
-            .replace(/[-_]+/g, " ")
-            .replace(/\b\w/g, (letter) => letter.toUpperCase())),
-    description: root === "design-md" ? "" : first?.description || "",
-    docs,
-    path,
-    href: docHref(path),
-  };
-});
+const siteAreas: SiteArea[] = siteAreaRoots
+  .map((root) => {
+    const docs = extraRootDocs
+      .filter((doc) => logicalSiteAreaKey(doc.root) === root)
+      .sort(compareDocs);
+    const first = docs.find((doc) => doc.root === root) ?? docs[0];
+    const path = `/${root}`;
+    return {
+      key: root,
+      title:
+        first?.nav ||
+        (root === "blogs"
+          ? "博客"
+          : root
+              .replace(/[-_]+/g, " ")
+              .replace(/\b\w/g, (letter) => letter.toUpperCase())),
+      description: first?.description || "",
+      docs,
+      path,
+      href: docHref(path),
+    };
+  })
+  .filter((area) => area.docs.length > 0);
 const docSections: DocSection[] = Object.entries(sectionInfo)
   .map(([title, info]) => ({
     key: info.key,
@@ -1219,6 +1233,9 @@ function SiteHeader({
     setOpenMenu(null);
     setMobileOpen(false);
   }, [location.pathname]);
+  const currentDoc = allDocs.find(
+    (doc) => doc.path === decodedPathname(location.pathname),
+  );
   const isActive = (item: LinkItem) => {
     const target = item.href.slice(Math.max(appBase.length - 1, 0));
     if (item.label === "文档")
@@ -1228,11 +1245,16 @@ function SiteHeader({
           (doc) => doc.root === "docs" && doc.path === location.pathname,
         )
       );
+    if (
+      target === `/${MIRA_DOCS_AREA_KEY}` &&
+      currentDoc?.root === VISUAL_CONTENT_ROOT
+    ) {
+      return true;
+    }
     return (
       location.pathname === target || location.pathname.startsWith(`${target}/`)
     );
   };
-  const currentDoc = allDocs.find((doc) => doc.path === location.pathname);
   const showMobileDocShare = currentDoc?.root === "docs";
   return (
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
@@ -1703,6 +1725,10 @@ function RoutedApp() {
         <Route path="/" element={<HomePage darkMode={darkMode} />} />
         <Route element={<DocsLayout />}>
           <Route path="/sitemap" element={<DocPage path="/sitemap" />} />
+          <Route
+            path={`/${VISUAL_CONTENT_ROOT}`}
+            element={<Navigate replace to={`/${MIRA_DOCS_AREA_KEY}`} />}
+          />
           {siteAreas.map((area) => (
             <Route
               key={area.key}
@@ -1912,10 +1938,18 @@ function directoryTitle(directory: string) {
     .join(" / ");
 }
 function docsByDirectory(docs: Doc[]) {
-  return [...new Set(docs.map((doc) => doc.directory))].map((directory) => ({
-    directory,
-    docs: docs.filter((doc) => doc.directory === directory).sort(compareDocs),
-  }));
+  return [...new Set(docs.map(navigationDirectory))]
+    .map((directory) => ({
+      directory,
+      docs: docs
+        .filter((doc) => navigationDirectory(doc) === directory)
+        .sort(compareDocs),
+    }))
+    .sort((left, right) => {
+      if (left.directory === VISUAL_NAV_DIRECTORY) return 1;
+      if (right.directory === VISUAL_NAV_DIRECTORY) return -1;
+      return 0;
+    });
 }
 function blogCategoryIcon(category: string): LucideIcon {
   if (category.includes("产品")) return Sparkles;
@@ -2057,13 +2091,7 @@ function BlogMaintainersSection({
   );
 }
 function AreaDocNav({ area, current }: { area: SiteArea; current: string }) {
-  const groups = Object.values(
-    area.docs.reduce<Record<string, Doc[]>>((result, doc) => {
-      (result[doc.directory] ??= []).push(doc);
-      return result;
-    }, {}),
-  ).map((docs) => docs.sort(compareDocs));
-  const groupKeys = [...new Set(area.docs.map((doc) => doc.directory))];
+  const groups = docsByDirectory(area.docs);
   return (
     <nav className="docnav">
       <h5>目录</h5>
@@ -2077,11 +2105,11 @@ function AreaDocNav({ area, current }: { area: SiteArea; current: string }) {
           </Link>
         </h5>
       </div>
-      {groupKeys.map((directory, index) => (
-        <div className="docnav-group" key={directory || "root"}>
-          <h5>{directory ? directoryTitle(directory) : "文档"}</h5>
+      {groups.map((group) => (
+        <div className="docnav-group" key={group.directory || "root"}>
+          <h5>{group.directory ? directoryTitle(group.directory) : "文档"}</h5>
           <ul>
-            {groups[index]?.map((doc) => (
+            {group.docs.map((doc) => (
               <li key={doc.path}>
                 <Link
                   className={current === doc.path ? "active" : ""}
@@ -2135,11 +2163,12 @@ function DocsLayout() {
   const location = useLocation();
   const currentPath = decodedPathname(location.pathname);
   const currentDoc = allDocs.find((item) => item.path === currentPath);
-  const currentArea = siteAreas.find(
-    (area) =>
-      location.pathname === area.path ||
-      location.pathname.startsWith(`${area.path}/`),
-  );
+  const currentArea = currentDoc
+    ? siteAreas.find((area) => area.key === logicalSiteAreaKey(currentDoc.root))
+    : siteAreas.find(
+        (area) =>
+          currentPath === area.path || currentPath.startsWith(`${area.path}/`),
+      );
   const isBlogArea = currentArea?.key === "blogs";
   const doc = currentDoc || allDocs[0];
   const [activeHeading, setActiveHeading] = useState("");

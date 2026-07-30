@@ -106,12 +106,45 @@ if (existsSync(indexPath)) {
   if ((html.match(/name="description"/g) || []).length !== 1) {
     failures.push("首页 description meta 不是唯一值");
   }
+  if (html.includes(">视觉</a>") || html.includes(">Design Md</a>")) {
+    failures.push("顶部导航仍残留独立视觉入口");
+  }
+  if (!html.includes(">MiraDocs</a>")) {
+    failures.push("顶部导航缺少 MiraDocs");
+  }
 }
 
 if (existsSync(notFoundPath)) {
   const html = readFileSync(notFoundPath, "utf8");
   if (!html.includes('content="noindex,nofollow"')) {
     failures.push("404 页面没有 noindex,nofollow");
+  }
+}
+
+const visualRootRoute = "/design-md";
+const visualRootPath = routeFile(visualRootRoute);
+if (!existsSync(visualRootPath)) {
+  failures.push("缺少视觉旧根路径兼容页");
+} else {
+  const html = readFileSync(visualRootPath, "utf8");
+  if (html.includes("EMPTY SECTION") || html.includes("页面不存在")) {
+    failures.push("视觉旧根路径仍渲染为空目录或 404");
+  }
+  if (!html.includes("视觉文档已归入 MiraDocs")) {
+    failures.push("视觉旧根路径没有明确迁移说明");
+  }
+  if (!html.includes("/mira-docs-api")) {
+    failures.push("视觉旧根路径没有指向 MiraDocs");
+  }
+}
+
+const miraDocsAreaPath = routeFile("/mira-docs-api");
+if (!existsSync(miraDocsAreaPath)) {
+  failures.push("缺少 MiraDocs 区域静态页");
+} else {
+  const html = readFileSync(miraDocsAreaPath, "utf8");
+  if (!html.includes("/design-md/视觉/product-design-system")) {
+    failures.push("MiraDocs 区域没有纳入视觉内容");
   }
 }
 
@@ -127,6 +160,16 @@ if (existsSync(designSystemPath)) {
   }
   if (!html.includes("Mira 的设计系统")) {
     failures.push("产品设计系统静态页缺少合并后的正文内容");
+  }
+  const docnav = html.match(/<nav class="docnav">[\s\S]*?<\/nav>/)?.[0] || "";
+  if (!docnav.includes(">MiraDocs</a>")) {
+    failures.push("视觉文档侧栏没有归入 MiraDocs");
+  }
+  if (!docnav.includes("<h5>视觉</h5>")) {
+    failures.push("视觉文档侧栏缺少统一视觉分组");
+  }
+  if (docnav.includes("<h5>主题</h5>") || docnav.includes("<h5>产品设计系统</h5>")) {
+    failures.push("视觉文档侧栏仍残留迁移前的拆分目录");
   }
 }
 verifyDocumentShell(designSystemRoute, "产品设计系统");
