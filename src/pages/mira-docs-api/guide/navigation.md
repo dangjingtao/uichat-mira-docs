@@ -22,24 +22,21 @@ import docs, { roots } from "virtual:mira-docs/content"
 
 虚拟模块会随 Markdown 变化失效，开发服务器随后完整刷新。
 
-## 当前站点的信息架构
+## 当前站点的导航边界
 
-当前 UIChat Mira 站点使用以下内容层级：
+当前 UIChat Mira 站点仍保留原有信息架构：
 
 ```text
 src/pages/
-├── docs/                 # 默认文档区，URL 不显示 docs
-├── mira-docs-api/        # MiraDocs 文档区
-│   └── 视觉/             # 产品设计系统与主题参考
-├── blogs/                # 博客
+├── docs/            # 默认文档区，URL 不显示 docs
+├── blogs/           # 博客
+├── mira-docs-api/   # MiraDocs 文档区
 └── ...
 ```
 
-视觉内容不再作为独立顶层区域，而是归入 MiraDocs 左侧目录中的“视觉”分组。
-
 Vite 插件负责发现文件，`src/content/mira-docs-adapter.ts` 负责把通用 `MiraDoc` 映射成旧站需要的文档模型。
 
-## URL 规则
+## URL 兼容
 
 当前配置使用：
 
@@ -55,7 +52,7 @@ miraDocs({
 })
 ```
 
-默认文档区继续隐藏 `/docs` 前缀；其余内容按照物理目录生成路由。视觉内容迁移后的路径位于 `/mira-docs-api/视觉/` 下。
+因此迁移前后的历史 URL 保持不变。MiraDocs 不要求消费者采用某一种目录前缀。
 
 ## 顶部与侧边导航
 
