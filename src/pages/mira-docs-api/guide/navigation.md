@@ -34,6 +34,8 @@ src/pages/
 └── ...
 ```
 
+`design-md` 继续作为视觉内容的物理来源，因此既有 `/design-md/...` 文章地址保持不变；站点适配层只把它的导航归属映射到 MiraDocs。顶部不再生成独立视觉入口，MiraDocs 左栏统一显示“视觉”分组，物理目录不会变成空栏目。
+
 Vite 插件负责发现文件，`src/content/mira-docs-adapter.ts` 负责把通用 `MiraDoc` 映射成旧站需要的文档模型。
 
 ## URL 兼容
