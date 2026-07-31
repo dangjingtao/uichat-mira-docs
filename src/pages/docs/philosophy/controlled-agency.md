@@ -1,87 +1,153 @@
 ---
-title: 可控的自主
-description: Main Agent 可以决定下一步并委派局部任务，但执行权始终受治理。
+title: 可控自主原则
+description: Main Agent、SubAgent、Harness、审批与用户控制权的责任边界。
 group: 产品哲学
 order: 5
 ---
 
-# 可控的自主
+# 可控自主原则
 
-Mira 追求的不是“尽可能自动”，而是让自主能力在清晰、稳定、可以被用户接管的边界里工作。
+## 原则定义
 
-## 全局决策与具体执行必须分开
+可控自主表示：模型可以根据目标决定下一步，但具体执行权必须受到明确的 Runtime、Policy、审批、Workspace 和 Evidence 合同约束。
 
-Main Planner 维护用户的完整目标，并决定下一步是回答、提问、检索、调用具体工具，还是委派一个局部工作包。
+```text
+自主决策
+!= 无条件执行
+```
 
-它不直接绕过执行协议。具体工具仍要经过 Normalize、Policy、Approval、ToolResult 和 Evidence。
+## 责任分配
 
-决策可以由模型完成，执行合同不能靠模型临场发挥。
+| 组件 | 负责 | 不负责 |
+| --- | --- | --- |
+| Main Planner | 维护全局目标、选择下一步、判断整体完成 | 直接绕过 Tool Runtime 执行动作 |
+| Normalize | 校验 concrete tool 与参数、冻结调用 | 判断业务目标是否完成 |
+| Policy / Approval | 判断一次具体调用是否允许 | 生成新的调用参数 |
+| Harness | 管理工具注册、可用性、暴露、执行和审计 | 用户目标分解和最终回答 |
+| Generic SubAgent | 完成一个受限、可验收的局部工作包 | 修改全局目标或递归委派 |
+| Skill-owned SubAgent | 在 Skill 约束内完成领域任务 | 自动获得全部公共工具和权限 |
+| Parent Agent | 保留用户对话、审批、恢复、Evidence 和最终交付 | 把治理责任永久移交给 Child |
+| User | 批准、拒绝、补充信息或终止高风险动作 | 为系统的模糊调用承担默认授权 |
 
-## 委派不是放弃治理
+## 具体调用合同
 
-Mira 允许两种局部执行单元：
+普通工具执行遵循：
 
-- Generic SubAgent：完成一个边界清楚、可独立验收的通用工作包；
-- Skill-owned SubAgent：在专业 Skill 的受限工具面和可选私有 Runtime 中完成领域施工。
+```text
+Planner Decision
+→ Normalize
+→ Frozen Invocation
+→ Policy / Approval
+→ Tool Runtime
+→ Tool Result
+→ Evidence
+→ Planner
+```
 
-SubAgent 只获得局部目标，不继承 Parent 的全部上下文和全部能力，也不能继续递归创建新的 SubAgent。
+一次批准必须针对明确的调用身份和参数。Settled contract 使用：
 
-Parent 始终保留：
+```text
+toolId + toolCallId + inputHash
+```
 
-- 用户对话；
-- 全局目标；
-- Policy 与审批；
-- 恢复和终止治理；
-- Evidence 收口；
-- 最终回答与产物交付。
+命令、参数、`cwd`、环境变量、超时或目标资源变化后，需要重新判断。
 
-真正的自主，不是把责任从系统里抹掉，而是让每一层只拥有它应该拥有的决定权。
+## 委派边界
 
-## Harness 是 concrete action 的边界
+### Generic SubAgent
 
-Harness 区分：
+适用于：
 
-- 系统可能拥有的能力；
-- 模型本轮可以看见的工具；
-- Planner 实际决定的调用；
-- 经过冻结和审批的 invocation；
-- 工具真实返回的结果。
+- 目标边界明确；
+- 可以独立验收；
+- 通常需要多步顺序工具调用；
+- 返回结构化 Evidence 后由 Main Planner 继续判断。
 
-`delegate_task` 不是一个绕过 Harness 的万能工具。Child 内部每一次 concrete tool 调用仍然受工具绑定、Policy、审批、workspace 和 Evidence 约束。
+限制：
 
-Skill-private Runtime 也不是自动获得权限的隐藏后门。它只能在 execution profile 的边界内工作，并把结果交回 Parent。
+- 只接收局部目标；
+- 只看见受限 concrete tools；
+- 不允许 nested SubAgent；
+- 不允许再次调用 `delegate_task`；
+- completed 不等于用户全局目标完成。
 
-## 高风险动作需要显式停顿
+### Skill-owned SubAgent
 
-一次批准必须绑定具体的 `toolId`、`toolCallId`、参数哈希和 checkpoint。
+适用于具有领域 Skill、Execution Profile 和可选私有 Runtime 的任务。
 
-系统恢复时继续的是同一项被冻结的调用，而不是重新生成一套“差不多”的参数。这样的停顿不是自动化失败，而是把不可逆选择明确交还给人。
+限制：
 
-## 给结果，也要给证据
+- SkillContext 不扩大 Main Planner ToolExposure；
+- 私有 Runtime 不能因为 Manifest 声明而自动获得可用性；
+- Parent 保留审批、恢复、终止和最终交付；
+- Child 完成后返回 Evidence、Artifact 或 Requirement。
 
-Mira 不把“模型说成功了”当成成功。
+## 高风险操作
 
-工具调用、检索、SubAgent 结果和 Artifact 都需要形成可追踪 Evidence。系统还必须区分：
+需要显式审批的操作包括但不限于：
 
-- 当前事实足以回答什么；
-- 用户要求的任务是否完整完成。
+- 文件写入、删除和移动；
+- Terminal 命令；
+- GitHub 远程写操作；
+- 邮件强制同步或发送；
+- Browser 输入、提交或外部传输；
+- External MCP Tool 调用；
+- 其他具有网络、副作用或不可逆影响的动作。
 
-这让用户能够看见系统做过什么、失败在哪里、为什么暂停，以及最终结论依据什么。
+风险处理不能通过“把工具隐藏起来”替代。Eligibility、Exposure 和 Approval 是不同层级。
 
-## 当前不是 Agent 社会
+## 等待与恢复
 
-Mira 当前不追求：
+系统需要区分：
 
-- Agent 自由复制；
-- Agent 间无限通信；
-- 多 Agent 群体投票；
-- nested SubAgent；
-- 不受约束的长链自主执行。
+| 状态 | 含义 |
+| --- | --- |
+| `waiting_user` | 缺少完成任务所需的信息 |
+| `waiting_approval` | 已冻结具体调用，等待用户决定 |
+| `running` | Runtime 正在处理 |
+| `completed` | 已形成可交付结果 |
+| `failed` | Terminal failure，不能继续 Generate |
 
-当前方向是受控、单层、任务局部的执行所有权转移。
+恢复必须使用同一 frozen invocation 和 checkpoint，不重新根据“同意”生成一套相似参数。
 
-## 稳定比显得聪明更重要
+## 禁止的隐式扩张
 
-当多个节点都能猜测用户意图，当批准可以被泛化，当 Child 可以偷偷扩大目标，系统会在边界处悄悄漂移。
+当前设计禁止：
 
-Mira 更看重职责单一、证据可追踪、审批可验证和回路可复现。先让每一步可靠，再让任务变长；先确保用户能够重新拿回主导权，再谈更大的自主能力。
+- Child 修改 Parent 的全局目标；
+- Child 递归创建 SubAgent；
+- Skill 私有 Runtime 进入 Main Planner 公共工具面；
+- 旧批准跨参数、跨任务或跨 fork 复用；
+- Tool Result 直接宣布用户任务完成；
+- UI 选中状态、ranking 结果或 capability match 直接成为 Invocation；
+- 连接成功自动等于 Agent Access。
+
+## 当前非目标
+
+Mira 当前不实现：
+
+- 开放式 Agent 社会；
+- Agent 间自由通信与群体投票；
+- 无限长自主循环；
+- 通用 DAG Scheduler；
+- 不受用户治理的后台执行；
+- 自动授予全部本地和远端权限。
+
+## 验证问题
+
+评审自主执行功能时，应回答：
+
+1. 谁维护全局目标？
+2. 谁生成参数，谁冻结参数？
+3. 审批绑定哪一次具体调用？
+4. Child 获得哪些上下文和工具？
+5. 失败如何进入 Evidence？
+6. 谁判断最终完成？
+7. 用户如何暂停、拒绝或终止？
+
+## 相关文档
+
+- [Agent 当前运行真相](/docs/architecture/agent)
+- [Harness 与工具边界](/docs/architecture/harness)
+- [Agent 策略](/docs/architecture/agent-strategy)
+- [证据优先原则](/docs/philosophy/evidence)
