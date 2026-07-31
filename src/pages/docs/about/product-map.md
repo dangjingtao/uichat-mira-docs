@@ -20,7 +20,7 @@ order: 3
 | 对话工作区 | Thread、Message、Attachment、AgentRun | 承载用户目标、上下文、执行过程与最终交付 | Chat |
 | Provider 与模型 | Template、Connection、Model Cache、Role Binding | 管理模型连接、远端模型目录、用途绑定与调用解析 | 模型设置 |
 | Knowledge Base 与 RAG | Knowledge Base、Document、Chunk、Vector Index、Source | 文本入库、索引、混合检索和有来源生成 | 知识库、Chat |
-| Evaluation | Dataset、Run、Metric、Report | 验证检索和生成质量，保护回归 | 评测中心 |
+| Evaluation | Package、Dataset、Run、Sample、Attempt、Metric、Report | 对当前 Knowledge Base / RAG 做本地回归和诊断 | 评测中心、评测工作台 |
 | 角色 | Role、Prompt Field、Generation Parameters | 管理可复用身份、表达方式和约束 | 角色工作台 |
 | Agent 与工具 | AgentRun、Planner、Harness、Tool、Evidence、Artifact | 决策下一步并执行受治理的具体动作 | Chat、工具工作台 |
 | MCP | Server、Transport、Discovered Tool、Agent Access | 连接和投影外部工具 | MCP 设置 |
@@ -96,16 +96,20 @@ User Question
 → Sources / Message Persistence
 ```
 
-### 评测
+### Evaluation
 
 ```text
-Evaluation Dataset
-→ Retrieval or RAG Run
-→ Metrics / Judge
-→ Report
+Evaluation ZIP
+→ Parsed Dataset
+→ Evaluation Run
+→ Sample Attempts
+→ Heuristic Metrics
+→ Client-side Markdown Report
 ```
 
-Evaluation 消费知识库与 RAG 结果，但不持有 Knowledge Base 的文档与索引真相。
+当前 `evaluation` role 只用于自动生成评测样本，不承担 Run Judge。
+
+Evaluation 消费当前 Knowledge Base 和 RAG 结果，但不持有文档与索引真相，也不冻结完整语料。
 
 ### Agent 任务
 
@@ -174,7 +178,7 @@ RAG Runtime
 → queries one bound knowledge base and produces sources / answer
 
 Evaluation
-→ measures retrieval and generation results
+→ executes samples and computes current diagnostic metrics
 ```
 
 当前知识库：
@@ -185,7 +189,21 @@ Evaluation
 - 通过 RRF 融合并可选 Rerank；
 - 一个 Chat Thread 当前绑定一个知识库。
 
-详细说明见：[知识库与 RAG](/docs/product/knowledge)和[Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)。
+当前 Evaluation：
+
+- 使用 ZIP 描述 Dataset、Gold Sources 和运行参数；
+- 运行时仍查询当前本机 Knowledge Base；
+- 支持 Retrieve 和 Retrieve + Generate；
+- 指标主要是 documentName 匹配和词项重合启发式；
+- Run 使用 SQLite 持久化，但执行不是 durable / resumable job；
+- Markdown Report 由桌面客户端即时生成。
+
+详细说明见：
+
+- [知识库与 RAG](/docs/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
+- [评测工作台](/docs/product/evaluation)
+- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
 
 ## Agent 与工具关系
 
@@ -230,6 +248,10 @@ Mira 当前不提供：
 - 所有 OpenAI-compatible Provider 的完全一致行为；
 - 根据供应商或模型名称自动确认全部模型能力；
 - Chat、Image 和 TTS 已经统一完成的一套 Provider 配置源；
+- 评测模型自动成为 LLM Judge；
+- Evaluation ZIP 自动冻结完整 Knowledge Base；
+- 标准 RAGAS、真实 rank MRR 或 Release Gate；
+- Evaluation Run 的重启恢复、取消和暂停；
 - 任意格式文档自动入库；
 - durable Knowledge Base indexing workflow；
 - 切换 Embedding 后自动重建索引；
@@ -242,7 +264,7 @@ Mira 当前不提供：
 - 所有 POC 和入口卡片的生产可用承诺；
 - 通用 durable workflow engine。
 
-当前优先级是稳定既有能力、修复已知合同漂移、提高 Provider、Sources、Evidence 和 Artifact 的可信度。
+当前优先级是稳定既有能力、修复已知合同漂移、提高 Provider、Sources、Evaluation 解释、Evidence 和 Artifact 的可信度。
 
 ## 相关文档
 
@@ -251,6 +273,8 @@ Mira 当前不提供：
 - [Provider 与模型运行时](/docs/architecture/provider-context)
 - [知识库与 RAG](/docs/product/knowledge)
 - [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
+- [评测工作台](/docs/product/evaluation)
+- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
 - [当前实现快照](/docs/status/current)
 - [Agent 当前运行真相](/docs/architecture/agent)
 - [Harness 与工具边界](/docs/architecture/harness)

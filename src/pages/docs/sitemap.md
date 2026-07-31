@@ -25,6 +25,10 @@ order: 99
 
 4. [知识库与 RAG](/docs/product/knowledge)：配置 Embedding，上传文本，等待索引 ready，并验证真实 Sources。
 
+需要保护 RAG 回归时，再继续：
+
+5. [评测工作台](/docs/product/evaluation)：准备 Evaluation ZIP、校验 Dataset、运行 Sample，并按当前算法解释指标。
+
 不要在主模型尚未验证时，同时配置所有高级角色、工具和微应用。
 
 ## 推荐阅读顺序
@@ -58,13 +62,14 @@ order: 99
 - [模型设置](/docs/configuration/model-settings)
 - [对话工作区](/docs/product/workspace)
 - [知识库与 RAG](/docs/product/knowledge)
+- [评测工作台](/docs/product/evaluation)
 - [角色工作台](/docs/product/roles-microapps)
 - [微应用中心](/docs/product/microapps)
 - [企业集成](/docs/product/enterprise-integrations)
 
 产品能力页优先说明前置条件、对象、操作、状态、限制和验证方式。
 
-Evaluation 是独立产品域，后续由专门文档说明；知识库页面只解释它与评测的边界。
+Knowledge Base 和 Evaluation 是相邻但独立的产品域。前者持有文档、Chunk 和索引；后者持有 Dataset、Run 和诊断结果。
 
 ### 4. 架构
 
@@ -73,6 +78,7 @@ Evaluation 是独立产品域，后续由专门文档说明；知识库页面只
 - [桌面运行时](/docs/architecture/runtime)
 - [Provider 与模型运行时](/docs/architecture/provider-context)
 - [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
+- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
 - [Agent 当前运行真相](/docs/architecture/agent)
 - [Harness 与工具边界](/docs/architecture/harness)
 - [Agent 策略](/docs/architecture/agent-strategy)
@@ -98,6 +104,13 @@ Evaluation 是独立产品域，后续由专门文档说明；知识库页面只
 模型绑定已保存
 != 模型目录同步成功
 != 真实模型请求成功
+```
+
+Evaluation 还必须区分：
+
+```text
+evaluation role 已绑定
+!= 已配置 Judge Model
 ```
 
 ### 6. 工程
@@ -170,11 +183,28 @@ Current Code + Repeatable Verification
 != 回答正确
 ```
 
+对于 Evaluation 还要分别判断：
+
+| 状态 | 需要的证据 |
+| --- | --- |
+| Package generated | ZIP 已写出；不证明 Dataset 或 Gold 正确 |
+| Dataset valid | 没有 validation error，Knowledge Base 当前存在 |
+| Run persisted | Run JSON 已写入 SQLite；不证明可重启恢复 |
+| Sample complete | 当前问题有 Attempt 结果 |
+| Metric available | 当前启发式公式已产出数值 |
+| Result reviewed | 人工检查 Sources、Answer 和失败样本 |
+
+```text
+Metric Label
+!= Standard Algorithm
+!= Release Gate
+```
+
 ## 搜索
 
 使用 `Ctrl + K` 或 `Command + K` 搜索标题、描述和 Markdown 正文。
 
-搜索可以跨目录找到概念，但不能自动判断内容生命周期。对于能力状态、Provider、Knowledge Base、审批或运行时问题，应优先阅读 Current 页面和对应架构文档。
+搜索可以跨目录找到概念，但不能自动判断内容生命周期。对于能力状态、Provider、Knowledge Base、Evaluation、审批或运行时问题，应优先阅读 Current 页面和对应架构文档。
 
 ## 文档与博客的区别
 

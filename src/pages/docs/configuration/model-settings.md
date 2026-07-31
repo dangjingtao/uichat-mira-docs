@@ -210,7 +210,7 @@ Provider Template
 | 主模型 | `llm` | 普通聊天和最终文本生成 | 可选模型、可编辑参数 |
 | 小任务模型 | `task` | 标题、摘要等轻量任务 | 可选模型；参数详情只读 |
 | Agent 任务模型 | `agentTask` | Agent 规划和任务生成 | 可选模型；参数详情只读 |
-| 评测模型 | `evaluation` | 评测生成与裁判 | 可选模型、可编辑参数 |
+| 评测模型 | `evaluation` | 从 Knowledge Base Chunk 生成评测包样本 | 可选模型、可编辑参数；当前不承担 Run Judge |
 | 向量模型 | `embedding` | 远程文本向量化 | 可选模型、可编辑参数 |
 | 排序模型 | `rerank` | 远程候选重排 | 可选模型、可编辑参数 |
 
@@ -238,7 +238,25 @@ Provider Template
 
 ### 评测模型
 
-评测模型用于样本生成或质量裁判。它不应自动等同于主聊天模型，否则可能难以比较不同模型组合。
+当前评测模型只用于评测包生成器：
+
+```text
+Knowledge Base Chunk
+→ question
+→ expectedAnswer
+→ tags
+```
+
+它不会参与 Evaluation Run 的指标裁判。当前 Faithfulness、Answer Relevance 和 Answer Completeness 使用本地词项重合启发式，而不是 LLM Judge。
+
+因此：
+
+```text
+evaluation role 已配置
+!= 已配置 Judge Model
+```
+
+详细说明见：[评测工作台](/docs/product/evaluation)和[Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)。
 
 ### 向量模型
 
@@ -398,5 +416,7 @@ OpenAI-compatible 只表示协议形态接近，不保证所有服务的模型�
 
 - [Provider 与模型运行时](/docs/architecture/provider-context)
 - [应用基础信息](/docs/configuration/application-basics)
-- [知识库与评测](/docs/product/knowledge)
+- [知识库与 RAG](/docs/product/knowledge)
+- [评测工作台](/docs/product/evaluation)
+- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
 - [当前实现快照](/docs/status/current)
