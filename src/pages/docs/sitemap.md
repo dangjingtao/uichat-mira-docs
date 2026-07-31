@@ -1,6 +1,6 @@
 ---
 title: Sitemap
-description: UIChat Mira 公共产品文档的目录职责、推荐阅读顺序与状态判断方法。
+description: UIChat Mira 公共产品文档的目录职责、首次使用路径、推荐阅读顺序与状态判断方法。
 group: 导航
 order: 99
 ---
@@ -12,6 +12,16 @@ order: 99
 本页提供 UIChat Mira 公共产品文档的推荐阅读顺序。
 
 公共文档用于解释当前产品、操作方式、稳定架构和明确计划。完整施工记录、测试证据和历史方案保存在主仓库工程文档中。
+
+## 首次使用路径
+
+全新安装先完成：
+
+1. [应用基础信息](/docs/configuration/application-basics)：确认运行形态和首次可用条件；
+2. [模型设置](/docs/configuration/model-settings)：配置 Provider Connection、绑定主模型并得到真实 Chat 回复；
+3. [对话工作区](/docs/product/workspace)：开始普通对话或创建工作线程。
+
+不要在主模型尚未验证时，同时配置所有高级角色、工具和微应用。
 
 ## 推荐阅读顺序
 
@@ -40,6 +50,8 @@ order: 99
 
 用于了解用户可进入的主要功能：
 
+- [应用基础信息](/docs/configuration/application-basics)
+- [模型设置](/docs/configuration/model-settings)
 - [对话工作区](/docs/product/workspace)
 - [知识库与评测](/docs/product/knowledge)
 - [角色工作台](/docs/product/roles-microapps)
@@ -53,11 +65,11 @@ order: 99
 用于理解 Runtime 和不变量：
 
 - [桌面运行时](/docs/architecture/runtime)
+- [Provider 与模型运行时](/docs/architecture/provider-context)
 - [Agent 当前运行真相](/docs/architecture/agent)
 - [Harness 与工具边界](/docs/architecture/harness)
 - [Agent 策略](/docs/architecture/agent-strategy)
 - [MicroApps 与独立 Runtime](/docs/architecture/microapps)
-- [Provider 与上下文](/docs/architecture/provider-context)
 
 架构页回答：状态由谁持有、调用链如何流转、哪些职责不能混合，以及当前有哪些实现偏差。
 
@@ -66,12 +78,20 @@ order: 99
 用于完成具体设置：
 
 - [应用基础信息](/docs/configuration/application-basics)
-- [通用设置与个人数据](/docs/configuration/general-settings)
 - [模型设置](/docs/configuration/model-settings)
+- [通用设置与个人数据](/docs/configuration/general-settings)
 - [工具工作台](/docs/configuration/tools)
 - [MCP](/docs/configuration/mcp)
 
 配置页应按前置条件、配置项、保存、验证和失败处理阅读。
+
+模型设置必须区分：
+
+```text
+模型绑定已保存
+!= 模型目录同步成功
+!= 真实模型请求成功
+```
 
 ### 6. 工程
 
@@ -116,11 +136,20 @@ Current Code + Repeatable Verification
 | Planned | 计划，不代表已经交付 |
 | Historical | 历史资料，不回答当前行为 |
 
+对于 Provider 还要分别判断：
+
+| 状态 | 需要的证据 |
+| --- | --- |
+| Connection 已配置 | Base URL、凭据和实例已保存 |
+| 模型目录已同步 | 最近一次列表接口成功 |
+| 模型角色已绑定 | model id 已分配给具体 role |
+| Runtime 已验证 | 真实 Chat、Embedding 或 Rerank 请求成功 |
+
 ## 搜索
 
 使用 `Ctrl + K` 或 `Command + K` 搜索标题、描述和 Markdown 正文。
 
-搜索可以跨目录找到概念，但不能自动判断内容生命周期。对于能力状态、审批或运行时问题，应优先阅读 Current 页面和对应架构文档。
+搜索可以跨目录找到概念，但不能自动判断内容生命周期。对于能力状态、Provider、审批或运行时问题，应优先阅读 Current 页面和对应架构文档。
 
 ## 文档与博客的区别
 
