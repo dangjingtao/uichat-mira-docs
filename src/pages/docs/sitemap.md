@@ -21,6 +21,10 @@ order: 99
 2. [模型设置](/docs/configuration/model-settings)：配置 Provider Connection、绑定主模型并得到真实 Chat 回复；
 3. [对话工作区](/docs/product/workspace)：开始普通对话或创建工作线程。
 
+需要使用自己的资料时，再继续：
+
+4. [知识库与 RAG](/docs/product/knowledge)：配置 Embedding，上传文本，等待索引 ready，并验证真实 Sources。
+
 不要在主模型尚未验证时，同时配置所有高级角色、工具和微应用。
 
 ## 推荐阅读顺序
@@ -53,12 +57,14 @@ order: 99
 - [应用基础信息](/docs/configuration/application-basics)
 - [模型设置](/docs/configuration/model-settings)
 - [对话工作区](/docs/product/workspace)
-- [知识库与评测](/docs/product/knowledge)
+- [知识库与 RAG](/docs/product/knowledge)
 - [角色工作台](/docs/product/roles-microapps)
 - [微应用中心](/docs/product/microapps)
 - [企业集成](/docs/product/enterprise-integrations)
 
 产品能力页优先说明前置条件、对象、操作、状态、限制和验证方式。
+
+Evaluation 是独立产品域，后续由专门文档说明；知识库页面只解释它与评测的边界。
 
 ### 4. 架构
 
@@ -66,6 +72,7 @@ order: 99
 
 - [桌面运行时](/docs/architecture/runtime)
 - [Provider 与模型运行时](/docs/architecture/provider-context)
+- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
 - [Agent 当前运行真相](/docs/architecture/agent)
 - [Harness 与工具边界](/docs/architecture/harness)
 - [Agent 策略](/docs/architecture/agent-strategy)
@@ -145,11 +152,29 @@ Current Code + Repeatable Verification
 | 模型角色已绑定 | model id 已分配给具体 role |
 | Runtime 已验证 | 真实 Chat、Embedding 或 Rerank 请求成功 |
 
+对于 Knowledge Base 还要分别判断：
+
+| 状态 | 需要的证据 |
+| --- | --- |
+| Document 已创建 | 上传请求已接受并写入记录 |
+| Index processing | 正在等待或执行切分与 Embedding |
+| Index ready | Chunk 和向量已写入 |
+| Document enabled | 允许进入检索 |
+| Retrieval verified | 真实问题命中正确 Chunk |
+| RAG verified | 回答展示真实 Sources，且没有超出来源 |
+
+```text
+上传成功
+!= 索引 ready
+!= 检索命中
+!= 回答正确
+```
+
 ## 搜索
 
 使用 `Ctrl + K` 或 `Command + K` 搜索标题、描述和 Markdown 正文。
 
-搜索可以跨目录找到概念，但不能自动判断内容生命周期。对于能力状态、Provider、审批或运行时问题，应优先阅读 Current 页面和对应架构文档。
+搜索可以跨目录找到概念，但不能自动判断内容生命周期。对于能力状态、Provider、Knowledge Base、审批或运行时问题，应优先阅读 Current 页面和对应架构文档。
 
 ## 文档与博客的区别
 
