@@ -19,7 +19,8 @@ order: 3
 | --- | --- | --- | --- |
 | 对话工作区 | Thread、Message、Attachment、AgentRun | 承载用户目标、上下文、执行过程与最终交付 | Chat |
 | Provider 与模型 | Template、Connection、Model Cache、Role Binding | 管理模型连接、远端模型目录、用途绑定与调用解析 | 模型设置 |
-| 知识与评测 | Knowledge Base、Document、Chunk、Evaluation Run | 文档入库、检索、RAG 和质量验证 | 知识库、评测中心 |
+| Knowledge Base 与 RAG | Knowledge Base、Document、Chunk、Vector Index、Source | 文本入库、索引、混合检索和有来源生成 | 知识库、Chat |
+| Evaluation | Dataset、Run、Metric、Report | 验证检索和生成质量，保护回归 | 评测中心 |
 | 角色 | Role、Prompt Field、Generation Parameters | 管理可复用身份、表达方式和约束 | 角色工作台 |
 | Agent 与工具 | AgentRun、Planner、Harness、Tool、Evidence、Artifact | 决策下一步并执行受治理的具体动作 | Chat、工具工作台 |
 | MCP | Server、Transport、Discovered Tool、Agent Access | 连接和投影外部工具 | MCP 设置 |
@@ -70,15 +71,41 @@ User Message
 → Message Persistence
 ```
 
+### 知识入库
+
+```text
+Markdown / TXT
+→ Text Decode
+→ Chunk Preview
+→ Document processing
+→ Embedding
+→ sqlite-vec Index
+→ ready / failed
+```
+
 ### 知识问答
 
 ```text
 User Question
-→ Knowledge Retrieval
-→ Retrieved Chunks
+→ Query Rewrite
+→ Query Embedding
+→ Vector + Lexical Retrieval
+→ RRF Fusion
+→ Optional Rerank
 → Model Generation
-→ Source / Evaluation Metadata
+→ Sources / Message Persistence
 ```
+
+### 评测
+
+```text
+Evaluation Dataset
+→ Retrieval or RAG Run
+→ Metrics / Judge
+→ Report
+```
+
+Evaluation 消费知识库与 RAG 结果，但不持有 Knowledge Base 的文档与索引真相。
 
 ### Agent 任务
 
@@ -135,6 +162,31 @@ Image Generation 与 TTS 当前主要由各自 Studio 管理 Provider 配置，�
 
 详细说明见：[Provider 与模型运行时](/docs/architecture/provider-context)。
 
+## Knowledge Base、RAG 与 Evaluation
+
+这三层必须分开：
+
+```text
+Knowledge Base
+→ owns documents, chunks and indexes
+
+RAG Runtime
+→ queries one bound knowledge base and produces sources / answer
+
+Evaluation
+→ measures retrieval and generation results
+```
+
+当前知识库：
+
+- 支持多个 Knowledge Base；
+- 只上传单个 Markdown / TXT；
+- 使用 sqlite-vec 与 Orama 中文词法召回；
+- 通过 RRF 融合并可选 Rerank；
+- 一个 Chat Thread 当前绑定一个知识库。
+
+详细说明见：[知识库与 RAG](/docs/product/knowledge)和[Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)。
+
 ## Agent 与工具关系
 
 Agent 决定下一步；Harness 管理具体工具的注册、可用性、暴露、审批、执行和审计。
@@ -178,19 +230,27 @@ Mira 当前不提供：
 - 所有 OpenAI-compatible Provider 的完全一致行为；
 - 根据供应商或模型名称自动确认全部模型能力；
 - Chat、Image 和 TTS 已经统一完成的一套 Provider 配置源；
+- 任意格式文档自动入库；
+- durable Knowledge Base indexing workflow；
+- 切换 Embedding 后自动重建索引；
+- 一个线程同时查询多个知识库；
+- Knowledge Base 自动成为长期记忆；
+- Evaluation 分数自动成为生产正确性证明；
 - 开放式多 Agent 自治与递归委派；
 - 所有产品域共享一种通用 Runtime；
 - 所有连接自动获得 Agent Access；
 - 所有 POC 和入口卡片的生产可用承诺；
 - 通用 durable workflow engine。
 
-当前优先级是稳定既有能力、修复已知合同漂移、提高 Provider、Evidence 和 Artifact 的可信度。
+当前优先级是稳定既有能力、修复已知合同漂移、提高 Provider、Sources、Evidence 和 Artifact 的可信度。
 
 ## 相关文档
 
 - [Mira 是什么](/docs/about/origin)
 - [模型设置](/docs/configuration/model-settings)
 - [Provider 与模型运行时](/docs/architecture/provider-context)
+- [知识库与 RAG](/docs/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
 - [当前实现快照](/docs/status/current)
 - [Agent 当前运行真相](/docs/architecture/agent)
 - [Harness 与工具边界](/docs/architecture/harness)

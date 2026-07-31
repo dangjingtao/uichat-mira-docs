@@ -1,6 +1,6 @@
 ---
 title: 当前实现快照
-description: 以 2026-07-31 的 dev 分支为准，说明 Provider、Agent、Tool Runtime、MicroApps Hub 与已知边界。
+description: 以 2026-07-31 的 dev 分支为准，说明 Provider、Knowledge Base、Agent、Tool Runtime、MicroApps Hub 与已知边界。
 group: 现状与方向
 order: 17
 ---
@@ -23,7 +23,7 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 
 - 对话工作区；
 - Provider Connection、模型目录、角色绑定与调用解析；
-- 知识库、检索与评测；
+- 多知识库、文本索引、混合检索、RAG 与评测；
 - 角色与提示词原型；
 - MCP、内置工具与 Harness；
 - Agent 任务执行与 execution trace；
@@ -94,6 +94,66 @@ rerank
 `imageGeneration` 与 `voice` 存在于全局角色 schema，但 Image Generation Studio 和 TTS Studio 当前主要使用独立 Provider 配置。
 
 详细步骤见：[模型设置](/docs/configuration/model-settings)。架构说明见：[Provider 与模型运行时](/docs/architecture/provider-context)。
+
+## Knowledge Base 与 RAG 当前快照
+
+当前对象链：
+
+```text
+Knowledge Base
+→ Document
+→ Chunk
+→ Embedding
+→ sqlite-vec Index
+→ Vector + Lexical Retrieval
+→ RRF Fusion
+→ Optional Rerank
+→ Generate / Sources
+```
+
+当前成立的产品能力：
+
+- 支持多个 Knowledge Base；
+- 系统确保存在不可删除的默认知识库；
+- 知识库可以保存描述、persona、scenario、tags 和 Chunk 配置；
+- 工作台支持知识库 CRUD、文档搜索筛选、启停、详情和删除；
+- Add Wizard 支持单文件上传、Chunk 配置、抽样预览和索引状态轮询；
+- 当前上传只接受 Markdown / TXT，单文件最大 100 MB；
+- TXT 在严格 UTF-8 失败时可以回退 GB18030；
+- Document 通过 `processing / ready / failed` 表达索引状态；
+- 只有 ready + enabled 文档进入检索；
+- 向量索引使用 sqlite-vec，并记录实际 Embedding 模型、配置和维度；
+- 词法召回当前使用 Orama 和中文 tokenizer；
+- Vector 与 Lexical 结果通过 RRF 融合；
+- Rerank 可选，未配置或远端失败时降级为融合顺序；
+- RAG Graph 包含 rewrite、embed、retrieve、rerank / fallback 和 generate；
+- Chat Thread 当前绑定一个 Knowledge Base，并持久化 Sources；
+- Main Agent 可以把 Sources 记录为 Retrieval Evidence；
+- 企业微信 `knowledge_query` 可以绑定指定 Knowledge Base。
+
+状态语义：
+
+| 状态 | 只证明 |
+| --- | --- |
+| 上传成功 | Document 已创建，索引已入队 |
+| processing | 正在等待或执行切分、Embedding 和写向量 |
+| ready | 当前 Chunk 和向量已完成 |
+| enabled | 文档允许进入检索 |
+| Sources 非空 | 当前问题真实命中知识库 |
+
+当前边界：
+
+- 索引队列只存在于 backend 进程内，没有 durable job、checkpoint 或 restart recovery；
+- `KnowledgeBase.embeddingModelConfigId` 字段尚未驱动实际 per-KB 模型选择；
+- 入库和查询仍使用全局默认 Embedding role；
+- 更换 Embedding 模型或维度不会自动重建已有索引；
+- 工作台“重建索引”确认后只显示等待提示，没有完成后端调用；
+- Add Wizard 第二步同时要求 LLM + Embedding，虽然后端索引的直接模型依赖是 Embedding；
+- 数据库维护 FTS5 表，但当前主词法 Runtime 使用 Orama cache；
+- 一个 Thread 当前只绑定一个 Knowledge Base；
+- Knowledge Base 不是长期记忆，也不是任意文档解析器。
+
+详细操作见：[知识库与 RAG](/docs/product/knowledge)。架构说明见：[Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)。
 
 ## Agent 当前运行时
 
@@ -225,6 +285,20 @@ MicroApps Hub 中还有不属于严格 Registry 的真实入口：
 
 当前 Model Call Observation 已有 endpoint、参数和 duration，但 Provider Proxy 尚未为所有 adapter 统一归一化 Token 与成本。
 
+### Knowledge Base 索引恢复
+
+索引队列不是持久工作流。Backend 在 Document processing 中中断时，当前没有自动恢复、重试或取消合同。
+
+### Knowledge Base 重建入口
+
+桌面已有“重建索引”确认入口，但没有完成后端调用。当前不能依靠它修复 Embedding 维度或模型不匹配。
+
+### Agent Retrieve 多执行 Generate
+
+Agent 的 retrieve 节点当前调用完整 `ragRunnableSequence`，包括 Generate；随后只保留 Sources，丢弃生成 Answer。
+
+影响是额外延迟、模型成本和节点观测语义偏差。代码已有 retrieve-only runnable，但当前节点没有使用。
+
 ### Recoverable 终止漂移
 
 Settled recoverable contract 是：恢复预算耗尽后生成 guarded answer，Graph 以 `completed` 收口，并明确说明未完成项和失败影响。
@@ -253,10 +327,13 @@ toolId + inputHash
 
 - 让新用户可以稳定完成第一次模型配置；
 - 区分模型绑定、目录同步与真实调用状态；
+- 稳定 Knowledge Base 上传、索引状态与 Sources；
+- 补齐索引重建和 processing 恢复边界；
+- 修复 Agent retrieve 的无用 Generate；
 - 修复已经确认的 Provider、Agent 和 Tool 合同漂移；
 - 减少提前收尾和错误工具选择；
 - 稳定审批与 checkpoint resume；
-- 提高 Provider Observation、Evidence、Artifact 与 execution trace 的可信度；
+- 提高 Provider Observation、RAG Sources、Evidence、Artifact 与 execution trace 的可信度；
 - 用回归测试保护已经形成的公共面和状态语义；
 - 逐项验证 Studio、Integration Invoke 与 Agent 接入，不用新卡片掩盖能力未收稳；
 - 控制新增能力范围，不重开 Agent Graph、Harness 或 Universal MicroApp Runtime。
@@ -269,4 +346,6 @@ toolId + inputHash
 
 - [模型设置](/docs/configuration/model-settings)
 - [Provider 与模型运行时](/docs/architecture/provider-context)
+- [知识库与 RAG](/docs/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
 - [MicroApps 与独立 Runtime](/docs/architecture/microapps)
