@@ -1,6 +1,6 @@
 ---
 title: 当前实现快照
-description: 以 2026-07-31 的 dev 分支为准，说明 Provider、Knowledge Base、Agent、Tool Runtime、MicroApps Hub 与已知边界。
+description: 以 2026-07-31 的 dev 分支为准，说明 Provider、Knowledge Base、Evaluation、Agent、Tool Runtime、MicroApps Hub 与已知边界。
 group: 现状与方向
 order: 17
 ---
@@ -23,7 +23,8 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 
 - 对话工作区；
 - Provider Connection、模型目录、角色绑定与调用解析；
-- 多知识库、文本索引、混合检索、RAG 与评测；
+- 多知识库、文本索引、混合检索与 RAG；
+- Evaluation Package、Dataset、Run、指标和报告；
 - 角色与提示词原型；
 - MCP、内置工具与 Harness；
 - Agent 任务执行与 execution trace；
@@ -77,6 +78,7 @@ rerank
 - Chat 使用 Ollama native 或 OpenAI-compatible adapter；
 - 远程 Embedding 使用 Ollama、Cloudflare 或 OpenAI-compatible adapter；
 - Rerank 必须由 Template 显式声明，不能从 Chat 兼容推断；
+- `evaluation` role 当前用于从 Knowledge Base Chunk 生成评测包样本，不承担 Run Judge；
 - 内置本地 Embedding / Rerank 使用独立 ONNX / WASM Runtime；
 - Model Call Observation 已能记录 Provider、协议、endpoint、模型、参数、请求摘要和耗时；
 - 模型设置支持 Connection、凭据、角色绑定和参数的导入导出。
@@ -154,6 +156,57 @@ Knowledge Base
 - Knowledge Base 不是长期记忆，也不是任意文档解析器。
 
 详细操作见：[知识库与 RAG](/docs/product/knowledge)。架构说明见：[Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)。
+
+## Evaluation 当前快照
+
+当前对象链：
+
+```text
+Evaluation Package
+→ Parsed Dataset
+→ Evaluation Run
+→ Sample Results / Attempts
+→ Metric Summary
+→ Client-side Markdown Report
+```
+
+当前成立的产品能力：
+
+- 评测中心和新建评测工作台都有桌面入口；
+- 可以从现有 Knowledge Base 自动生成 Evaluation ZIP，或上传单个 ZIP；
+- ZIP 解析 manifest、evalset 和 documents 清单；
+- Dataset 校验结构、Reference Answer、Gold Sources 和 Knowledge Base；
+- Run 使用 `queued / running / completed / failed`；
+- 支持 `retrieve` 和 `retrieve-generate`；
+- Sample 支持 Repeat、并发 workers、Timeout、Attempt 和失败信息；
+- Dataset、Samples 和 Run 使用 SQLite JSON 快照持久化；
+- 评测中心支持列表、搜索、详情、Markdown 导出和删除已结束 Run；
+- 报告可以包含配置、Sample、Sources、日志、Mermaid 图和客户端加权概览。
+
+当前必须明确：
+
+- `evaluation` role 只用于自动生成 question、expectedAnswer 和 tags；
+- 自动生成 ZIP 中 documents 是占位文件，不保存真实 Knowledge Base 正文；
+- Run 实际查询当前本机 Knowledge Base；
+- Gold Source 只按规范化 documentName 精确匹配；
+- Faithfulness、Relevance 和 Completeness 是词项重合启发式，不是 LLM Judge；
+- 当前 `mrr` 使用命中与 Recall 的近似，不是真实 rank MRR；
+- Source Hit Rate 当前实质与 Hit@K 同义；
+- Markdown weighted score 只存在于客户端报告，不是 Runtime 指标。
+
+当前边界：
+
+- Run 通过进程内 `queueMicrotask` 调度，不是 durable queue；
+- Backend 在 queued / running 时重启后，Run 会保留状态但不会恢复执行，且当前 API 拒绝删除；
+- `retrieve` 模式当前仍执行完整 RAG Graph 和 Generate，再丢弃 Answer；
+- Timeout 不取消底层 RAG / Provider 请求；
+- 任一 Repeat 失败会令 Sample failed，任一 Sample failed 会令 Run failed；
+- Dataset 没有列表、详情或删除入口；
+- Run / Dataset 当前没有 userId，不是多租户隔离合同；
+- Center 无分页、Compare、Baseline、Retry、Cancel 或 Release Gate；
+- 指标适合当前实例的回归和定位，不是标准研究基准或专业正确性证明。
+
+详细操作见：[评测工作台](/docs/product/evaluation)。架构与算法见：[Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)。
 
 ## Agent 当前运行时
 
@@ -293,11 +346,19 @@ MicroApps Hub 中还有不属于严格 Registry 的真实入口：
 
 桌面已有“重建索引”确认入口，但没有完成后端调用。当前不能依靠它修复 Embedding 维度或模型不匹配。
 
-### Agent Retrieve 多执行 Generate
+### Evaluation 重启恢复
 
-Agent 的 retrieve 节点当前调用完整 `ragRunnableSequence`，包括 Generate；随后只保留 Sources，丢弃生成 Answer。
+Run 在 queued / running 时 Backend 重启，会被原状态 hydrate，但不重新执行。当前删除接口又拒绝删除这些状态，可能形成永久卡住记录。
 
-影响是额外延迟、模型成本和节点观测语义偏差。代码已有 retrieve-only runnable，但当前节点没有使用。
+### Evaluation 指标语义
+
+MRR、Source Hit Rate 和三个生成指标的名称强于当前算法。它们必须按当前 documentName 匹配和词项重合公式解释，不能写成标准 RAGAS 或 LLM Judge。
+
+### Retrieve 路径多执行 Generate
+
+Agent retrieve 和 Evaluation retrieve 当前都通过完整 RAG Graph，包括 Generate；随后只保留 Sources，丢弃 Answer。
+
+影响是额外延迟、模型成本和节点语义偏差。代码已有更窄的 runnable 名称，但底层 `ragGraph.retrieve` 当前仍执行完整图。
 
 ### Recoverable 终止漂移
 
@@ -329,11 +390,13 @@ toolId + inputHash
 - 区分模型绑定、目录同步与真实调用状态；
 - 稳定 Knowledge Base 上传、索引状态与 Sources；
 - 补齐索引重建和 processing 恢复边界；
-- 修复 Agent retrieve 的无用 Generate；
+- 让 Evaluation 指标名称、算法和报告保持一致；
+- 修复 Evaluation queued / running 重启后的生命周期；
+- 修复 Agent / Evaluation retrieve 的无用 Generate；
 - 修复已经确认的 Provider、Agent 和 Tool 合同漂移；
 - 减少提前收尾和错误工具选择；
 - 稳定审批与 checkpoint resume；
-- 提高 Provider Observation、RAG Sources、Evidence、Artifact 与 execution trace 的可信度；
+- 提高 Provider Observation、RAG Sources、Evaluation 解释、Evidence、Artifact 与 execution trace 的可信度；
 - 用回归测试保护已经形成的公共面和状态语义；
 - 逐项验证 Studio、Integration Invoke 与 Agent 接入，不用新卡片掩盖能力未收稳；
 - 控制新增能力范围，不重开 Agent Graph、Harness 或 Universal MicroApp Runtime。
@@ -348,4 +411,6 @@ toolId + inputHash
 - [Provider 与模型运行时](/docs/architecture/provider-context)
 - [知识库与 RAG](/docs/product/knowledge)
 - [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
+- [评测工作台](/docs/product/evaluation)
+- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
 - [MicroApps 与独立 Runtime](/docs/architecture/microapps)
