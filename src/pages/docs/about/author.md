@@ -1,6 +1,6 @@
 ---
-title: 作者与项目
-description: Tomz Dang、UIChat Mira，以及一个人如何与 AI 一起把长期想法做成真实产品。
+title: 项目与维护者
+description: UIChat Mira 的项目归属、维护责任、AI 协作方式与公开仓库入口。
 group: 认识 Mira
 order: 2
 author: tomz
@@ -9,59 +9,80 @@ writtenBy: mira
 reviewedBy: tomz
 ---
 
-# 作者与项目
+# 项目与维护者
 
-UIChat Mira 由 **Tomz Dang** 发起并持续构建。
+## 文档范围
 
-他是一名独立开发者，也是一名长期在产品、前端、桌面应用和智能体工程之间来回穿梭的实践者。Mira 不是公司内部立项，也不是为了追逐某一轮模型热点临时拼出的 Demo；它更接近一项长期持续的个人工程：把人与 AI 的对话、资料、角色、工具和工作状态，放进一个真正属于用户自己的工作空间。
+本页说明 UIChat Mira 的项目归属、维护责任和公开协作边界。它不记录私人联系方式、生活信息或与项目无关的个人资料。
 
-## Tomz 在做什么
+## 项目维护者
 
-Tomz 长期关注一个问题：
+UIChat Mira 由 **Tomz Dang** 发起并持续维护。
 
-> 当 AI 从一次问答变成长期协作者时，用户如何保留自己的数据、权限、上下文和主导权？
+| 角色 | 责任 |
+| --- | --- |
+| 产品作者 | 确定产品定位、能力优先级和用户体验边界 |
+| 工程维护者 | 维护主仓库、运行时合同、发布路径和回归要求 |
+| 最终验收者 | 决定实现是否满足目标，批准合并与发布 |
+| 文档负责人 | 确认 current truth、计划与历史资料没有混淆 |
 
-这个问题最后变成了 UIChat Mira。
+## AI 协作角色
 
-它既有聊天界面，也有知识库、评测、角色、模型设置、工具、MCP、微应用和受控 Agent Runtime。Tomz 负责产品判断、架构边界、最终验收和那些很难写进需求文档的直觉；AI 参与研究、写作、代码施工和评审，但不替代作者对产品方向的责任。
+Mira 作为 AI 协作者参与：
 
-::: html
+- 资料检索与方案比较；
+- 代码施工和测试补充；
+- Pull Request 审查与问题归纳；
+- 工程文档和公开文章草拟；
+- 已有合同与当前实现的交叉核对。
 
-<div style="margin:28px 0;padding:22px;border:1px solid var(--hairline,#e6dfd8);border-radius:16px;background:var(--surface-soft,#f5f0e8);">
-  <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-active,#a9583e);margin-bottom:14px;">PROJECT AUTHORS</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;">
-    <div style="padding:18px;border-radius:12px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);">
-      <strong style="display:block;font-size:18px;margin-bottom:6px;">Tomz Dang</strong>
-      <div style="font-size:13px;color:var(--body-c,#3d3d3a);">产品作者 · 独立开发者 · 最终维护者</div>
-    </div>
-    <div style="padding:18px;border-radius:12px;background:var(--canvas,#faf9f5);border:1px solid var(--hairline,#e6dfd8);">
-      <strong style="display:block;font-size:18px;margin-bottom:6px;">Mira</strong>
-      <div style="font-size:13px;color:var(--body-c,#3d3d3a);">AI 写作者 · 研究与工程协作者</div>
-    </div>
-  </div>
-</div>
-:::
+AI 协作不转移以下责任：
 
-## 项目坐标
+- 产品方向的最终决定；
+- 高风险修改的批准；
+- 代码合并与发布判断；
+- 公开内容的真实性与隐私边界。
 
-- 作者 GitHub：[dangjingtao](https://github.com/dangjingtao)
-- 个人站点：[tomz.io](https://tomz.io)
-- 项目源码：[dangjingtao/uichat-mira](https://github.com/dangjingtao/uichat-mira)
-- 文档站源码：[dangjingtao/uichat-mira-docs](https://github.com/dangjingtao/uichat-mira-docs)
+## 工程治理方式
 
-## 一个人也要建立秩序
+Mira 是长期维护的个人工程，不以聊天记录或单次施工线程作为唯一真相源。
 
-Mira 的源码不是一份简单 Demo。仓库同时维护桌面壳、Web renderer、本地后端、数据库、Provider、Agent Runtime、Harness、知识系统、评测系统、工具和微应用。
+当前工程使用以下治理方式：
 
-一个人无法永远靠记忆维持这样的系统，所以项目逐渐形成了自己的工作方式：
+1. 重要能力先定义范围和不变量；
+2. 代码修改通过分支、PR、测试和审查进入主线；
+3. 当前事实、施工记录、方案和历史归档分开维护；
+4. Agent、Tool、Skill 和 MicroApp 等关键域使用 current-contract 或 current-snapshot；
+5. AI 可以执行工作，但不能绕过审批、验证和最终验收。
 
-- 重要能力先明确边界，再进入施工；
-- 复杂改动通过任务卡、评审证据和回归测试收口；
-- 文档不仅给人看，也作为 AI 理解项目的稳定入口；
-- 自动化可以提高速度，但最终决定权仍然回到作者手中。
+## 公开仓库
 
-这也是 Mira 反复强调「可控自主」的原因。它不是因为不相信 AI，而是因为真正长期的协作，必须允许人随时看见、介入和拿回主导权。
+- 项目源码：[`dangjingtao/uichat-mira`](https://github.com/dangjingtao/uichat-mira)
+- 公共文档站：[`dangjingtao/uichat-mira-docs`](https://github.com/dangjingtao/uichat-mira-docs)
+- MiraDocs 核心：[`dangjingtao/mira-docs`](https://github.com/dangjingtao/mira-docs)
+- 作者 GitHub：[`dangjingtao`](https://github.com/dangjingtao)
+- 站点：[`tomz.io`](https://tomz.io)
 
-## 关于公开信息
+## 内容署名
 
-本文只保留与项目有关、适合公开的作者信息。私人生活、家庭、健康和联系方式不属于产品说明书的内容，也不会因为它们曾经出现在对话中而自动进入文档站。
+文档或文章可能包含以下字段：
+
+| 字段 | 含义 |
+| --- | --- |
+| `author` | 对外署名 |
+| `writtenBy` | 初稿主要生成者 |
+| `reviewedBy` | 最终审核者 |
+| `writingMode` | authored、co-authored 等协作方式 |
+
+署名用于说明内容责任和协作过程，不表示 AI 拥有仓库权限或发布决定权。
+
+## 隐私边界
+
+以下信息不属于项目文档：
+
+- 私人联系方式；
+- 家庭、健康或财务信息；
+- 对话中偶然出现但未明确公开的个人资料；
+- 与项目无关的身份推断。
+
+公开文档只保留理解和使用 UIChat Mira 所必需的项目信息。
