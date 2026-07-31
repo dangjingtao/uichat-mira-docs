@@ -1,13 +1,13 @@
 ---
 title: 当前实现快照
-description: 以 2026-07-30 的 dev 分支为准，说明产品能力、Agent、Tool Runtime、MicroApps Hub 与已知边界。
+description: 以 2026-07-31 的 dev 分支为准，说明 Provider、Agent、Tool Runtime、MicroApps Hub 与已知边界。
 group: 现状与方向
 order: 17
 ---
 
 # 当前实现快照
 
-> 本页核对日期为 2026 年 7 月 30 日。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
+> 本页核对日期为 2026 年 7 月 31 日。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
 
 ## 版本与定位
 
@@ -22,7 +22,7 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 当前源码已经覆盖：
 
 - 对话工作区；
-- Provider 与模型管理；
+- Provider Connection、模型目录、角色绑定与调用解析；
 - 知识库、检索与评测；
 - 角色与提示词原型；
 - MCP、内置工具与 Harness；
@@ -30,7 +30,70 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 - MicroApps Hub、独立 Studio 与专用 Runtime；
 - 桌面端构建、调试与发布链路。
 
-不同页面或后端入口已经存在，不等于每项能力都达到同样成熟度。公开说明会继续区分稳定、部分可用、实验中与方向性能力。
+不同页面或后端入口已经存在，不等于每项能力都达到同样成熟度。公开说明继续区分稳定、部分可用、实验中与方向性能力。
+
+## Provider 与模型当前快照
+
+当前对象链：
+
+```text
+Provider Template
+→ Provider Connection
+→ Provider Model Cache
+→ Model Role Binding
+→ Provider Resolution
+→ Protocol Adapter
+→ Invocation / Observation
+```
+
+当前 Provider Template 包括：
+
+- Ollama；
+- LM Studio；
+- OpenAI；
+- Google Gemini；
+- Cloudflare；
+- 火山引擎；
+- 火山 Code Plan；
+- 火山 Agent Plan；
+- 可创建多个实例的自定义 OpenAI-compatible Connection。
+
+模型设置总览当前主要管理六个角色：
+
+```text
+llm
+task
+agentTask
+evaluation
+embedding
+rerank
+```
+
+当前成立的行为：
+
+- 模型目录可以通过 Ollama、OpenAI-compatible、Cloudflare 或 Ark Plan adapter 同步；
+- 不在同步目录中的 model id 可以手工绑定；
+- `agentTask` 未显式绑定时，Runtime 回退到 `task`；
+- Chat 使用 Ollama native 或 OpenAI-compatible adapter；
+- 远程 Embedding 使用 Ollama、Cloudflare 或 OpenAI-compatible adapter；
+- Rerank 必须由 Template 显式声明，不能从 Chat 兼容推断；
+- 内置本地 Embedding / Rerank 使用独立 ONNX / WASM Runtime；
+- Model Call Observation 已能记录 Provider、协议、endpoint、模型、参数、请求摘要和耗时；
+- 模型设置支持 Connection、凭据、角色绑定和参数的导入导出。
+
+首次配置完成标准是：主模型绑定后，在新 Chat 中收到一条真实模型回复。
+
+以下状态不能替代真实调用：
+
+| 状态 | 只证明 |
+| --- | --- |
+| 模型卡“已配置” | 已保存 Connection 和 model id |
+| Provider `connected` | 最近一次模型目录同步成功 |
+| Chat 有回复 | 当前 Chat invocation 成功 |
+
+`imageGeneration` 与 `voice` 存在于全局角色 schema，但 Image Generation Studio 和 TTS Studio 当前主要使用独立 Provider 配置。
+
+详细步骤见：[模型设置](/docs/configuration/model-settings)。架构说明见：[Provider 与模型运行时](/docs/architecture/provider-context)。
 
 ## Agent 当前运行时
 
@@ -142,6 +205,26 @@ MicroApps Hub 中还有不属于严格 Registry 的真实入口：
 
 ## 已知实现偏差
 
+### Provider 状态语义
+
+模型卡“已配置”只检查 Connection 与 model id 是否已保存；Provider `connected` 只记录最近一次模型目录同步成功。两者都不证明当前 Chat、Embedding 或 Rerank 请求成功。
+
+数据库还会 seed 部分 Ollama 模型绑定。本地服务未启动或模型未下载时，页面仍可能显示已有配置。
+
+### 自定义 OpenAI-compatible 身份映射
+
+`openai-compatible-custom` 当前在 Provider Resolution 中仍映射为火山 runtime provider code。
+
+这可能影响调试标签和 Task 参数特判。它是已知历史兼容实现，不是目标上的供应商身份合同。
+
+### Image / Voice 配置来源
+
+全局模型角色与 Image / TTS Studio provider config 尚未统一。不能用其中一处“已配置”推断另一处 ready。
+
+### Provider Token / Cost
+
+当前 Model Call Observation 已有 endpoint、参数和 duration，但 Provider Proxy 尚未为所有 adapter 统一归一化 Token 与成本。
+
 ### Recoverable 终止漂移
 
 Settled recoverable contract 是：恢复预算耗尽后生成 guarded answer，Graph 以 `completed` 收口，并明确说明未完成项和失败影响。
@@ -168,11 +251,13 @@ toolId + inputHash
 
 2026 年 8 月起，Mira 进入功能稳定迭代阶段。当前优先级是：
 
-- 修复已经确认的合同漂移；
+- 让新用户可以稳定完成第一次模型配置；
+- 区分模型绑定、目录同步与真实调用状态；
+- 修复已经确认的 Provider、Agent 和 Tool 合同漂移；
 - 减少提前收尾和错误工具选择；
 - 稳定审批与 checkpoint resume；
-- 提高 Evidence、Artifact 与 execution trace 的可信度；
-- 用回归测试保护已经形成的工具公共面和暴露规则；
+- 提高 Provider Observation、Evidence、Artifact 与 execution trace 的可信度；
+- 用回归测试保护已经形成的公共面和状态语义；
 - 逐项验证 Studio、Integration Invoke 与 Agent 接入，不用新卡片掩盖能力未收稳；
 - 控制新增能力范围，不重开 Agent Graph、Harness 或 Universal MicroApp Runtime。
 
@@ -182,5 +267,6 @@ toolId + inputHash
 
 延伸阅读：
 
+- [模型设置](/docs/configuration/model-settings)
+- [Provider 与模型运行时](/docs/architecture/provider-context)
 - [MicroApps 与独立 Runtime](/docs/architecture/microapps)
-- [Mira 的微应用现在到底是什么](/blogs/engineering/mira-microapps-current-truth)
