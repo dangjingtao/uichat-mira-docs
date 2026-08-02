@@ -126,9 +126,30 @@
   background: var(--surface-card);
 }
 
-.release-download-options > a span {
+.release-download-option-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.release-download-option-title > span:first-child {
   font-size: 13px;
   font-weight: 600;
+}
+
+.release-download-version {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--primary-active);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .release-download-options > a small {
