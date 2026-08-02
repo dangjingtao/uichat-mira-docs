@@ -19,6 +19,7 @@ type DownloadSource = "github" | "r2";
 type DownloadOption = {
   key: string;
   label: string;
+  version: string;
   meta: string;
   githubUrl: string;
   r2Url: string;
@@ -29,10 +30,23 @@ const latestReleaseUrl =
 const fallbackReleaseUrl =
   "https://github.com/dangjingtao/uichat-mira/releases/latest";
 const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
+const mobileVersionSourceUrl =
+  "https://raw.githubusercontent.com/dangjingtao/uichat-mira-mobile/dev/android/app/build.gradle";
+const mobileVersionFallback = "1.0";
 const mobileGithubApkUrl =
-  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/dev-latest/uichat-mira-mobile-dev.apk";
+  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/dev-latest/uichat-mira-mobile-release.apk";
 const mobileR2ApkUrl =
-  "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-dev.apk";
+  "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-release.apk";
+
+function formatVersion(value: string) {
+  const version = value.trim();
+  if (!version) return "";
+  return /^\d/.test(version) ? `v${version}` : version;
+}
+
+function readAndroidVersionName(buildGradle: string) {
+  return buildGradle.match(/\bversionName\s+["']([^"']+)["']/)?.[1] || "";
+}
 
 function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
   const version = releaseTag.replace(/^v/i, "");
@@ -62,11 +76,15 @@ function r2AssetUrl(asset: ReleaseAsset, releaseTag: string) {
   return `${r2PublicBaseUrl}/${encodeURIComponent(r2AssetName(asset, releaseTag))}`;
 }
 
-function classifyDownloads(release: GitHubRelease | null) {
+function classifyDownloads(
+  release: GitHubRelease | null,
+  mobileVersion: string,
+) {
   const assets = (release?.assets || []).filter(
     (asset) => !/\.blockmap$/i.test(asset.name),
   );
   const releaseTag = release?.tag_name || "";
+  const desktopVersion = formatVersion(releaseTag);
 
   const electronSetup = assets.find(
     (asset) =>
@@ -96,6 +114,7 @@ function classifyDownloads(release: GitHubRelease | null) {
     options.push({
       key,
       label,
+      version: desktopVersion,
       meta,
       githubUrl: asset.browser_download_url,
       r2Url: r2AssetUrl(asset, releaseTag),
@@ -106,9 +125,10 @@ function classifyDownloads(release: GitHubRelease | null) {
   pushOption("tauri-nsis", "Tauri 安装版", "轻量实验版 · EXE", tauriNsis);
   pushOption("tauri-msi", "Tauri MSI", "企业或批量部署", tauriMsi);
   options.push({
-    key: "android-dev",
-    label: "Android 测试版",
-    meta: "React Native · APK · dev",
+    key: "android-release",
+    label: "Android 安装版",
+    version: formatVersion(mobileVersion),
+    meta: "React Native · 已签名 APK · dev",
     githubUrl: mobileGithubApkUrl,
     r2Url: mobileR2ApkUrl,
   });
@@ -126,11 +146,15 @@ function classifyDownloads(release: GitHubRelease | null) {
 export default function ReleaseDownloadEnhancer() {
   const location = useLocation();
   const [release, setRelease] = useState<GitHubRelease | null>(null);
+  const [mobileVersion, setMobileVersion] = useState(mobileVersionFallback);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<DownloadSource>("github");
 
-  const downloads = useMemo(() => classifyDownloads(release), [release]);
+  const downloads = useMemo(
+    () => classifyDownloads(release, mobileVersion),
+    [release, mobileVersion],
+  );
   const recommendedUrl =
     source === "r2"
       ? downloads.recommendedR2Url
@@ -138,6 +162,7 @@ export default function ReleaseDownloadEnhancer() {
 
   useEffect(() => {
     const controller = new AbortController();
+
     fetch(latestReleaseUrl, {
       headers: { Accept: "application/vnd.github+json" },
       signal: controller.signal,
@@ -150,6 +175,20 @@ export default function ReleaseDownloadEnhancer() {
       .catch(() => {
         // Keep the stable latest-release fallback when GitHub is unavailable.
       });
+
+    fetch(mobileVersionSourceUrl, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub raw returned ${response.status}`);
+        return response.text();
+      })
+      .then((buildGradle) => {
+        const version = readAndroidVersionName(buildGradle);
+        if (version) setMobileVersion(version);
+      })
+      .catch(() => {
+        // Keep the last known Android version when GitHub is unavailable.
+      });
+
     return () => controller.abort();
   }, []);
 
@@ -255,7 +294,14 @@ export default function ReleaseDownloadEnhancer() {
                   href={source === "r2" ? option.r2Url : option.githubUrl}
                   role="menuitem"
                 >
-                  <span>{option.label}</span>
+                  <div className="release-download-option-title">
+                    <span>{option.label}</span>
+                    {option.version ? (
+                      <span className="release-download-version">
+                        {option.version}
+                      </span>
+                    ) : null}
+                  </div>
                   <small>
                     {option.meta} · {source === "r2" ? "R2 镜像" : "GitHub"}
                   </small>
