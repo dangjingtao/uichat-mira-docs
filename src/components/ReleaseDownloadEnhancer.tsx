@@ -31,10 +31,8 @@ const fallbackReleaseUrl =
   "https://github.com/dangjingtao/uichat-mira/releases/latest";
 const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
 const mobileVersionSourceUrl =
-  "https://raw.githubusercontent.com/dangjingtao/uichat-mira-mobile/dev/android/app/build.gradle";
-const mobileVersionFallback = "1.0";
-const mobileGithubApkUrl =
-  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/dev-latest/uichat-mira-mobile-release.apk";
+  "https://raw.githubusercontent.com/dangjingtao/uichat-mira-mobile/dev/package.json";
+const mobileVersionFallback = "0.1.2";
 const mobileR2ApkUrl =
   "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-release.apk";
 
@@ -44,8 +42,18 @@ function formatVersion(value: string) {
   return /^\d/.test(version) ? `v${version}` : version;
 }
 
-function readAndroidVersionName(buildGradle: string) {
-  return buildGradle.match(/\bversionName\s+["']([^"']+)["']/)?.[1] || "";
+function readPackageVersion(packageJson: string) {
+  try {
+    const parsed = JSON.parse(packageJson) as { version?: unknown };
+    return typeof parsed.version === "string" ? parsed.version.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
+function mobileGithubApkUrl(version: string) {
+  const normalizedVersion = version.trim() || mobileVersionFallback;
+  return `https://github.com/dangjingtao/uichat-mira-mobile/releases/download/v${normalizedVersion}-dev/uichat-mira-mobile-release.apk`;
 }
 
 function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
@@ -129,7 +137,7 @@ function classifyDownloads(
     label: "Android 安装版",
     version: formatVersion(mobileVersion),
     meta: "React Native · 已签名 APK · dev",
-    githubUrl: mobileGithubApkUrl,
+    githubUrl: mobileGithubApkUrl(mobileVersion),
     r2Url: mobileR2ApkUrl,
   });
 
@@ -181,8 +189,8 @@ export default function ReleaseDownloadEnhancer() {
         if (!response.ok) throw new Error(`GitHub raw returned ${response.status}`);
         return response.text();
       })
-      .then((buildGradle) => {
-        const version = readAndroidVersionName(buildGradle);
+      .then((packageJson) => {
+        const version = readPackageVersion(packageJson);
         if (version) setMobileVersion(version);
       })
       .catch(() => {
