@@ -30,11 +30,11 @@ const latestReleaseUrl =
 const fallbackReleaseUrl =
   "https://github.com/dangjingtao/uichat-mira/releases/latest";
 const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
-const mobileVersionSourceUrl =
-  "https://raw.githubusercontent.com/dangjingtao/uichat-mira-mobile/dev/android/app/build.gradle";
-const mobileVersionFallback = "1.0";
-const mobileGithubApkUrl =
-  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/dev-latest/uichat-mira-mobile-release.apk";
+const mobileReleasesUrl =
+  "https://api.github.com/repos/dangjingtao/uichat-mira-mobile/releases?per_page=20";
+const mobileReleaseFallbackTag = "v0.1.2-dev";
+const mobileGithubApkFallbackUrl =
+  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/v0.1.2-dev/uichat-mira-mobile-release.apk";
 const mobileR2ApkUrl =
   "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-release.apk";
 
@@ -44,8 +44,18 @@ function formatVersion(value: string) {
   return /^\d/.test(version) ? `v${version}` : version;
 }
 
-function readAndroidVersionName(buildGradle: string) {
-  return buildGradle.match(/\bversionName\s+["']([^"']+)["']/)?.[1] || "";
+function mobileVersionFromTag(tag: string) {
+  return formatVersion(tag.replace(/-dev$/i, ""));
+}
+
+function findMobileDevRelease(releases: GitHubRelease[]) {
+  return releases.find(
+    (release) =>
+      /^v.+-dev$/i.test(release.tag_name) &&
+      release.assets.some(
+        (asset) => asset.name === "uichat-mira-mobile-release.apk",
+      ),
+  );
 }
 
 function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
@@ -78,7 +88,7 @@ function r2AssetUrl(asset: ReleaseAsset, releaseTag: string) {
 
 function classifyDownloads(
   release: GitHubRelease | null,
-  mobileVersion: string,
+  mobileRelease: GitHubRelease | null,
 ) {
   const assets = (release?.assets || []).filter(
     (asset) => !/\.blockmap$/i.test(asset.name),
@@ -124,12 +134,18 @@ function classifyDownloads(
   pushOption("electron", "Windows 安装版", "Electron · EXE · 推荐", electronSetup);
   pushOption("tauri-nsis", "Tauri 安装版", "轻量实验版 · EXE", tauriNsis);
   pushOption("tauri-msi", "Tauri MSI", "企业或批量部署", tauriMsi);
+
+  const mobileReleaseTag = mobileRelease?.tag_name || mobileReleaseFallbackTag;
+  const mobileReleaseApk = mobileRelease?.assets.find(
+    (asset) => asset.name === "uichat-mira-mobile-release.apk",
+  );
   options.push({
     key: "android-release",
     label: "Android 安装版",
-    version: formatVersion(mobileVersion),
+    version: mobileVersionFromTag(mobileReleaseTag),
     meta: "React Native · 已签名 APK · dev",
-    githubUrl: mobileGithubApkUrl,
+    githubUrl:
+      mobileReleaseApk?.browser_download_url || mobileGithubApkFallbackUrl,
     r2Url: mobileR2ApkUrl,
   });
 
@@ -146,14 +162,14 @@ function classifyDownloads(
 export default function ReleaseDownloadEnhancer() {
   const location = useLocation();
   const [release, setRelease] = useState<GitHubRelease | null>(null);
-  const [mobileVersion, setMobileVersion] = useState(mobileVersionFallback);
+  const [mobileRelease, setMobileRelease] = useState<GitHubRelease | null>(null);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<DownloadSource>("github");
 
   const downloads = useMemo(
-    () => classifyDownloads(release, mobileVersion),
-    [release, mobileVersion],
+    () => classifyDownloads(release, mobileRelease),
+    [release, mobileRelease],
   );
   const recommendedUrl =
     source === "r2"
@@ -176,17 +192,20 @@ export default function ReleaseDownloadEnhancer() {
         // Keep the stable latest-release fallback when GitHub is unavailable.
       });
 
-    fetch(mobileVersionSourceUrl, { signal: controller.signal })
+    fetch(mobileReleasesUrl, {
+      headers: { Accept: "application/vnd.github+json" },
+      signal: controller.signal,
+    })
       .then((response) => {
-        if (!response.ok) throw new Error(`GitHub raw returned ${response.status}`);
-        return response.text();
+        if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+        return response.json() as Promise<GitHubRelease[]>;
       })
-      .then((buildGradle) => {
-        const version = readAndroidVersionName(buildGradle);
-        if (version) setMobileVersion(version);
+      .then((releases) => {
+        const devRelease = findMobileDevRelease(releases);
+        if (devRelease) setMobileRelease(devRelease);
       })
       .catch(() => {
-        // Keep the last known Android version when GitHub is unavailable.
+        // Keep the last known successful dev release when GitHub is unavailable.
       });
 
     return () => controller.abort();
