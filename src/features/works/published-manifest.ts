@@ -1,0 +1,58 @@
+import type { ComicManifest } from "./work";
+
+const coverSource = { width: 960, height: 696, src: "cover/cover-960.08d358b8.webp", bytes: 195968, sha256: "08d358b85e0b62061be597cb26cd56d3ebdba3a7441e73e542381cb8da692ccf" };
+
+const pageData = [
+  [1, 1467, 1072, 1.36847, "pages/001-960.909be7e7.webp", 702],
+  [2, 1467, 1072, 1.36847, "pages/002-960.d442308a.webp", 702],
+  [3, 1467, 1072, 1.36847, "pages/003-960.c26e497a.webp", 702],
+  [4, 1467, 1072, 1.36847, "pages/004-960.ede59c4d.webp", 702],
+  [5, 1467, 1072, 1.36847, "pages/005-960.fb4e656d.webp", 702],
+  [6, 1467, 1072, 1.36847, "pages/006-960.ea6e2353.webp", 702],
+  [7, 1467, 1072, 1.36847, "pages/007-960.e4a7b4f9.webp", 702],
+  [8, 1473, 1068, 1.379213, "pages/008-960.5b8e026b.webp", 696],
+  [9, 1467, 1072, 1.36847, "pages/009-960.36d27b63.webp", 702],
+  [10, 1473, 1068, 1.379213, "pages/010-960.5e2e2893.webp", 696],
+  [11, 1473, 1068, 1.379213, "pages/011-960.b6bd3b9f.webp", 696],
+  [12, 1473, 1068, 1.379213, "pages/012-960.ac8f5777.webp", 696],
+  [13, 1467, 1072, 1.36847, "pages/013-960.326dea0b.webp", 702],
+  [14, 1467, 1072, 1.36847, "pages/014-960.69baa1e2.webp", 702],
+  [15, 1467, 1072, 1.36847, "pages/015-960.6619675b.webp", 702],
+  [16, 1467, 1072, 1.36847, "pages/016-960.54aef3a4.webp", 702],
+  [17, 1473, 1068, 1.379213, "pages/017-960.593a5575.webp", 696],
+  [18, 1473, 1068, 1.379213, "pages/018-960.75108c92.webp", 696],
+  [19, 1473, 1068, 1.379213, "pages/019-960.e5c1e91e.webp", 696],
+  [20, 1473, 1068, 1.379213, "pages/020-960.4ca2c4fa.webp", 696],
+  [21, 1467, 1072, 1.36847, "pages/021-960.3997034d.webp", 702],
+  [22, 1467, 1072, 1.36847, "pages/022-960.2d10fac9.webp", 702],
+  [23, 1473, 1068, 1.379213, "pages/023-960.66180e79.webp", 696],
+  [24, 1473, 1068, 1.379213, "pages/024-960.7ea3c461.webp", 696],
+  [25, 1473, 1068, 1.379213, "pages/025-960.c3cbafad.webp", 696],
+  [26, 1473, 1068, 1.379213, "pages/026-960.12129080.webp", 696],
+  [27, 1473, 1068, 1.379213, "pages/027-960.a9271c19.webp", 696],
+  [28, 1473, 1068, 1.379213, "pages/028-960.c6478545.webp", 696],
+  [29, 1473, 1068, 1.379213, "pages/029-960.c14f5d13.webp", 696],
+  [30, 1473, 1068, 1.379213, "pages/030-960.e9928be7.webp", 696],
+  [31, 1473, 1068, 1.379213, "pages/031-960.61355a16.webp", 696],
+  [32, 1473, 1068, 1.379213, "pages/032-960.a8dcb827.webp", 696],
+] as const;
+
+export const publishedManifest: ComicManifest = {
+  schemaVersion: 1,
+  pipelineVersion: "1",
+  id: "yuguang-vol-1",
+  edition: "upper-final-2026-08-03",
+  title: "余光·上",
+  subtitle: "第一次讲话",
+  expectedPages: 32,
+  availablePages: 32,
+  missingPages: [],
+  readingDirection: "ltr",
+  releaseFingerprint: "8c507bfdd2d993617a9ebd8d39f05e245f2583fade35edc1bd2c4aa8c8d91e25",
+  cover: { original: { width: 1473, height: 1068, aspectRatio: 1.379213, bytes: 3000389, sha256: "1d3016553314ed5ba1923066edc743a967f0a595874c0bba5c1d3f911d906261" }, sources: [coverSource] },
+  pages: pageData.map(([number, width, height, aspectRatio, src, sourceHeight]) => ({
+    number,
+    original: { width, height, aspectRatio, bytes: 0, sha256: "bundled-release-snapshot" },
+    sources: [{ width: 960, height: sourceHeight, src, bytes: 0, sha256: "bundled-release-snapshot" }],
+  })),
+};
