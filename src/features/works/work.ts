@@ -1,29 +1,48 @@
 export const workRoute = "/works/yuguang-vol-1";
 export const progressKey = "mira:works:yuguang-vol-1:progress";
-export const assetRoot = `${import.meta.env.BASE_URL}works-data/yuguang-vol-1/`;
-export const coverAssetUrl = `${assetRoot}cover.webp`;
-export const manifestAssetUrl = `${assetRoot}manifest.json`;
+export const comicAssetRoot = "https://assets.tomz.io/mira/comics/yuguang-vol-1/current/";
+export const manifestAssetUrl = `${comicAssetRoot}manifest.json`;
+export const coverFallbackUrl = `${import.meta.env.BASE_URL}works-data/yuguang-vol-1/cover.webp`;
 
-export const pageNumbers = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-  21, 23, 24, 25, 26, 27, 28, 29, 30,
-] as const;
+export const pageNumbers = Array.from({ length: 32 }, (_, index) => index + 1);
 
-export type PageNumber = (typeof pageNumbers)[number];
-export type ComicSpritePage = {
-  number: PageNumber;
-  col: number;
-  row: number;
+export type PageNumber = number;
+export type ComicSource = {
+  width: number;
+  height: number;
+  src: string;
+  bytes: number;
+  sha256: string;
+};
+export type ComicOriginal = {
+  width: number;
+  height: number;
+  aspectRatio: number;
+  bytes: number;
+  sha256: string;
+};
+export type ComicPage = {
+  number: number;
+  original: ComicOriginal;
+  sources: ComicSource[];
 };
 export type ComicManifest = {
-  tileWidth: number;
-  tileHeight: number;
-  columns: number;
-  rows: number;
-  chunks: string[];
-  pages: ComicSpritePage[];
+  schemaVersion: number;
+  pipelineVersion: string;
+  id: string;
+  edition: string;
+  title: string;
+  subtitle: string;
+  expectedPages: number;
+  availablePages: number;
   missingPages: number[];
+  readingDirection: "ltr" | "rtl";
+  releaseFingerprint: string;
+  cover: {
+    original: ComicOriginal;
+    sources: ComicSource[];
+  };
+  pages: ComicPage[];
 };
 
 export const work = {
@@ -31,16 +50,32 @@ export const work = {
   title: "余光·上",
   subtitle: "第一次讲话",
   authors: "Tomz Dang × Mira",
-  edition: "experiment-2026-08-03",
-  status: "实验预览",
+  edition: "upper-final-2026-08-03",
+  status: "正式发行",
   description:
-    "男人第一次走进那家小店。当前实验版收录 29 张已完成页面，保留原页码，第 22 页尚未完成。",
-  missingPages: [22] as const,
+    "男人第一次走进那家小店。上册收录封面与 32 页正文，以他的目光讲述第一次讲话之前与之后。",
+  missingPages: [] as const,
   pageCount: pageNumbers.length,
 };
+
+export function comicAssetUrl(path: string) {
+  return new URL(path, comicAssetRoot).toString();
+}
+
+export function pickComicSource(sources: ComicSource[], targetWidth: number) {
+  const ordered = [...sources].sort((left, right) => left.width - right.width);
+  return ordered.find((source) => source.width >= targetWidth) ?? ordered.at(-1) ?? null;
+}
+
+export function comicSrcSet(sources: ComicSource[]) {
+  return [...sources]
+    .sort((left, right) => left.width - right.width)
+    .map((source) => `${comicAssetUrl(source.src)} ${source.width}w`)
+    .join(", ");
+}
 
 export function readSavedPage() {
   if (typeof window === "undefined") return 1;
   const saved = Number(window.localStorage.getItem(progressKey));
-  return pageNumbers.includes(saved as PageNumber) ? saved : 1;
+  return pageNumbers.includes(saved) ? saved : 1;
 }
