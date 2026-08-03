@@ -27,6 +27,7 @@ import "./blog-detail.css";
 import "./claude-visual.css";
 import "./features/works/works-experience.css";
 import "./features/works/works-sprite.css";
+import "./features/works/works-route-fixes.css";
 
 const themeKey = "mira-color-theme";
 const defaultTheme = "claude";
