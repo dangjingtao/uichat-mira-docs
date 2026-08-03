@@ -1,0 +1,39 @@
+.comic-page-sprite {
+  display: block;
+  width: 100%;
+  background-repeat: no-repeat;
+}
+
+.comic-stage > .comic-page-sprite {
+  max-width: calc(100vw - 120px);
+  max-height: calc(100dvh - 92px);
+  width: min(calc(100vw - 120px), calc((100dvh - 92px) * 1.3333));
+  box-shadow: 0 24px 80px rgb(0 0 0 / 54%);
+  transform-origin: center;
+  user-select: none;
+  transition: transform .18s ease;
+}
+
+.comic-stage.is-zoomed > .comic-page-sprite {
+  transition: none;
+}
+
+.comic-directory-grid .comic-page-sprite {
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 640px), (orientation: landscape) and (max-height: 520px) {
+  .comic-stage > .comic-page-sprite {
+    max-width: 100vw;
+    max-height: 100dvh;
+    width: min(100vw, calc(100dvh * 1.3333));
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comic-stage > .comic-page-sprite {
+    transition: none;
+  }
+}
