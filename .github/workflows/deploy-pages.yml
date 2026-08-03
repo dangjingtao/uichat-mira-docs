@@ -34,7 +34,7 @@ jobs:
           path: dist
   deploy:
     environment:
-      name: github-pages
+      name: ${{ github.ref_name == 'main' && 'github-pages' || 'github-pages-experiment' }}
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
