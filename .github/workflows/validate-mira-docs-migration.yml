@@ -30,6 +30,8 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Test comic image pipeline
+        run: pnpm run comic:test
       - name: Verify real MiraDocs content compatibility
         run: pnpm run verify:mira-docs
       - name: Build existing GitHub Pages site
