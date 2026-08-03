@@ -9,6 +9,19 @@ import {
   workRoute,
 } from "./work";
 
+function measureHeaderOffset() {
+  const topNav = document.querySelector<HTMLElement>(".top-nav");
+  const mobileBar = document.querySelector<HTMLElement>(".docs-mobile-bar");
+  const topNavHeight = topNav?.getBoundingClientRect().height ?? 0;
+  const mobileBarHeight = mobileBar && window.getComputedStyle(mobileBar).display !== "none"
+    ? mobileBar.getBoundingClientRect().height
+    : 0;
+  document.documentElement.style.setProperty(
+    "--works-header-offset",
+    `${Math.round(topNavHeight + mobileBarHeight)}px`,
+  );
+}
+
 export default function WorksExperience() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,9 +33,29 @@ export default function WorksExperience() {
 
   useEffect(() => {
     if (!active) return;
+    const root = document.documentElement;
     const previousOverflow = document.body.style.overflow;
+    root.classList.add("works-route");
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previousOverflow; };
+
+    const observedElements = [
+      document.querySelector<HTMLElement>(".top-nav"),
+      document.querySelector<HTMLElement>(".docs-mobile-bar"),
+    ].filter((element): element is HTMLElement => Boolean(element));
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(measureHeaderOffset);
+    observedElements.forEach((element) => resizeObserver?.observe(element));
+    window.addEventListener("resize", measureHeaderOffset);
+    window.requestAnimationFrame(measureHeaderOffset);
+
+    return () => {
+      root.classList.remove("works-route");
+      root.style.removeProperty("--works-header-offset");
+      document.body.style.overflow = previousOverflow;
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", measureHeaderOffset);
+    };
   }, [active]);
 
   useEffect(() => {
@@ -111,26 +144,30 @@ export default function WorksExperience() {
                 <img src={coverAssetUrl} alt={`《${work.title}：${work.subtitle}》`} />
               </div>
               <div className="work-detail-copy">
-                <span className="work-detail-kicker">80 年代大陆成人彩色连环画 · 实验预览</span>
-                <h1 id="work-detail-title">{work.title}</h1>
-                <h2>{work.subtitle}</h2>
-                <p>{work.description}</p>
-                <dl>
-                  <div><dt>作者</dt><dd>{work.authors}</dd></div>
-                  <div><dt>版本</dt><dd>{work.edition}</dd></div>
-                  <div><dt>内容</dt><dd>{work.pageCount} 张已完成页面 / 缺第 22 页</dd></div>
-                </dl>
-                <div className="work-detail-actions">
-                  <button className="work-primary-action" type="button" onClick={() => void startReading(false)}>
-                    {hasProgress ? `继续第 ${savedPage} 页` : "开始阅读"}
-                  </button>
-                  <button className="work-landscape-action" type="button" onClick={() => void startReading(true)}>
-                    横屏全屏阅读
-                  </button>
+                <div className="work-detail-main">
+                  <span className="work-detail-kicker">80 年代大陆成人彩色连环画 · 实验预览</span>
+                  <h1 id="work-detail-title">{work.title}</h1>
+                  <h2>{work.subtitle}</h2>
+                  <p>{work.description}</p>
+                  <dl>
+                    <div><dt>作者</dt><dd>{work.authors}</dd></div>
+                    <div><dt>版本</dt><dd>{work.edition}</dd></div>
+                    <div><dt>内容</dt><dd>{work.pageCount} 张已完成页面 / 缺第 22 页</dd></div>
+                  </dl>
                 </div>
-                <p className="work-detail-note">
-                  PC 阅读会进入关灯模式；手机会请求全屏与横屏。浏览器不允许锁定方向时，仍可手动旋转阅读。
-                </p>
+                <div className="work-detail-footer">
+                  <div className="work-detail-actions">
+                    <button className="work-primary-action" type="button" onClick={() => void startReading(false)}>
+                      {hasProgress ? `继续第 ${savedPage} 页` : "开始阅读"}
+                    </button>
+                    <button className="work-landscape-action" type="button" onClick={() => void startReading(true)}>
+                      横屏全屏阅读
+                    </button>
+                  </div>
+                  <p className="work-detail-note">
+                    PC 阅读会进入关灯模式；手机会请求全屏与横屏。浏览器不允许锁定方向时，仍可手动旋转阅读。
+                  </p>
+                </div>
               </div>
             </div>
           </>
