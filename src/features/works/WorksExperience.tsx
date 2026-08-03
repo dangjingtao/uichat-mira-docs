@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ComicReader from "./ComicReader";
 import {
@@ -25,6 +25,8 @@ function measureHeaderOffset() {
 export default function WorksExperience() {
   const location = useLocation();
   const navigate = useNavigate();
+  const detailCoverRef = useRef<HTMLDivElement>(null);
+  const detailCopyRef = useRef<HTMLDivElement>(null);
   const [reading, setReading] = useState(false);
   const [preferFullscreen, setPreferFullscreen] = useState(false);
   const savedPage = readSavedPage();
@@ -57,6 +59,37 @@ export default function WorksExperience() {
       window.removeEventListener("resize", measureHeaderOffset);
     };
   }, [active]);
+
+  useEffect(() => {
+    if (!active || location.pathname !== workRoute || reading) return;
+    const cover = detailCoverRef.current;
+    const copy = detailCopyRef.current;
+    if (!cover || !copy) return;
+
+    const desktopQuery = window.matchMedia("(min-width: 901px)");
+    const syncDetailHeight = () => {
+      if (!desktopQuery.matches) {
+        copy.style.removeProperty("--work-detail-height");
+        return;
+      }
+      const height = cover.getBoundingClientRect().height;
+      if (height > 0) copy.style.setProperty("--work-detail-height", `${Math.round(height)}px`);
+    };
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(syncDetailHeight);
+    resizeObserver?.observe(cover);
+    desktopQuery.addEventListener("change", syncDetailHeight);
+    window.addEventListener("resize", syncDetailHeight);
+    window.requestAnimationFrame(syncDetailHeight);
+
+    return () => {
+      copy.style.removeProperty("--work-detail-height");
+      resizeObserver?.disconnect();
+      desktopQuery.removeEventListener("change", syncDetailHeight);
+      window.removeEventListener("resize", syncDetailHeight);
+    };
+  }, [active, location.pathname, reading]);
 
   useEffect(() => {
     setReading(false);
@@ -140,10 +173,10 @@ export default function WorksExperience() {
               ← 返回画册馆
             </button>
             <div className="work-detail-grid">
-              <div className="work-detail-cover">
+              <div className="work-detail-cover" ref={detailCoverRef}>
                 <img src={coverAssetUrl} alt={`《${work.title}：${work.subtitle}》`} />
               </div>
-              <div className="work-detail-copy">
+              <div className="work-detail-copy" ref={detailCopyRef}>
                 <div className="work-detail-main">
                   <span className="work-detail-kicker">80 年代大陆成人彩色连环画 · 实验预览</span>
                   <h1 id="work-detail-title">{work.title}</h1>
