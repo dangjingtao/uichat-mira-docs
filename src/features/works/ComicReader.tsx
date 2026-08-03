@@ -106,20 +106,33 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
 
   useEffect(() => {
     revealControls();
-    return () => {
-      if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
-    };
+    return clearHideTimer;
   }, [directoryOpen]);
 
   useEffect(() => {
     if (preferFullscreen) void requestLandscapeFullscreen();
   }, [preferFullscreen]);
 
+  function clearHideTimer() {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }
+
+  function hideControls() {
+    clearHideTimer();
+    setControlsVisible(false);
+  }
+
   function revealControls() {
+    clearHideTimer();
     setControlsVisible(true);
-    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
     if (!directoryOpen) {
-      hideTimerRef.current = window.setTimeout(() => setControlsVisible(false), 2600);
+      hideTimerRef.current = window.setTimeout(() => {
+        hideTimerRef.current = null;
+        setControlsVisible(false);
+      }, 4000);
     }
   }
 
@@ -162,6 +175,7 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
   }
 
   async function close() {
+    clearHideTimer();
     if (document.fullscreenElement) {
       try {
         await document.exitFullscreen();
@@ -172,8 +186,12 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
     onClose();
   }
 
+  function handleReaderPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse") revealControls();
+  }
+
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    revealControls();
+    if (controlsVisible) revealControls();
     if (zoom > 1) {
       dragRef.current = {
         pointerId: event.pointerId,
@@ -189,7 +207,6 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
   }
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    revealControls();
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     setPan({
@@ -224,7 +241,8 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
     const ratio = (event.clientX - rect.left) / rect.width;
     if (ratio < 0.25) showPrevious();
     else if (ratio > 0.75) showNext();
-    else setControlsVisible((visible) => !visible);
+    else if (controlsVisible) hideControls();
+    else revealControls();
   }
 
   const messageStyle = { display: "grid", placeItems: "center", alignContent: "center", gap: 16 } as const;
@@ -235,7 +253,7 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
     <div
       ref={rootRef}
       className={`comic-reader${controlsVisible || directoryOpen ? " controls-visible" : ""}`}
-      onPointerMove={revealControls}
+      onPointerMove={handleReaderPointerMove}
     >
       <div
         className={`comic-stage${zoom > 1 ? " is-zoomed" : ""}`}
@@ -254,13 +272,13 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
         />
       </div>
 
-      <header className="comic-toolbar comic-toolbar-top">
+      <header className="comic-toolbar comic-toolbar-top" onPointerDown={() => revealControls()}>
         <button type="button" onClick={() => void close()}>退出阅读</button>
         <strong>{work.title}：{work.subtitle}</strong>
         <button type="button" onClick={() => void requestLandscapeFullscreen()}>全屏</button>
       </header>
 
-      <footer className="comic-toolbar comic-toolbar-bottom">
+      <footer className="comic-toolbar comic-toolbar-bottom" onPointerDown={() => revealControls()}>
         <button type="button" disabled={index <= 0} onClick={showPrevious}>←</button>
         <button className="comic-page-indicator" type="button" onClick={() => setDirectoryOpen(true)}>
           第 {page} 页 · {index + 1}/{pageNumbers.length}
