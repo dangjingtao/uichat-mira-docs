@@ -7,12 +7,19 @@
   -webkit-user-drag: none;
 }
 
-.comic-stage > .comic-page-sprite {
-  width: auto;
-  height: auto;
-  max-width: calc(100vw - 120px);
-  max-height: calc(100dvh - 92px);
-  object-fit: contain;
+/*
+ * Full-page reading must not depend on a mobile WebView applying max-height
+ * back through an intrinsic image width after an orientation/fullscreen change.
+ * Give the landscape page an explicit viewport-bound height and let its width
+ * come only from the image's own aspect ratio.
+ */
+.works-experience .comic-stage > img.comic-page-sprite {
+  width: auto !important;
+  height: calc(100vh - 92px) !important;
+  height: calc(100dvh - 92px) !important;
+  max-width: calc(100vw - 120px) !important;
+  max-height: none !important;
+  object-fit: contain !important;
   box-shadow: 0 24px 80px rgb(0 0 0 / 54%);
   transform-origin: center;
   transition: transform .18s ease;
@@ -28,13 +35,24 @@
   object-fit: contain;
 }
 
-@media (max-width: 640px), (orientation: landscape) and (max-height: 520px) {
-  .comic-stage > .comic-page-sprite {
-    width: auto;
-    height: auto;
-    max-width: calc(100vw - 16px);
-    max-height: calc(100dvh - 16px);
-    object-fit: contain;
+@media (orientation: landscape) and (pointer: coarse) {
+  .works-experience .comic-stage > img.comic-page-sprite {
+    width: auto !important;
+    height: calc(100vh - 16px) !important;
+    height: calc(100dvh - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: none !important;
+    box-shadow: none;
+  }
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  .works-experience .comic-stage > img.comic-page-sprite {
+    width: calc(100vw - 16px) !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: calc(100vh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
     box-shadow: none;
   }
 }
