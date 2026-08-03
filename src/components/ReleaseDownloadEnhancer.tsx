@@ -37,6 +37,10 @@ const mobileGithubApkFallbackUrl =
   "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/v0.1.2-dev/uichat-mira-mobile-release.apk";
 const mobileR2ApkUrl =
   "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-release.apk";
+const mobileGithubIpaFallbackUrl =
+  "https://github.com/dangjingtao/uichat-mira-mobile/releases/download/v0.1.2-dev/uichat-mira-mobile-ios-unsigned-device.ipa";
+const mobileR2IpaUrl =
+  "https://assets.tomz.io/mira/mobile/dev/latest/uichat-mira-mobile-ios-unsigned-device.ipa";
 
 function formatVersion(value: string) {
   const version = value.trim();
@@ -139,6 +143,9 @@ function classifyDownloads(
   const mobileReleaseApk = mobileRelease?.assets.find(
     (asset) => asset.name === "uichat-mira-mobile-release.apk",
   );
+  const mobileReleaseIpa = mobileRelease?.assets.find(
+    (asset) => asset.name === "uichat-mira-mobile-ios-unsigned-device.ipa",
+  );
   options.push({
     key: "android-release",
     label: "Android 安装版",
@@ -147,6 +154,15 @@ function classifyDownloads(
     githubUrl:
       mobileReleaseApk?.browser_download_url || mobileGithubApkFallbackUrl,
     r2Url: mobileR2ApkUrl,
+  });
+  options.push({
+    key: "ios-unsigned-device",
+    label: "iOS 真机 IPA",
+    version: mobileVersionFromTag(mobileReleaseTag),
+    meta: "React Native · 未签名 IPA · 需侧载",
+    githubUrl:
+      mobileReleaseIpa?.browser_download_url || mobileGithubIpaFallbackUrl,
+    r2Url: mobileR2IpaUrl,
   });
 
   return {
