@@ -54,8 +54,9 @@ export async function inspectComicSource(sourceDirectory) {
 
   const errors = [];
   const warnings = [];
-  const config = await readJson(configPath);
-  validateConfig(config, errors);
+  const rawConfig = await readJson(configPath);
+  validateConfig(rawConfig, errors);
+  const config = rawConfig && typeof rawConfig === "object" ? rawConfig : {};
   config.missingPages = uniqueSortedNumbers(config.missingPages);
   const pagesDir = path.join(sourceDir, "pages");
 
@@ -110,7 +111,12 @@ export async function inspectComicSource(sourceDirectory) {
   if (!actualNumbers.length) errors.push("pages 目录没有有效页面。");
 
   const sharp = await loadSharp();
-  const cover = await inspectImage(sharp, coverPath);
+  let cover = null;
+  try {
+    cover = await inspectImage(sharp, coverPath);
+  } catch (error) {
+    errors.push(`无法解码封面：${String(error instanceof Error ? error.message : error)}`);
+  }
   const pages = [];
   for (const number of actualNumbers) {
     try {
