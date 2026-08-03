@@ -13,6 +13,7 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import App from "./App";
 import ReleaseDownloadEnhancer from "./components/ReleaseDownloadEnhancer";
+import WorksExperience from "./features/works/WorksExperience";
 import "./claude.theme.css";
 import "./apple.theme.css";
 import "./Supabase.theme.css";
@@ -24,6 +25,9 @@ import "./blog-list.css";
 import "./markdown.css";
 import "./blog-detail.css";
 import "./claude-visual.css";
+import "./features/works/works-experience.css";
+import "./features/works/works-sprite.css";
+import "./features/works/works-route-fixes.css";
 
 const themeKey = "mira-color-theme";
 const defaultTheme = "claude";
@@ -77,6 +81,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter basename={buildBase}>
       <App />
+      <WorksExperience />
       <ReleaseDownloadEnhancer />
     </BrowserRouter>
   </React.StrictMode>,

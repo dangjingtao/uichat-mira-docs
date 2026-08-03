@@ -1,0 +1,3 @@
+GitHub Pages acceptance build for feat/works-comic-reader-experiment
+2026-08-03
+mobile acceptance fixes: fixed-light theme, nav layering, stable reader controls, compact works list
