@@ -8,8 +8,12 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import {
+  comicAssetUrl,
+  comicSrcSet,
   pageNumbers,
+  pickComicSource,
   progressKey,
+  type ComicManifest,
   type PageNumber,
   work,
 } from "./work";
@@ -29,29 +33,32 @@ type DragState = {
   originY: number;
 };
 
-type PageSpriteProps = {
+type PageImageProps = {
   number: number;
-  spriteUrl: string;
-  manifest: NonNullable<ReturnType<typeof useComicAssets>["manifest"]>;
+  manifest: ComicManifest;
   className?: string;
   style?: CSSProperties;
+  thumbnail?: boolean;
 };
 
-function PageSprite({ number, spriteUrl, manifest, className = "", style }: PageSpriteProps) {
+function PageImage({ number, manifest, className = "", style, thumbnail = false }: PageImageProps) {
   const page = manifest.pages.find((candidate) => candidate.number === number);
   if (!page) return null;
-  const x = manifest.columns <= 1 ? 0 : (page.col / (manifest.columns - 1)) * 100;
-  const y = manifest.rows <= 1 ? 0 : (page.row / (manifest.rows - 1)) * 100;
+  const source = pickComicSource(page.sources, thumbnail ? 320 : 960);
+  if (!source) return null;
   return (
-    <span
-      role="img"
+    <img
       aria-label={`第 ${number} 页`}
       className={`comic-page-sprite ${className}`.trim()}
+      src={comicAssetUrl(source.src)}
+      srcSet={comicSrcSet(page.sources)}
+      sizes={thumbnail ? "160px" : "(max-width: 900px) 100vw, 960px"}
+      width={source.width}
+      height={source.height}
+      draggable={false}
+      alt={`《${work.title}》第 ${number} 页`}
       style={{
-        aspectRatio: `${manifest.tileWidth} / ${manifest.tileHeight}`,
-        backgroundImage: `url(${spriteUrl})`,
-        backgroundSize: `${manifest.columns * 100}% ${manifest.rows * 100}%`,
-        backgroundPosition: `${x}% ${y}%`,
+        aspectRatio: `${page.original.width} / ${page.original.height}`,
         ...style,
       }}
     />
@@ -71,12 +78,12 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const page = pageNumbers[index];
-  const { manifest, spriteUrl, loading, error } = useComicAssets();
+  const { manifest, loading, error } = useComicAssets();
 
   const directoryEntries = useMemo(
-    () => Array.from({ length: 30 }, (_, offset) => {
+    () => Array.from({ length: work.pageCount }, (_, offset) => {
       const number = offset + 1;
-      const pageIndex = pageNumbers.indexOf(number as PageNumber);
+      const pageIndex = pageNumbers.indexOf(number);
       return { number, index: pageIndex, missing: pageIndex < 0 };
     }),
     [],
@@ -247,7 +254,7 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
 
   const messageStyle = { display: "grid", placeItems: "center", alignContent: "center", gap: 16 } as const;
   if (loading) return <div className="comic-reader" style={messageStyle}>正在准备画册……</div>;
-  if (error || !manifest || !spriteUrl) return <div className="comic-reader" style={messageStyle}>{error || "画册资源不完整"}<button type="button" onClick={onClose}>返回</button></div>;
+  if (error || !manifest) return <div className="comic-reader" style={messageStyle}>{error || "画册资源不完整"}<button type="button" onClick={onClose}>返回</button></div>;
 
   return (
     <div
@@ -264,9 +271,8 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
         onClick={handleClick}
         onDoubleClick={() => zoom > 1 ? resetZoom() : setZoom(2)}
       >
-        <PageSprite
+        <PageImage
           number={page}
-          spriteUrl={spriteUrl}
           manifest={manifest}
           style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})` }}
         />
@@ -310,7 +316,7 @@ export default function ComicReader({ initialPage, preferFullscreen, onClose }: 
                     setDirectoryOpen(false);
                   }}
                 >
-                  {entry.missing ? <span>缺页</span> : <PageSprite number={entry.number} spriteUrl={spriteUrl} manifest={manifest} />}
+                  {entry.missing ? <span>缺页</span> : <PageImage number={entry.number} manifest={manifest} thumbnail />}
                   <small>{String(entry.number).padStart(2, "0")}</small>
                 </button>
               ))}
