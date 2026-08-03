@@ -144,6 +144,7 @@ export default function WorksExperience() {
                   <strong>{work.title}</strong>
                   <em>{work.subtitle}</em>
                 </span>
+                <span className="work-book-description">{work.description}</span>
                 <span className="work-book-meta-line">
                   <small>Tomz × Mira · {work.pageCount} 页</small>
                   <span className="work-book-action">
