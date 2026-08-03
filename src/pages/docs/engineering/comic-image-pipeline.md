@@ -7,7 +7,7 @@ order: 17
 
 # 画册图片管线契约
 
-画册图片不应由页面代码临时压缩、拼接或猜测尺寸。正式链路采用三层边界：
+画册图片不由页面代码临时压缩、拼接或猜测尺寸。正式链路采用四层边界：
 
 ```text
 原始图片
@@ -20,18 +20,22 @@ order: 17
 
 > 原图是事实，管线负责派生，manifest 是唯一交付物，前端不得参与图片加工。
 
-本文先锁定契约，不代表相关 CLI、R2 发布命令和逐页阅读协议已经实现。当前《余光·上》实验分支仍使用低清精灵图与分片，仅用于验证页面顺序、缺页、目录和阅读器交互，正式化时应整体替换。
+第一阶段 CLI 已在 `scripts/comic-pipeline/` 落地，支持源图检查、WebP 构建、产物校验与显式 R2 发布。当前《余光·上》阅读器仍使用低清精灵图与分片；它尚未切换到新 manifest，因此图片管线已经可用，不等于阅读端迁移已经完成。
 
-## 目标与非目标
+## 已实现范围
 
-本管线要解决：
+当前实现包含：
 
-- 同一批源图可以稳定生成同一套阅读资源；
-- 页面尺寸、缺页、比例和文件体积可被程序校验；
-- 手机、桌面、目录和放大阅读按需选择清晰度；
-- 修改单页时不必重建整本精灵图；
-- 生成物可追溯到源图和具体 edition；
-- R2、CDN、PWA 缓存不会因覆盖旧文件而串版。
+- `comic:inspect`：检查配置、页码、缺页、重复页、尺寸和比例；
+- `comic:build`：生成多尺寸 WebP、内容哈希文件名、manifest 与报告；
+- `comic:verify`：校验文件存在性、宽高、体积与 SHA-256；
+- `comic:publish`：使用 staging 前缀提升到 R2 正式目录；
+- `comic:test`：在临时目录生成 fixture，完整覆盖 inspect、build 和 verify；
+- 本地构建采用临时目录完成后整体替换，失败时不留下半成品。
+
+第一阶段暂不生成 CBZ 和 PDF。它们以后必须从同一份源图和 manifest 派生，不能建立第二套页码事实。
+
+## 非目标
 
 本管线不负责：
 
@@ -40,7 +44,7 @@ order: 17
 - 自动调色、提亮、锐化、降噪；
 - 用超出源图宽度的文件制造“假高清”；
 - 在网站运行时加工原图；
-- 本地构建完成后自动执行外部上传。
+- `build` 完成后自动执行外部上传。
 
 ## 源文件契约
 
@@ -54,7 +58,6 @@ comic-source/
     └── pages/
         ├── 001.png
         ├── 002.png
-        ├── 003.png
         ├── ...
         └── 030.png
 ```
@@ -77,10 +80,20 @@ comic-source/
 }
 ```
 
+可选字段：
+
+```json
+{
+  "aspectRatioOverrides": [7]
+}
+```
+
+只有人工确认某页确实采用不同构图时，才能把页码放入 `aspectRatioOverrides`。它不是跳过全部比例检查的开关。
+
 硬规则：
 
 - `id` 在作品生命周期内保持稳定；
-- `edition` 对应一套不可变发布物；
+- 内容变化时必须提升 `edition`；
 - 缺页必须显式列入 `missingPages`；
 - 已声明缺页的位置不得同时存在页图；
 - 不允许重复页码；
@@ -89,9 +102,11 @@ comic-source/
 - 输出颜色空间统一为 sRGB；
 - 页面内容、亮度和颜色不得被程序主观修改。
 
+支持的输入格式为 PNG、JPEG、WebP 和 TIFF。输出第一阶段统一为 WebP。
+
 ## 派生尺寸规则
 
-候选宽度统一为：
+页面候选宽度：
 
 ```text
 320
@@ -100,60 +115,66 @@ comic-source/
 原图宽度
 ```
 
-程序只生成不超过源图宽度的候选项，并对重复宽度去重。
-
-例如源图宽度约为 1450px，实际输出应为：
+封面额外包含 480px 档：
 
 ```text
-001-320.webp
-001-960.webp
-001-1450.webp
+320
+480
+960
+1600
+原图宽度
 ```
 
-源图宽度为 2400px 时，才生成：
+程序只生成不超过源图宽度的候选项，并对重复宽度去重。例如源图宽度为 1450px，页面实际输出为：
 
 ```text
-001-320.webp
-001-960.webp
-001-1600.webp
-001-2400.webp
+001-320.<hash>.webp
+001-960.<hash>.webp
+001-1450.<hash>.webp
 ```
+
+每张派生图：
+
+- 保持原始比例；
+- 使用 `withoutEnlargement`；
+- 归一化 EXIF 方向；
+- 转为 sRGB；
+- 使用 WebP quality 84、effort 5；
+- 文件名包含派生文件 SHA-256 的前 8 位。
 
 各档用途：
 
 | 宽度 | 用途 |
 | --- | --- |
 | 320 | 目录缩略图与小尺寸列表 |
+| 480 | 画册封面列表 |
 | 960 | 普通手机与低倍率阅读 |
 | 1600 | 高分屏手机、平板与桌面 |
 | 原图宽度 | 放大阅读与最终兜底 |
 
-封面遵守相同原则，但可以额外生成 480px 档用于画册列表。第一阶段统一输出 WebP，不同时引入 AVIF，避免增加构建、调试和兼容成本。
+## 本地输出契约
 
-## 输出目录契约
-
-本地构建产物按作品和 edition 隔离：
+默认构建目录：
 
 ```text
-comic-build/
-└── yuguang-vol-1/
-    └── v1/
-        ├── manifest.json
-        ├── report.json
-        ├── cover/
-        │   ├── cover-320.<hash>.webp
-        │   ├── cover-480.<hash>.webp
-        │   └── cover-1450.<hash>.webp
-        ├── pages/
-        │   ├── 001-320.<hash>.webp
-        │   ├── 001-960.<hash>.webp
-        │   ├── 001-1450.<hash>.webp
-        │   └── ...
-        ├── yuguang-vol-1.cbz
-        └── yuguang-vol-1.pdf
+.mira-cache/
+└── comics/
+    └── yuguang-vol-1/
+        └── v1/
+            ├── manifest.json
+            ├── report.json
+            ├── cover/
+            └── pages/
 ```
 
-文件名附带内容哈希，允许派生图片使用长期不可变缓存。`manifest.json` 不使用永久缓存，以便入口能切换到新 edition。
+`.mira-cache/` 已加入 `.gitignore`。构建过程先写入同级 staging 目录，完成校验后再替换目标目录。目标目录不会在生成一半时被阅读器或发布命令消费。
+
+也可以显式指定输出目录：
+
+```bash
+pnpm comic:build -- D:/MiraAssets/comics/yuguang-vol-1 \
+  --output D:/MiraBuild/yuguang-vol-1-v1
+```
 
 ## manifest 契约
 
@@ -162,16 +183,24 @@ comic-build/
 ```json
 {
   "schemaVersion": 1,
+  "pipelineVersion": 1,
   "id": "yuguang-vol-1",
   "edition": "v1",
+  "title": "余光·上",
+  "subtitle": "第一次讲话",
   "expectedPages": 30,
   "availablePages": 29,
   "missingPages": [22],
   "readingDirection": "ltr",
+  "releaseFingerprint": "...",
   "cover": {
-    "width": 1456,
-    "height": 1055,
-    "aspectRatio": 1.38,
+    "original": {
+      "width": 1456,
+      "height": 1055,
+      "aspectRatio": 1.38,
+      "bytes": 123456,
+      "sha256": "..."
+    },
     "sources": [
       {
         "width": 320,
@@ -185,30 +214,19 @@ comic-build/
   "pages": [
     {
       "number": 1,
-      "width": 1456,
-      "height": 1055,
-      "aspectRatio": 1.38,
-      "sourceSha256": "...",
+      "original": {
+        "width": 1456,
+        "height": 1055,
+        "aspectRatio": 1.38,
+        "bytes": 234567,
+        "sha256": "..."
+      },
       "sources": [
-        {
-          "width": 320,
-          "height": 232,
-          "src": "pages/001-320.aa32f91c.webp",
-          "bytes": 20481,
-          "sha256": "..."
-        },
         {
           "width": 960,
           "height": 696,
           "src": "pages/001-960.f20a177b.webp",
           "bytes": 108240,
-          "sha256": "..."
-        },
-        {
-          "width": 1456,
-          "height": 1055,
-          "src": "pages/001-1456.726cd9aa.webp",
-          "bytes": 238012,
           "sha256": "..."
         }
       ]
@@ -217,44 +235,126 @@ comic-build/
 }
 ```
 
-manifest 必须保留：
+`releaseFingerprint` 由作品配置、封面源哈希和全部页图源哈希计算。它用于识别一套输入事实，不包含本机绝对路径和构建时间。
 
-- 作品 ID 与 edition；
-- 预期页数、可用页数和真实缺页；
-- 原始宽高与比例；
-- 每个派生文件的宽高、体积和哈希；
-- 源文件哈希；
-- 阅读方向。
+`report.json` 可以包含构建时间、警告和产物体积，但不会暴露源图完整本地路径。
 
-## CLI 边界
+## CLI 使用
 
-计划提供三个相互独立的动作。命令名称是契约草案，落实现时可以调整参数，但不能合并职责。
+所有 pnpm 参数都放在 `--` 后面。
 
-### inspect
+### 检查源图
 
 ```bash
-pnpm comic:inspect D:/MiraAssets/comics/yuguang-vol-1
+pnpm comic:inspect -- D:/MiraAssets/comics/yuguang-vol-1
 ```
 
-只读取和检查源文件，不写图片、不上传资源。输出页码、缺页、尺寸范围、比例偏差和预计产物数量。
-
-### build
+输出 JSON：
 
 ```bash
-pnpm comic:build D:/MiraAssets/comics/yuguang-vol-1
+pnpm comic:inspect -- D:/MiraAssets/comics/yuguang-vol-1 --json
 ```
 
-生成派生图片、manifest、报告和可选下载包，默认写入被 `.gitignore` 排除的本地缓存目录。
+`inspect` 只读取源文件，不生成图片，不访问 R2。
 
-### publish
+### 构建
 
 ```bash
-pnpm comic:publish yuguang-vol-1 --edition v1
+pnpm comic:build -- D:/MiraAssets/comics/yuguang-vol-1
 ```
 
-发布前重新检查 manifest、哈希和文件数量，再显式上传 R2。`build` 不能隐式调用 `publish`。
+### 校验已有构建
 
-第一阶段实现可使用 Node.js 与 `sharp`。`sharp` 只属于开发期图片工具，不进入网站运行时依赖。
+```bash
+pnpm comic:verify -- .mira-cache/comics/yuguang-vol-1/v1
+```
+
+### 查看发布计划
+
+```bash
+pnpm comic:publish -- .mira-cache/comics/yuguang-vol-1/v1 --plan
+```
+
+`--plan` 不执行任何外部操作，也不要求真实密钥。
+
+### 显式发布
+
+```bash
+pnpm comic:publish -- .mira-cache/comics/yuguang-vol-1/v1 --confirm
+```
+
+没有 `--confirm` 时，发布命令直接失败。
+
+## R2 环境变量
+
+发布复用 Mira Mobile 已有的密钥命名：
+
+```text
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+R2_ACCOUNT_ID
+R2_BUCKET
+R2_PUBLIC_BASE_URL        # 可选，仅用于打印公开 manifest 地址
+R2_COMICS_PREFIX          # 可选，默认 mira/comics
+```
+
+本地发布依赖 AWS CLI。GitHub Runner 已预装 AWS CLI；Windows 本机执行前需要保证 `aws` 命令可用。
+
+## R2 整目录替换语义
+
+R2/S3 实际上没有可原子重命名的“文件夹”。因此不能假装一次 rename 就能替换整本画册，也不能直接逐个覆盖正式目录。
+
+当前发布策略：
+
+```text
+本地完整构建
+→ 上传到 .staging 临时前缀
+→ dry-run 校验 staging 与本地一致
+→ 先复制全部新图片到 current
+→ 复制 report.json
+→ 最后复制 manifest.json，完成版本切换
+→ manifest 切换后删除 current 中的旧文件
+→ dry-run 校验 current 与 staging 完全一致
+→ 删除 staging 临时目录
+```
+
+正式路径固定为：
+
+```text
+mira/comics/<work-id>/current/
+├── manifest.json
+├── report.json
+├── cover/
+└── pages/
+```
+
+临时路径：
+
+```text
+mira/comics/.staging/<work-id>/<edition>-<fingerprint>-<timestamp>/
+```
+
+这套策略的效果是：
+
+- 发布完成后，R2 只保留一份 `current`，不会永久堆积 edition 文件夹；
+- 正式目录最终与本地构建完全一致，旧文件会被删除；
+- 新 manifest 写入之前，新 manifest 引用的图片已经全部存在；
+- staging 只在发布期间短暂占用空间，成功后立即清理；
+- 发布失败时不会先清空正式目录。
+
+对象存储无法提供真正的目录级原子事务。这里把 `manifest.json` 作为唯一切换点，是在不引入 Worker 和数据库的前提下最稳妥的边界。
+
+派生图片使用：
+
+```text
+Cache-Control: public, max-age=31536000, immutable
+```
+
+manifest 与报告使用：
+
+```text
+Cache-Control: public, max-age=60, must-revalidate
+```
 
 ## 校验语义
 
@@ -265,20 +365,20 @@ pnpm comic:publish yuguang-vol-1 --edition v1
 - 出现未声明缺页；
 - 已声明缺页的位置存在文件；
 - 图片无法解码或宽高无效；
+- 比例偏差超过 5% 且未人工声明 override；
 - 派生图宽度超过源图；
 - manifest 引用了不存在的文件；
-- 文件哈希与 manifest 不一致；
-- 同一 edition 的源内容发生变化却试图覆盖旧发布物。
+- 文件体积、宽高或 SHA-256 与 manifest 不一致；
+- R2 staging 或正式目录在提升后仍与本地构建不一致。
 
 以下情况默认警告：
 
-- 页面尺寸不完全一致；
 - 页面比例偏差超过 2%；
 - 源图宽度低于 960px；
 - 优化后的文件反而大于源文件；
-- 单页体积显著高于全书中位数。
+- 构建目录出现未被 manifest 引用的额外文件。
 
-比例偏差明显超过作品约定时，程序应要求人工确认，而不是自动裁切“修正”。
+程序不会自动裁切“修正”比例异常。
 
 ## 前端消费契约
 
@@ -289,80 +389,21 @@ pnpm comic:publish yuguang-vol-1 --edition v1
 - 当前页根据容器宽度与设备像素比选择合适尺寸；
 - 默认只预加载前一页和后一页；
 - 放大时允许升级到更高尺寸；
-- 离开页面后取消不再需要的请求；
 - Service Worker 不预缓存整本书；
 - 缺页由 manifest 明确渲染；
 - 页面在图片返回前使用 manifest 宽高预留位置；
 - 阅读进度和缓存键必须包含 edition。
 
-推荐进度键：
+前端不得拼 Base64 分片、生成精灵图、在浏览器里压缩源图或给原画应用全站明暗主题滤镜。
 
-```text
-comic-progress:yuguang-vol-1:v1
-```
+## 当前迁移顺序
 
-前端不得：
+1. `inspect / build / verify / publish`：已完成第一阶段实现；
+2. 用《余光·上》原始页面跑真实构建并审查报告；
+3. 上传 R2，确认 `current/manifest.json` 与缓存头；
+4. 阅读器切换为逐页 manifest 加载；
+5. 验证目录、翻页、缩放、缺页、缓存和移动流量；
+6. 删除精灵图、Base64 分片和运行时 Blob 拼接逻辑；
+7. 后续再从同一 manifest 增加 CBZ 与 PDF。
 
-- 拼接 Base64 分片；
-- 生成精灵图；
-- 在浏览器里压缩源图；
-- 根据目录文件数量猜测缺页；
-- 用后一页代替缺页；
-- 给原画应用全站明暗主题滤镜。
-
-## 仓库与 R2 边界
-
-```text
-原始 PNG：本地资产目录或私有存储
-本地派生缓存：.mira-cache 或等价目录，不提交 Git
-正式 WebP / CBZ / PDF：R2
-网站仓库：阅读器代码、作品元数据、manifest 地址
-```
-
-R2 路径按不可变 edition 隔离：
-
-```text
-comics/yuguang-vol-1/v1/
-├── manifest.json
-├── report.json
-├── cover/
-├── pages/
-├── yuguang-vol-1.cbz
-└── yuguang-vol-1.pdf
-```
-
-派生图片使用：
-
-```text
-Cache-Control: public, max-age=31536000, immutable
-```
-
-修改任意正式页面都必须发布新 edition，不覆盖旧目录。这样 CDN、PWA 缓存、分享链接和阅读进度不会串版。
-
-## 当前实验方案的处置
-
-《余光·上》当前实验资源使用低清精灵图、Base64 分片与运行时 Blob 拼接。该方案只用于界面和交互验收，不进入正式协议。
-
-迁移顺序固定为：
-
-1. 实现 `inspect` 和 `build`；
-2. 用原始页面生成多尺寸资源与正式 manifest；
-3. 阅读器切换为逐页加载；
-4. 验证页码、缺页、目录、翻页、缩放、缓存和移动流量；
-5. 删除精灵图、Base64 分片和运行时拼接逻辑；
-6. 最后接入显式 R2 发布。
-
-不允许长期并存“精灵图协议”和“逐页 manifest 协议”，也不应继续给实验精灵图增加高清分支。
-
-## 变更原则
-
-后续修改本契约时，需要同时核对：
-
-- 源目录兼容性；
-- manifest schemaVersion；
-- 已发布 edition 的不可变性；
-- 阅读器资源选择与缓存逻辑；
-- R2 路径与缓存头；
-- CBZ、PDF 和网页版本是否仍来自同一套源事实。
-
-任何无法由程序重复生成的手工图片处理，都不应进入正式发布链路。
+不允许长期并存“精灵图协议”和“逐页 manifest 协议”。任何无法由程序重复生成的手工图片处理，都不应进入正式发布链路。
