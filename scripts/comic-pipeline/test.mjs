@@ -6,6 +6,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { buildComic } from "./build-lib.mjs";
 import { inspectComicSource } from "./inspect-lib.mjs";
+import { publishComicToR2 } from "./publish-lib.mjs";
 import { verifyComicBuild } from "./verify-lib.mjs";
 
 const root = await mkdtemp(path.join(os.tmpdir(), "mira-comic-pipeline-"));
@@ -44,6 +45,10 @@ try {
   assert.deepEqual(verified.errors, []);
   const manifest = JSON.parse(await readFile(path.join(output, "manifest.json"), "utf8"));
   assert.equal(manifest.releaseFingerprint.length, 64);
+
+  const publishPlan = await publishComicToR2(output, { planOnly: true });
+  assert.equal(publishPlan.livePrefix, "mira/comics/fixture-comic/current");
+  assert.equal(publishPlan.planOnly, true);
   console.log("comic pipeline fixture passed");
 } finally {
   await rm(root, { recursive: true, force: true });
