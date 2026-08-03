@@ -62,7 +62,7 @@ export default function WorksExperience() {
             <div>
               <span>WORKS / 画册</span>
               <h1 id="works-library-title">画册馆</h1>
-              <p>这里收着 Mira 与 Tomz 共同完成的连环画、图像叙事与小册子。</p>
+              <p>Mira 与 Tomz 共同完成的连环画与图像叙事。</p>
             </div>
             <div className="works-library-count">01</div>
           </header>
@@ -74,10 +74,16 @@ export default function WorksExperience() {
               </span>
               <span className="work-book-copy">
                 <span className="work-book-kicker">成人彩色连环画</span>
-                <strong>{work.title}</strong>
-                <em>{work.subtitle}</em>
-                <small>{work.authors} · {work.pageCount} 页预览</small>
-                <span className="work-book-action">{hasProgress ? `继续第 ${savedPage} 页` : "打开画册"} →</span>
+                <span className="work-book-title-line">
+                  <strong>{work.title}</strong>
+                  <em>{work.subtitle}</em>
+                </span>
+                <span className="work-book-meta-line">
+                  <small>Tomz × Mira · {work.pageCount} 页</small>
+                  <span className="work-book-action">
+                    {hasProgress ? `继续第 ${savedPage} 页` : "打开画册"} →
+                  </span>
+                </span>
               </span>
             </button>
           </div>
