@@ -1,0 +1,45 @@
+name: Refresh comic pipeline lockfile
+
+on:
+  push:
+    branches:
+      - feat/works-comic-reader-experiment
+    paths:
+      - package.json
+      - .github/workflows/refresh-comic-pipeline-lock.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-comic-pipeline-lock
+  cancel-in-progress: true
+
+jobs:
+  refresh-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/works-comic-reader-experiment
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Refresh pnpm lockfile
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Commit lockfile
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo 'pnpm-lock.yaml is already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pnpm-lock.yaml
+          git commit -m 'chore: refresh comic pipeline lockfile'
+          git push origin HEAD:feat/works-comic-reader-experiment
