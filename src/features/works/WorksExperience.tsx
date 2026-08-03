@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ComicReader from "./ComicReader";
+import { useComicAssets } from "./useComicAssets";
 import {
-  coverAssetUrl,
+  coverFallbackUrl,
   pageNumbers,
   readSavedPage,
   work,
@@ -32,6 +33,8 @@ export default function WorksExperience() {
   const savedPage = readSavedPage();
   const hasProgress = savedPage !== pageNumbers[0];
   const active = location.pathname === "/works" || location.pathname === workRoute;
+  const { coverUrl } = useComicAssets(active);
+  const displayCoverUrl = coverUrl || coverFallbackUrl;
 
   useEffect(() => {
     if (!active) return;
@@ -135,7 +138,7 @@ export default function WorksExperience() {
           <div className="works-shelf">
             <button className="work-book-card" type="button" onClick={() => navigate(workRoute)}>
               <span className="work-book-cover">
-                <img src={coverAssetUrl} alt={`《${work.title}：${work.subtitle}》封面预览`} />
+                <img src={displayCoverUrl} alt={`《${work.title}：${work.subtitle}》封面`} />
                 <span className="work-book-status">{work.status}</span>
               </span>
               <span className="work-book-copy">
@@ -175,18 +178,18 @@ export default function WorksExperience() {
             </button>
             <div className="work-detail-grid">
               <div className="work-detail-cover" ref={detailCoverRef}>
-                <img src={coverAssetUrl} alt={`《${work.title}：${work.subtitle}》`} />
+                <img src={displayCoverUrl} alt={`《${work.title}：${work.subtitle}》`} />
               </div>
               <div className="work-detail-copy" ref={detailCopyRef}>
                 <div className="work-detail-main">
-                  <span className="work-detail-kicker">80 年代大陆成人彩色连环画 · 实验预览</span>
+                  <span className="work-detail-kicker">80 年代大陆成人彩色连环画 · 正式发行</span>
                   <h1 id="work-detail-title">{work.title}</h1>
                   <h2>{work.subtitle}</h2>
                   <p>{work.description}</p>
                   <dl>
                     <div><dt>作者</dt><dd>{work.authors}</dd></div>
                     <div><dt>版本</dt><dd>{work.edition}</dd></div>
-                    <div><dt>内容</dt><dd>{work.pageCount} 张已完成页面 / 缺第 22 页</dd></div>
+                    <div><dt>内容</dt><dd>封面 1 张 / 正文 {work.pageCount} 页</dd></div>
                   </dl>
                 </div>
                 <div className="work-detail-footer">
