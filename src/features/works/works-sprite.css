@@ -7,19 +7,12 @@
   -webkit-user-drag: none;
 }
 
-/*
- * Full-page reading must not depend on a mobile WebView applying max-height
- * back through an intrinsic image width after an orientation/fullscreen change.
- * Give the landscape page an explicit viewport-bound height and let its width
- * come only from the image's own aspect ratio.
- */
-.works-experience .comic-stage > img.comic-page-sprite {
-  width: auto !important;
-  height: calc(100vh - 92px) !important;
-  height: calc(100dvh - 92px) !important;
-  max-width: calc(100vw - 120px) !important;
-  max-height: none !important;
-  object-fit: contain !important;
+.comic-stage > .comic-page-sprite {
+  width: auto;
+  height: auto;
+  max-width: calc(100vw - 120px);
+  max-height: calc(100dvh - 92px);
+  object-fit: contain;
   box-shadow: 0 24px 80px rgb(0 0 0 / 54%);
   transform-origin: center;
   transition: transform .18s ease;
@@ -35,24 +28,18 @@
   object-fit: contain;
 }
 
-@media (orientation: landscape) and (pointer: coarse) {
+/*
+ * Some Android phone browsers keep stale dynamic viewport units after entering
+ * fullscreen and locking landscape. Fit against the stage's actual box instead
+ * of 100dvh. The narrow query deliberately leaves tablets on the normal path.
+ */
+@media (orientation: landscape) and (pointer: coarse) and (max-width: 1200px) and (max-height: 600px) {
   .works-experience .comic-stage > img.comic-page-sprite {
     width: auto !important;
-    height: calc(100vh - 16px) !important;
-    height: calc(100dvh - 16px) !important;
-    max-width: calc(100vw - 16px) !important;
+    height: calc(100% - 16px) !important;
+    max-width: calc(100% - 16px) !important;
     max-height: none !important;
-    box-shadow: none;
-  }
-}
-
-@media (orientation: portrait) and (pointer: coarse) {
-  .works-experience .comic-stage > img.comic-page-sprite {
-    width: calc(100vw - 16px) !important;
-    height: auto !important;
-    max-width: none !important;
-    max-height: calc(100vh - 16px) !important;
-    max-height: calc(100dvh - 16px) !important;
+    object-fit: contain !important;
     box-shadow: none;
   }
 }
