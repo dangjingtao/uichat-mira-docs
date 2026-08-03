@@ -1,30 +1,22 @@
 import { useEffect, useState } from "react";
 import {
-  assetRoot,
+  comicAssetUrl,
   manifestAssetUrl,
+  pickComicSource,
   type ComicManifest,
 } from "./work";
 
 type AssetState = {
   manifest: ComicManifest | null;
-  spriteUrl: string;
+  coverUrl: string;
   loading: boolean;
   error: string;
 };
 
-function decodeBase64(value: string) {
-  const binary = window.atob(value);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
-}
-
 export function useComicAssets(active = true): AssetState {
   const [state, setState] = useState<AssetState>({
     manifest: null,
-    spriteUrl: "",
+    coverUrl: "",
     loading: active,
     error: "",
   });
@@ -32,32 +24,39 @@ export function useComicAssets(active = true): AssetState {
   useEffect(() => {
     if (!active) return;
     const controller = new AbortController();
-    let spriteUrl = "";
 
     async function load() {
       try {
-        const manifestResponse = await fetch(manifestAssetUrl, { signal: controller.signal });
-        if (!manifestResponse.ok) throw new Error(`manifest ${manifestResponse.status}`);
-        const manifest = await manifestResponse.json() as ComicManifest;
-        const chunks = await Promise.all(manifest.chunks.map(async (path) => {
-          const response = await fetch(`${assetRoot}${path}`, { signal: controller.signal });
-          if (!response.ok) throw new Error(`chunk ${response.status}`);
-          return response.text();
-        }));
-        const spriteBytes = decodeBase64(chunks.join(""));
-        spriteUrl = URL.createObjectURL(new Blob([spriteBytes], { type: "image/webp" }));
-        setState({ manifest, spriteUrl, loading: false, error: "" });
+        const response = await fetch(manifestAssetUrl, {
+          signal: controller.signal,
+          cache: "no-cache",
+        });
+        if (!response.ok) throw new Error(`manifest ${response.status}`);
+        const manifest = await response.json() as ComicManifest;
+        if (manifest.id !== "yuguang-vol-1" || manifest.availablePages !== 32) {
+          throw new Error("unexpected manifest");
+        }
+        const cover = pickComicSource(manifest.cover.sources, 960);
+        if (!cover) throw new Error("cover missing");
+        setState({
+          manifest,
+          coverUrl: comicAssetUrl(cover.src),
+          loading: false,
+          error: "",
+        });
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
-        setState({ manifest: null, spriteUrl: "", loading: false, error: "画册资源加载失败，请刷新后重试。" });
+        setState({
+          manifest: null,
+          coverUrl: "",
+          loading: false,
+          error: "画册资源加载失败，请刷新后重试。",
+        });
       }
     }
 
     void load();
-    return () => {
-      controller.abort();
-      if (spriteUrl) URL.revokeObjectURL(spriteUrl);
-    };
+    return () => controller.abort();
   }, [active]);
 
   return state;
