@@ -1,7 +1,9 @@
 name: Deploy GitHub Pages
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - feat/works-comic-reader-experiment
   workflow_dispatch:
 permissions:
   contents: read
