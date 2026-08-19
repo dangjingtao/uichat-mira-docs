@@ -10,7 +10,7 @@ export const topNavigationOrder = [
 ] as const;
 
 export const logoUrl = "https://assets.tomz.io/images/mira-logo.png";
-export const siteUrl = "https://tomz.io";
+export const siteUrl = "https://mira.tomz.io";
 export const seo = {
   enabled: true,
 } as const;
