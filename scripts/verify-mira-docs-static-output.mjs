@@ -5,7 +5,7 @@ import { parseMiraDoc } from "@uichat-mira/docs";
 const root = process.cwd();
 const pagesRoot = resolve(root, "src/pages");
 const distRoot = resolve(root, "dist");
-const siteUrl = "https://tomz.io";
+const siteUrl = "https://mira.tomz.io";
 const expectedBase = `/${(process.env.EXPECTED_BASE || "uichat-mira-docs").replace(/^\/+|\/+$/g, "")}`;
 
 function markdownFiles(directory) {
