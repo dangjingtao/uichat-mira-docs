@@ -117,10 +117,10 @@ jobs:
 
       - name: Submit changed URLs to Baidu
         env:
-          BAIDU_PUSH_TOKEN: ${{ secrets.BAIDU_PUSH_TOKEN }}
+          BAIDU_PUSH_TOKEN: ${{ secrets.BAIDU_PUSH_TOKEN_MIRA }}
         run: |
           if [ -z "$BAIDU_PUSH_TOKEN" ]; then
-            echo "BAIDU_PUSH_TOKEN is not configured; skipping Baidu submission."
+            echo "BAIDU_PUSH_TOKEN_MIRA is not configured; skipping Baidu submission."
             exit 0
           fi
 
@@ -136,7 +136,7 @@ jobs:
             -w '%{http_code}' \
             -H 'Content-Type:text/plain' \
             --data-binary @urls.txt \
-            "http://data.zz.baidu.com/urls?site=https://tomz.io&token=${BAIDU_PUSH_TOKEN}")
+            "http://data.zz.baidu.com/urls?site=https://mira.tomz.io&token=${BAIDU_PUSH_TOKEN}")
 
           echo "Baidu HTTP status: $HTTP_STATUS"
           echo "Baidu response:"
