@@ -1,11 +1,11 @@
 ---
 title: 把 AI Code Review 接成一个真正的 Agent Loop
-description: 用 GitHub Actions、OpenCode Go 与 DeepSeek V4 Pro，把 Builder → PR → Reviewer → Findings → Builder 接成可重复运行、可校验版本、可被本地 Agent 消费的评审循环。
+description: 用 GitHub Actions、OpenCode Go、项目级 Review Skill、可信版本边界与确定性 Gate，把 Builder → Reviewer → Findings → Builder 接成可重复、可校验、可逐步放行的工程循环。
 group: 工程现场
 order: 30
 date: 2026年8月28日
-readTime: 12 分钟阅读
-tags: OpenCode Go | DeepSeek V4 Pro | AI Code Review | Agent Loop | GitHub Actions | Agent Handoff
+readTime: 16 分钟阅读
+tags: OpenCode Go | GPT 5.6 Luna | AI Code Review | Agent Loop | GitHub Actions | Agent Handoff | Gatekeeper
 author: tomz | mira
 writingMode: co-authored
 writtenBy: tomz | mira
@@ -50,9 +50,9 @@ Reviewer again
 
 [《OPC 探索（三）：从复制粘贴到宏观 Agent Loop》](https://tomz.io/blogs/shared-thinking/macro-agent-loop-beyond-copy-paste)。
 
-这篇只讲工程上怎么把它接成一条可信的 loop。
+这篇只讲工程上怎么把它接成一条可信的 loop，以及这条 loop 跑进 Mira Mobile 以后，Review 权限边界又是怎么继续收敛的。
 
-## 目标不是做一个会评论的机器人
+## 第一阶段：先让 Reviewer 成为真正的第二双眼睛
 
 代码 Review 很适合作为宏观 Agent Loop 的第一个实验，是因为它天然有几个清晰边界：
 
@@ -68,7 +68,7 @@ Reviewer again
 
 Reviewer 可以错，但它至少应该明确自己在看哪一版代码、基于什么证据做判断。
 
-所以我们一开始就定了几条边界：
+第一阶段为了先把 loop 本身跑通，我们故意把 Reviewer 的权力压得很低：
 
 - 不自动 merge；
 - 不自动 GitHub `APPROVE`；
@@ -76,15 +76,21 @@ Reviewer 可以错，但它至少应该明确自己在看哪一版代码、基�
 - 不自动把任务改成 `PASS`；
 - Review Agent 不能修改代码；
 - Review Agent 不能执行 shell；
-- Review 结果只是建议，本地施工 Agent 必须重新对照代码和合同验证。
+- Review 结果只是下一轮验证输入，Builder 必须重新对照代码和合同核实。
 
-这套东西的定位始终是 **第二双眼睛**，不是最终裁判。
+这不是说“以后系统永远不能自动放行”。
 
-## 最终架构：模型只读，发布器单独写 GitHub
+它只是一个很重要的 bootstrap 原则：
 
-真正跑起来以后，最重要的一次架构调整不是 prompt，而是权限。
+> **先证明模型能稳定地审，再讨论给流程增加多少自动权力。**
 
-最终 workflow 被拆成两个 job：
+后来我们确实开始讨论放行、改任务状态和 GitHub Approve。
+
+但结论不是把这些权限补回 Reviewer，而是再拆出一个确定性的 Gatekeeper。后面会讲。
+
+## 模型只读，GitHub 写权限和模型执行分开
+
+最初跑通的 workflow 被拆成两个 job：
 
 ```text
 pull_request -> dev
@@ -114,19 +120,13 @@ contents: read
 
 它会：
 
-1. checkout 当前 PR head；
-2. 关闭 persisted Git credentials；
-3. 安装 OpenCode CLI；
-4. 从 `dev` 读取可信 Reviewer 脚本；
-5. 调用模型生成 Review；
-6. 写出 `ai-review.md`；
-7. 上传短期 artifact。
+1. 读取当前 PR 的目标版本；
+2. 获取可信的 Reviewer 规则；
+3. 调用 OpenCode Go 模型生成 Review；
+4. 写出结构化 Review artifact；
+5. 不直接向 GitHub 执行写操作。
 
-最关键的是：**这个 job 不拿 GitHub 写权限。**
-
-模型即使“想”去评论、改代码、加 reaction，也没有对应 token 可以用。
-
-OpenCode 的权限同时显式限制为：
+OpenCode 自身也显式关闭施工型权限，例如：
 
 ```json
 {
@@ -138,9 +138,9 @@ OpenCode 的权限同时显式限制为：
 }
 ```
 
-也就是说它只是 Reviewer。
+Reviewer 可以读、理解、判断。
 
-不是披着 Reviewer 名字的第二个 Coding Agent。
+但不是披着 Reviewer 名字的第二个 Coding Agent。
 
 ### publish job
 
@@ -149,35 +149,34 @@ Publisher 不运行模型。
 它只做确定性操作：
 
 ```text
-下载 ai-review.md
+下载 Review artifact
 ↓
-查找带 marker 的 PR comment
+校验结构和版本信息
 ↓
-不存在：创建
-存在：更新
+创建 / 更新 marked PR comment
 ↓
-执行本地 handoff 脚本
-↓
-验证 Head SHA + marker
+执行 local handoff self-check
 ```
 
 所以 GitHub 写权限和模型执行被物理拆开了。
 
-这是整套设计里我们最想保留的一条原则：
+这是整套设计里我们一直想保留的一条原则：
 
-> **需要写权限的是发布器，不是 Reviewer。**
+> **模型不因为需要输出 Review，就顺便获得 GitHub 写权限。**
 
-## 为什么没有直接沿用 OpenCode 的 GitHub Action 写法
+后面加入 Gatekeeper 时，也继续沿用这条分工。
 
-第一次 smoke test 其实走过一条更直接的路。
+## 为什么没有为了方便直接扩大 OpenCode 的 GitHub 权限
 
-我们尝试让 OpenCode 官方 GitHub 模式直接处理 PR。
+第一次 smoke test 走过一条更直接的路。
+
+我们尝试让 OpenCode 的 GitHub 模式直接处理 PR。
 
 PR trigger、checkout、`OPENCODE_API_KEY` 检查、OpenCode 安装都正常。
 
 但官方模式本身会尝试在 GitHub 上添加 reaction / comment。
 
-在严格的只读权限下，它遇到了：
+在严格只读权限下，它遇到了：
 
 ```text
 403 Resource not accessible by integration
@@ -198,149 +197,115 @@ Publisher = deterministic write
 
 这比单纯把 Action 跑绿更重要。
 
-## Reviewer 脚本必须来自可信 base，而不是 PR branch
+## Review 的规则必须来自可信 base
 
 还有一个容易忽略的问题。
 
-如果 workflow checkout 的是 PR head，然后直接执行：
-
-```text
-scripts/opencode-pr-review.mjs
-```
-
-那么提交 PR 的代码本身就可以修改 Reviewer 脚本。
+如果 workflow checkout 的是 PR head，然后直接执行 PR 里的 Reviewer 脚本，那么提交 PR 的代码本身就可以修改“如何审查自己”。
 
 即使是同仓库 PR，这个边界也不够干净。
 
-所以 workflow 实际执行的是：
+所以原则变成：
 
-```bash
-git show "origin/${BASE_BRANCH}:scripts/opencode-pr-review.mjs" \
-  > "$RUNNER_TEMP/opencode-pr-review.mjs"
-```
+> **Review 的对象可以来自 PR，Review 的规则必须来自可信 base。**
 
-也就是：
-
-> **Review 的对象来自 PR，Review 的规则来自可信的 `dev`。**
-
-这样 PR 可以改变待评审代码，但不能在同一个 diff 里偷偷改掉“评审自己”的逻辑并让这轮 CI 使用它。
-
-## OpenCode Go 的模型 ID：`opencode-go/deepseek-v4-pro`
-
-这里还踩了一个非常真实的坑。
-
-一开始把 DeepSeek V4 Pro 配成了：
+也就是说：
 
 ```text
-opencode/deepseek-v4-pro
+PR head
+→ 待评审代码
+
+base / dev
+→ AGENTS.md
+→ Reviewer script
+→ Review skill
+→ task / project contracts
 ```
 
-调用确实到了 DeepSeek V4 Pro，但 OpenCode 返回：
+PR 可以改变待评审代码，但不能让同一轮 Review 顺便采用它自己刚改出来的新裁判规则。
+
+## 仅仅读可信脚本还不够：OpenCode 启动环境也要可信
+
+把 Reviewer 脚本从 base 取出来以后，我们又继续往前追了一层。
+
+OpenCode 项目本身可以加载项目级配置、skills 和 plugins。
+
+如果直接在原始 PR worktree 里启动 OpenCode，那么 PR 仍可能通过修改 `.opencode`、项目配置或其他 Agent 配置，影响 Reviewer 启动时的行为。
+
+所以 Mira Mobile 的实现又多了一层隔离：
 
 ```text
-Insufficient balance
+PR head
+↓
+git archive 到临时 snapshot
+↓
+移除 PR 可控的 Agent / OpenCode 配置
+↓
+从可信 base 注入 AGENTS.md
+↓
+从可信 base 注入唯一允许的 Review Skill
+↓
+在 sanitized snapshot 中启动 Reviewer
 ```
 
-开始看起来像 Key、余额或模型权限问题。
-
-后来才确认，我们用的是 **OpenCode Go 账户**。
-
-Go 和 Zen 是两个不同 provider。
-
-正确模型 ID 是：
+当前会显式清掉这类 PR 控制面，再注入可信版本：
 
 ```text
-opencode-go/deepseek-v4-pro
-```
-
-修正以后，用同一个 repository secret `OPENCODE_API_KEY` 重新触发 smoke PR，Review 正常完成。
-
-日志明确记录：
-
-```text
-OPENCODE_REVIEW_MODEL: opencode-go/deepseek-v4-pro
-```
-
-最后 Review comment 的 metadata 也记录同一个模型。
-
-这个坑很小，但很值得留下：
-
-> **不要把“模型名字一样”理解成“provider 一样”。账户产品线不同，路由也可能完全不同。**
-
-## Review 输入不只是一段 diff
-
-如果只是把 diff 丢给模型，它很容易退化成语法和局部实现检查。
-
-我们希望 Reviewer 至少理解“这次改动要满足什么”。
-
-所以 Reviewer 输入包括：
-
-```text
-PR title / body
-base / head metadata
-changed filenames
-PR diff
+.opencode
+.claude
+.agents
+opencode.json / opencode.jsonc
+CLAUDE.md
 AGENTS.md
-Product Brief
-Work Ledger
-matching T### task card
 ```
 
-其中任务卡会在 PR title、body 或 branch name 里识别 `T###`。
+这样“待审代码”和“裁判环境”才真正分开。
 
-这样 Reviewer 不只知道：
+这是从第一次原型走到真实 Mobile 项目后，最值得保留的安全原则之一。
 
-> 这里改了一个函数。
+## 通用 Review Prompt 不够，项目应该拥有自己的 Review Skill
 
-它还可能知道：
+原型阶段可以先用通用 Reviewer 验证 loop。
 
-> 这张任务卡明确要求不能改变某个合同；当前改动违反了它。
+但真实项目很快暴露一个问题：
 
-这才开始接近项目 Review，而不是通用静态扫描。
+> 同一套 Review 原则，不能机械地套在所有代码库上。
 
-当然，大 diff 仍然会被截断。
+Mira Mobile 是 React Native 客户端，也是 Mira Host 的 companion。
 
-当前输入上限是一个明确的工程边界，而不是假装模型看到了全仓。
+它和一个纯 Web Prototype 的 Review 重心明显不同。
 
-只要 Evidence 不完整，Reviewer 就应该在 `Review gaps` 里承认。
+所以 Mobile 增加了自己的项目级 Review Skill。
 
-## 输出必须是合同，而不是一篇自由发挥的作文
-
-Review 最终带固定 marker：
-
-```html
-<!-- local-ai-review:v1 -->
-```
-
-同时还有 metadata，至少记录：
+它要求 Reviewer 优先理解真实项目合同，并重点检查：
 
 ```text
-Head SHA
-model
+React Native lifecycle / foreground / background
+异步竞态、stale response、重复 listener / timer
+Android / iOS parity
+权限、camera、files、share、notifications、deep links
+Gradle / CocoaPods / plist / manifest / signing / entitlements
+Remote Host / pairing / auth / reconnect / pagination
+本地持久化与服务端 authoritative state 的边界
+敏感 token、日志、CI signing / secret 边界
+feature -> dev -> test -> prod 的发布约定
 ```
 
-正文保持固定顶层结构：
+同时它也明确一条很重要的反误报规则：
 
-```text
-# Experimental OpenCode PR Review
+> **缺少真机、Host 或平台验证证据，通常先进入 validation gaps，不自动升级成代码 Bug。**
 
-## Verdict
-## Findings
-## Review gaps
-## Local handoff
-```
+除非任务合同本身明确要求这一轮必须完成对应验证。
 
-Verdict 只允许三个实验性值：
+这让 Reviewer 不再拿“我没看到证据”直接推导成“实现一定错了”。
 
-```text
-NO_BLOCKING_FINDINGS
-CHANGES_NEEDED
-HUMAN_CHECK_NEEDED
-```
+## Findings 要把 Observation、Inference、Judgment 分开
 
-这三个值都不是 GitHub 的正式审批状态。
+AI Review 很常见的一种问题是：
 
-Findings 要求把三层东西分开：
+模型看到一个现象，下一句话就把猜测写成事实，再下一句话给出一个很重的结论。
+
+所以 Mobile Skill 继续强化了三层输出：
 
 ```text
 Observation
@@ -348,15 +313,56 @@ Inference
 Judgment
 ```
 
-并给出 P0-P3 severity。
+一个 finding 至少应该回答：
 
-这是为了避免很常见的一种 AI Review 问题：
+```text
+Observation：代码实际做了什么？
+Inference：这可能导致什么？
+Judgment：基于现有合同，这是不是需要处理的问题？
+```
 
-模型看到一个现象，下一句话就把猜测写成事实，再下一句话给出一个很重的结论。
+并且附带：
 
-把观察、推断和判断拆开以后，本地 Agent 更容易逐条复核。
+```text
+Platform / surface
+Location
+Suggested fix
+Verification
+```
 
-## 同一个 PR 只保留一条 Review comment
+这样 Builder 收到的不是一段“很像专家”的长作文，而是一组可以重新核实的假设。
+
+Reviewer 的结论仍然不是事实本身。
+
+## 输出必须是合同，不是一篇自由发挥的评论
+
+一条 Review 要进入 Agent Loop，必须能够被机器识别。
+
+所以 Review 带固定 marker 和 metadata，并记录至少：
+
+```text
+Head SHA
+Base SHA
+Model
+Skill marker
+Verdict
+```
+
+Mobile 当前的 verdict 只允许：
+
+```text
+NO_BLOCKING_FINDINGS
+CHANGES_NEEDED
+HUMAN_CHECK_NEEDED
+```
+
+这些值首先是 Reviewer 的**判断合同**，不是 GitHub 最终审批状态。
+
+如果 marker、skill marker、结构或 metadata 不符合合同，workflow 应该失败，而不是把一段自由文本默默当成有效 Review。
+
+这条原则后来也成为 Gatekeeper 的前提：只有结构化、可验证的 Reviewer 输出，才有资格进入确定性放行判断。
+
+## 同一个 PR 只保留一个“当前 Review 状态”
 
 如果每 push 一次就新增一条评论，真实项目很快会变成：
 
@@ -370,25 +376,22 @@ Review #5
 
 然后人和 Agent 都不知道哪条才对应当前代码。
 
-所以 Publisher 会查找带 marker 的 comment：
+所以 Publisher 查找固定 marker：
 
 ```text
-<!-- local-ai-review:v1 -->
+找到 → 更新
+找不到 → 创建
 ```
 
-找到就 PATCH。
+每次 synchronize 更新的是同一条 Review comment。
 
-找不到才 POST。
-
-每次 synchronize 更新的是同一条 Review。
-
-真正判断新旧的依据不是 comment 数量，而是 metadata 里的：
+真正判断新旧的依据不是评论数量，而是 metadata 里的：
 
 ```text
 Head SHA
 ```
 
-这让 Review comment 更像一个“当前状态视图”，而不是聊天记录。
+这让 PR comment 更像一个“当前 Review 状态视图”，而不是聊天记录。
 
 ## 本地 Agent 需要一个明确的 Review Inbox
 
@@ -398,7 +401,7 @@ Head SHA
 
 > 不要再让我把 Review 从 GitHub 复制回 OpenCode / Codex / 施工线程。
 
-所以项目里增加了：
+所以 Mobile 提供本地 handoff：
 
 ```bash
 npm run review:pull
@@ -411,31 +414,16 @@ npm run review:pull
 .ai/reviews/latest.md
 ```
 
-本地文件记录：
-
-```text
-repository
-PR URL
-base
-head
-Head SHA
-review source
-updated time
-完整 Review body
-```
-
-`.ai/reviews/` 被 gitignore。
-
-这不是新的任务真相源，只是一个本地 Agent inbox。
+本地记录包含当前 PR、reviewed Head SHA、Base SHA、模型、stale 状态和完整 Review。
 
 施工 Agent 的处理原则是：
 
 ```text
 读取 latest.md
 ↓
-检查 Head SHA 是否等于当前 PR
+检查 reviewed Head SHA
 ↓
-不一致：视为 stale
+不一致：stale，拒绝消费
 ↓
 一致：逐条回查 finding
 ↓
@@ -444,9 +432,9 @@ fix / reject / escalate
 
 也就是说：
 
-> **Reviewer 的结论不是事实；Reviewer 的输出是下一轮验证的输入。**
+> **Reviewer 的输出是下一轮验证的输入，不是自动变成事实。**
 
-## Head SHA 是这条 loop 里最重要的小字段之一
+## Head SHA 是整条 loop 最重要的门禁字段之一
 
 假设 Reviewer 看的是：
 
@@ -468,7 +456,7 @@ SHA B
 
 那么上一轮 Review 就已经过期。
 
-所以本地 Agent 不能只问：
+本地 Agent 不能只问：
 
 > 有没有 Review？
 
@@ -476,83 +464,258 @@ SHA B
 
 > **这条 Review 是不是针对我现在手里的代码？**
 
-这也是为什么 Publisher 在发布后还会自己运行一次：
+Publisher 在发布后也会用同一套 handoff 逻辑自检，确认 reviewed Head SHA 与当前 PR Head 一致。
+
+这一步证明 GitHub 上的 Review 确实沿着我们规定的协议进入本地 Agent 收件箱，而不是只在文档里说“理论上可以”。
+
+## 模型路由踩过的坑仍然值得保留
+
+原型阶段我们用过 DeepSeek V4 Pro，并踩过一个很真实的 provider 路由问题。
+
+一开始把模型写成：
 
 ```text
-scripts/pull-ai-review.mjs
+opencode/deepseek-v4-pro
 ```
 
-并验证 `.ai/reviews/latest.md` 里的 Head SHA 和 marker。
+调用到了另一条账户产品线，最后报余额错误。
 
-这一步看起来有点重复，但它证明了：
-
-> GitHub 上生成的 Review，确实可以沿着我们规定的协议进入本地 Agent 收件箱。
-
-不是只在文档里说“理论上可以”。
-
-## smoke test 里真正验证了什么
-
-我们用了 disposable PR 做真实 smoke，没有 merge。
-
-第一轮暴露 GitHub write 权限问题。
-
-第二轮证明 OpenCode Key 能真实进入模型调用，但错误走到了 Zen provider。
-
-切到免费模型以后，先把完整 Review + Publisher + comment update + local handoff 链路跑通。
-
-最后再用 OpenCode Go + DeepSeek V4 Pro 做独立 smoke。
-
-最终验证的不是一句“CI 绿了”，而是这些具体事实：
-
-- `pull_request -> dev` 确实触发；
-- Review job 只有 `contents: read`；
-- OpenCode 实际运行 `opencode-go/deepseek-v4-pro`；
-- `ai-review.md` artifact 正常生成；
-- Publisher 正常创建 / 更新 marked comment；
-- 新 push 后更新的是同一条 comment；
-- metadata Head SHA 跟随 PR head 更新；
-- `review:pull` 能生成本地 Review inbox；
-- CI 能验证 inbox 中 Head SHA 与 marker；
-- 普通 `Verify Prototype` 仍然独立工作；
-- smoke PR 最终关闭，没有 merge。
-
-这才算一条最小 loop 真正接通。
-
-## 为什么现在仍然不把它做成强制门禁
-
-跑通基础链路以后，最容易做的下一步是：
+后来确认 OpenCode Go 应使用对应的 Go provider，例如当时的：
 
 ```text
-CHANGES_NEEDED -> block merge
-NO_BLOCKING_FINDINGS -> allow merge
+opencode-go/deepseek-v4-pro
 ```
 
-我们没有这么做。
+这个坑本身仍然值得留：
 
-因为现在最需要验证的不是自动化强度，而是 Reviewer 质量。
+> **模型名字相同，不代表 provider 路由相同。**
 
-接下来更值得观察 3 到 5 个真实业务 PR：
+但模型并不是这套架构最稳定的部分。
+
+进入 Mira Mobile 后，默认 Reviewer 改成并真实 smoke 过：
 
 ```text
-它发现了什么真问题？
-误报了什么？
-漏掉了什么？
-施工 Agent 对 findings 的处理是否合理？
-返工以后第二轮 Review 有没有真正收敛？
-耗时是否值得？
+opencode-go/gpt-5.6-luna
 ```
 
-只有真实数据积累起来以后，才值得决定：
+这也进一步说明：
 
-- prompt 要不要继续收紧；
-- severity 哪一级应该阻塞；
-- DeepSeek V4 Pro 是否保持默认；
-- 哪些目录需要不同 Review 策略；
-- 是否需要正式接进 Mira Forge 的调度状态机。
+Reviewer 模型可以换。
 
-否则很容易把一个刚跑通的实验，过早升级成新的 CI 官僚主义。
+Skill、版本合同、权限边界和 Gate 规则不应该因此重写。
 
-## 从 Review Bot 到 Agent Handoff
+## Mira Mobile smoke 真正验证了什么
+
+进入 Mobile 项目以后，我们重新做了一次 disposable smoke PR，没有 merge。
+
+这次验证的不只是“模型有没有回一句话”，而是一整条链：
+
+```text
+PR -> dev
+↓
+只读 Reviewer job
+↓
+可信 base Reviewer / Skill
+↓
+sanitized PR snapshot
+↓
+OpenCode Go + Luna
+↓
+结构化 Mobile Review
+↓
+Publisher comment
+↓
+local review:pull
+↓
+Head SHA freshness check
+```
+
+smoke 得到：
+
+```text
+NO_BLOCKING_FINDINGS
+```
+
+而且没有因为“没有真机 / Host 验证”胡乱报一个阻塞 Bug，而是明确把这类验证视为当前 docs-only 改动之外的 validation gap。
+
+这件小事其实很关键。
+
+它证明项目级 Review Skill 不只是被写进仓库，而是真的进入了模型调用和最终输出合同。
+
+## 第二阶段：开始设计 Gate，但 Gate 不用模型
+
+第一阶段我们刻意不做强制门禁，是因为当时真正需要验证的是 Reviewer 质量。
+
+这条谨慎仍然是对的。
+
+但当 Review loop、版本绑定、项目 Skill 和 local handoff 都真实跑通以后，下一个问题自然出现：
+
+> 如果所有条件都明确满足，为什么还必须让人手工改状态、手工 Approve？
+
+这里我们没有选择给 Reviewer 更多 GitHub 写权限，也没有再增加一个“审批模型”。
+
+当前设计是增加一个**纯确定性 Gatekeeper**。
+
+它不读 diff，不重新推理代码，也不调用任何模型。
+
+它只检查硬条件。
+
+例如 Mira Mobile 可以要求同时满足：
+
+```text
+Reviewer verdict == NO_BLOCKING_FINDINGS
+review marker 有效
+skill marker 有效
+reviewed Head SHA == current PR Head SHA
+必要 CI 全绿
+不存在 HUMAN_CHECK_NEEDED
+对应 MOB 任务卡存在且状态允许放行
+PR 目标分支符合项目约定
+```
+
+全部满足，Gate 才有资格执行确定性写操作，例如：
+
+```text
+更新任务 Review 状态
+GitHub APPROVE
+标记 ready-to-merge
+```
+
+任一条件不满足，就不放行。
+
+这个 Gatekeeper **目前是已经确定的下一阶段设计，不应写成已经完成的线上能力**。
+
+第一阶段真正已经运行的是 Reviewer → Publisher → Local Handoff；Gate 的施工会在这条可信基础上继续补。
+
+## 为什么 Gatekeeper 坚持不用模型
+
+我们讨论过要不要给 Gatekeeper 再配一个模型。
+
+最后决定不要。
+
+原因不是成本，而是职责。
+
+Reviewer 已经负责最需要语义理解的部分：
+
+```text
+读需求
+读代码
+理解合同
+识别风险
+给 verdict
+```
+
+Gatekeeper 如果再拿模型重新解释一次，就会出现新的问题：
+
+```text
+Reviewer 说没有阻塞
+↓
+Gate 模型再“感觉一下”能不能过
+↓
+到底哪个判断才是合同？
+```
+
+更干净的结构是：
+
+```text
+Luna / 其他 Reviewer
+        ↓
+结构化 verdict + evidence
+        ↓
+Deterministic Gate
+        ↓
+RETURN / APPROVE / ready-to-merge
+```
+
+Gate 的价值就在于它**无聊、可预测、可审计**。
+
+它不需要“聪明”。
+
+它只需要忠实执行规则。
+
+## Reviewer、Publisher、Gatekeeper 三种写权限不要混在一起
+
+走到这里，GitHub Review 的角色边界越来越清楚：
+
+```text
+Reviewer
+- 模型
+- 读项目
+- 读代码
+- 输出判断
+- 无 GitHub 业务写权
+
+Publisher
+- 无模型
+- 发布当前 Review 状态
+- 验证 handoff 合同
+
+Gatekeeper
+- 无模型
+- 验证版本 / CI / marker / task / branch
+- 满足条件后执行有限的流程写操作
+```
+
+这比“一个 AI Reviewer 拿一个大 token，然后什么都做”复杂一点。
+
+但它有一个非常现实的好处：
+
+> **每一种权力都能解释为什么存在，也能解释为什么到这里为止。**
+
+## GitHub APPROVE 和 merge 也应该继续分层
+
+Gatekeeper 可以负责正式 `APPROVE`，不等于现在就应该自动 merge。
+
+至少第一阶段更稳的做法是：
+
+```text
+Reviewer 无阻塞
++
+Gate 规则全通过
+↓
+自动更新 Review 状态
+自动 APPROVE
+ready-to-merge
+↓
+人工 / 更高层规则决定 merge
+```
+
+这给我们留下观察真实 PR 的空间，也避免把“代码审查通过”和“现在就应该改变主干”混成一个动作。
+
+以后如果某类低风险 PR 已经足够稳定，再单独定义 auto-merge 条件也来得及。
+
+## Review 原则应该继续长在项目里，而不是长在一篇 prompt 里
+
+Mira Mobile 这次还有一个很重要的变化：
+
+Review 规则开始变成项目资产。
+
+不是每次临时告诉模型：
+
+> 你认真一点，帮我审一下。
+
+而是让项目自己逐渐积累：
+
+```text
+什么是真相源
+哪些合同不能破坏
+哪些平台差异必须关注
+什么算 P0 / P1 / P2
+什么只是 validation gap
+哪些目录有特殊风险
+什么情况下必须人工介入
+什么条件可以确定性放行
+```
+
+这些规则会继续变化。
+
+有些属于产品组织原则，写在 Tomz.io。
+
+有些属于项目 Review Skill、GitHub Actions、Gatekeeper 和具体合同，留在项目和工程文档里。
+
+这比把所有经验都塞进一个越来越长的 prompt 更容易维护。
+
+## 从 Review Bot 到完整的 Agent Handoff
 
 如果只看 GitHub 页面，这套东西仍然很像一个 Review Bot。
 
@@ -564,20 +727,22 @@ Reviewer Output
 Local Agent Observation
 ```
 
-这一步一旦稳定，后面可以继续接：
+再往前一步，则是：
 
 ```text
 Builder
 ↓
 Reviewer
 ↓
-Builder
+Builder / Fix
 ↓
-Test Agent
+Reviewer
 ↓
-Browser / Device Validation
+Deterministic Gate
 ↓
-Release Reviewer
+ready-to-merge / human check
+↓
+Test / Device Validation / Release
 ```
 
 每个 Agent 不需要共享一条无限长的聊天上下文。
@@ -592,10 +757,20 @@ Evidence
 handoff contract
 ```
 
-这也是这次实验最值得留下的地方。
+我们一开始只是想做一个 AI Code Review。
 
-我们没有做出一个“更会说话的 AI Reviewer”。
+真正跑下来以后，更值得留下的反而是几条工程原则：
 
-我们只是第一次把 Reviewer 放进了一条可以回到施工方的循环里。
+- Reviewer 的判断和 GitHub 写权限分开；
+- 待审代码和 Reviewer 控制面分开；
+- 项目 Review 规则通过 Skill / contract 固化；
+- Review 必须绑定明确版本；
+- 缺失验证证据和已证明 Bug 分开；
+- 模型判断和确定性放行分开；
+- 自动 Approve 和最终 merge 也可以继续分层。
 
-而对 Macro Agent Loop 来说，这可能比多增加十个“专家角色”更重要。
+这条 loop 以后当然还会改。
+
+但它已经不只是“让 AI 在 PR 下留一句评论”。
+
+它开始变成一套能够被 Builder、Reviewer、人和流程规则共同消费的工程合同。
