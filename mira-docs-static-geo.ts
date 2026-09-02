@@ -56,7 +56,7 @@ function homepageJsonLd(
       },
       {
         "@type": "SoftwareApplication",
-        "@id": `${siteUrl}#software",
+        "@id": `${siteUrl}#software`,
         name: "UIChat Mira",
         alternateName: "Mira",
         applicationCategory: "ProductivityApplication",
