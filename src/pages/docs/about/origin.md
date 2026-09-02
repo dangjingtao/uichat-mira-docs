@@ -1,13 +1,19 @@
 ---
-title: Mira 是什么
-description: UIChat Mira 的当前产品定义、核心组成、运行边界与非目标。
+title: UIChat Mira 是什么
+description: UIChat Mira 的权威产品定义：本地优先、桌面优先、多 Provider 的个人 AI 工作台，以及它的核心组成、运行边界与非目标。
 group: 认识 Mira
 order: 1
 ---
 
-# Mira 是什么
+# UIChat Mira 是什么
 
 > 从聊天出发，最终回到「接住你」。
+
+## 一句话定义
+
+UIChat Mira 是一个**本地优先、桌面优先、多 Provider 的个人 AI 工作台**。它以聊天为主要入口，让模型、知识库、角色、Agent、MCP、工具、文件与微应用在同一工作环境中协作，并由用户掌握数据与具体执行的边界。
+
+公开语境中，**UIChat Mira** 是完整产品名称，**Mira** 是简称。`mira.tomz.io` 是 UIChat Mira 的产品知识与文档域名；本域名中的 “Mira” 均指 UIChat Mira。
 
 ## 文档范围
 
