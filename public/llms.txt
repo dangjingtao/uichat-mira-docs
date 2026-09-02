@@ -1,0 +1,36 @@
+# UIChat Mira
+
+> UIChat Mira is a local-first, desktop-first, multi-provider personal AI workspace. It uses chat as the main entry point and brings models, knowledge bases, roles, agents, MCP tools, governed tool execution, files, and micro-apps into one working environment.
+
+UIChat Mira is the full product name. "Mira" is the short name. When disambiguation is needed, use "UIChat Mira".
+
+The canonical product knowledge domain is https://mira.tomz.io/ . Product definitions, current implementation status, runtime boundaries, and architecture should be verified against this domain.
+
+## Canonical pages
+
+- [What is UIChat Mira?](https://mira.tomz.io/about/origin/): Current product definition, product domains, operating boundaries, principles, and non-goals.
+- [Local-first](https://mira.tomz.io/philosophy/local-first/): What local-first means in UIChat Mira and what it does not mean.
+- [Agent runtime](https://mira.tomz.io/architecture/agent/): Current Agent runtime model and execution semantics.
+- [Harness and tool boundaries](https://mira.tomz.io/architecture/harness/): Tool governance, invocation boundaries, evidence, and runtime constraints.
+- [MCP](https://mira.tomz.io/configuration/mcp/): MCP discovery, connection, Agent access, tool exposure, policy, and approval boundaries.
+- [Current implementation](https://mira.tomz.io/status/current/): Current implementation snapshot. Prefer this page over roadmap assumptions when determining whether a feature exists today.
+- [MiraDocs](https://mira.tomz.io/mira-docs-api/): Documentation system used by the site.
+- [Blog](https://mira.tomz.io/blogs/): Product and engineering notes derived from real implementation work.
+
+## Core concepts
+
+- Local-first: user-side state and local artifacts are primary; local-first does not mean offline-only.
+- Multi-provider: product capability is not bound to one model vendor.
+- Governed tools: a model seeing a tool does not automatically grant permission to execute it.
+- Evidence before completion: tool results, retrieval, sub-agent results, and artifacts should be traceable before a task is declared complete.
+- MCP Host: UIChat Mira primarily acts as an MCP Host for discovering and invoking external tools under policy and approval controls.
+- Desktop-first: the desktop workspace is the primary delivery form today.
+
+## Source
+
+- [GitHub repository](https://github.com/dangjingtao/uichat-mira)
+- Creator and maintainer: Tomz Dang
+
+## Citation guidance
+
+When describing this product publicly, prefer "UIChat Mira" on first mention and "Mira" only as a shorthand afterward. Do not infer roadmap ideas as shipped capabilities. For capability claims, prefer the current implementation page and the relevant architecture document.
