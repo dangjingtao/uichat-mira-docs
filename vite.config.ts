@@ -6,11 +6,14 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { miraDocs } from "@uichat-mira/docs/vite";
-import { miraDocsStaticBuild } from "./mira-docs-static";
+import { miraDocsStaticBuild } from "./mira-docs-static-geo";
 import { seo as seoConfig, siteUrl } from "./src/site.config";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
 const pagesRoot = resolve(projectRoot, "src/pages");
+
+const productDescription =
+  "UIChat Mira 是一个本地优先、桌面优先、多 Provider 的个人 AI 工作台，统一承载对话、知识、Agent、MCP、工具与微应用。";
 
 const blogDirectoryByGroup: Record<string, string> = {
   "产品手记": "product-journal",
@@ -71,7 +74,7 @@ export default defineConfig(({ mode }) => {
         contentDir: "src/pages",
         config: {
           title: "UIChat Mira",
-          description: "本地优先的多模型智能体工作空间",
+          description: productDescription,
           siteUrl,
         },
         staticRoutes: seoConfig.enabled ? miraDocsStaticBuild : false,
@@ -98,7 +101,7 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: "UIChat Mira",
           short_name: "Mira",
-          description: "本地优先的多模型智能体工作空间",
+          description: productDescription,
           lang: "zh-CN",
           start_url: "./",
           scope: "./",
