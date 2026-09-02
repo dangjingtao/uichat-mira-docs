@@ -12,6 +12,7 @@
   "include": [
     "vite.config.ts",
     "mira-docs-static.ts",
+    "mira-docs-static-geo.ts",
     "src/site.config.ts"
   ]
 }
