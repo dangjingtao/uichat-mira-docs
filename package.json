@@ -14,7 +14,8 @@
     "comic:test": "node scripts/comic-pipeline/test.mjs",
     "build": "npm run verify:mira-docs && tsc -b && vite build",
     "build:github-pages": "npm run build -- --mode github-pages",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify:current-status": "node scripts/verify-current-status.mjs"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.2.11",
