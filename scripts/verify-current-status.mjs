@@ -96,18 +96,33 @@ if (!actualVersion) {
 }
 
 const verifiedMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(verifiedAt);
+let verifiedDate = null;
 if (!verifiedMatch) {
   failures.push('verifiedAt must use YYYY-MM-DD, got "' + (verifiedAt || "<missing>") + '".');
 } else {
-  const verifiedMs = Date.parse(verifiedAt + "T00:00:00Z");
-  const ageDays = Math.floor((Date.now() - verifiedMs) / 86400000);
-  if (ageDays < -1) {
-    failures.push("verifiedAt is in the future: " + verifiedAt + ".");
-  } else if (ageDays > maxAgeDays) {
-    failures.push(
-      "Current implementation verification is " + ageDays +
-        " days old; maximum allowed age is " + maxAgeDays + " days.",
-    );
+  const year = Number(verifiedMatch[1]);
+  const month = Number(verifiedMatch[2]);
+  const day = Number(verifiedMatch[3]);
+  const candidate = new Date(Date.UTC(year, month - 1, day));
+  const isRealCalendarDate =
+    !Number.isNaN(candidate.getTime()) &&
+    candidate.getUTCFullYear() === year &&
+    candidate.getUTCMonth() === month - 1 &&
+    candidate.getUTCDate() === day;
+
+  if (!isRealCalendarDate) {
+    failures.push("verifiedAt is not a real calendar date: " + verifiedAt + ".");
+  } else {
+    verifiedDate = candidate;
+    const ageDays = Math.floor((Date.now() - verifiedDate.getTime()) / 86400000);
+    if (ageDays < -1) {
+      failures.push("verifiedAt is in the future: " + verifiedAt + ".");
+    } else if (ageDays > maxAgeDays) {
+      failures.push(
+        "Current implementation verification is " + ageDays +
+          " days old; maximum allowed age is " + maxAgeDays + " days.",
+      );
+    }
   }
 }
 
