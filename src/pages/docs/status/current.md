@@ -1,17 +1,21 @@
 ---
 title: 当前实现快照
-description: 以 2026-07-31 的 dev 分支为准，说明 Provider、Knowledge Base、Evaluation、Agent、Tool Runtime、MicroApps Hub 与已知边界。
+description: 以 2026-09-05 的 dev 分支为准，说明 Provider、Knowledge Base、Evaluation、Agent、Tool Runtime、MicroApps Hub 与已知边界。
 group: 现状与方向
 order: 17
+sourceBranch: dev
+sourceVersion: 0.99.12
+sourceCommit: 7343d4532f566e36c0eb88969969c6422b5eb862
+verifiedAt: 2026-09-05
 ---
 
 # 当前实现快照
 
-> 本页核对日期为 2026 年 7 月 31 日。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
+> 本页核对日期为 2026 年 9 月 5 日，核对基线为 `dev@7343d45`。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
 
 ## 版本与定位
 
-当前根包版本为 `0.99.6`，项目描述仍是：
+当前根包版本为 `0.99.12`，项目描述仍是：
 
 > An intelligent agent cabin that starts with a chat and returns to your side.
 
