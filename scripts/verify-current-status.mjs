@@ -11,27 +11,57 @@ const sourceRoot = resolve(
   process.cwd(),
   process.env.MIRA_SOURCE_ROOT || ".source/uichat-mira",
 );
+const remoteSourcePackageUrl =
+  "https://raw.githubusercontent.com/dangjingtao/uichat-mira/dev/package.json";
 const maxAgeDays = Number(process.env.CURRENT_STATUS_MAX_AGE_DAYS || "14");
+const strictEnvironment =
+  process.env.CI === "true" ||
+  process.env.GITHUB_ACTIONS === "true" ||
+  process.env.CF_PAGES === "1";
 const failures = [];
 const warnings = [];
 
 if (!existsSync(statusPath)) {
   failures.push("Current implementation page not found: " + statusPath);
 }
-if (!existsSync(sourcePackagePath)) {
-  failures.push(
-    "Mira dev source package not found: " + sourcePackagePath +
-      ". Checkout dangjingtao/uichat-mira@dev and set MIRA_SOURCE_PACKAGE.",
-  );
-}
 
-let raw = "";
-let sourcePackage = {};
-if (failures.length === 0) {
-  raw = readFileSync(statusPath, "utf8");
+let sourcePackage = null;
+let sourceMode = "";
+
+if (existsSync(sourcePackagePath)) {
   sourcePackage = JSON.parse(readFileSync(sourcePackagePath, "utf8"));
+  sourceMode = "checked-out dev source";
+} else {
+  try {
+    const response = await fetch(remoteSourcePackageUrl, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+    sourcePackage = await response.json();
+    sourceMode = "remote dev package";
+    warnings.push(
+      "Checked-out Mira dev source was unavailable; freshness used the public dev package.json.",
+    );
+  } catch (error) {
+    const message =
+      "Could not read Mira dev package from checkout or " +
+      remoteSourcePackageUrl + ": " +
+      (error instanceof Error ? error.message : String(error));
+    if (strictEnvironment) {
+      failures.push(message);
+    } else {
+      console.warn("Current status freshness warning: " + message);
+      console.warn(
+        "Current status freshness skipped outside CI. Set MIRA_SOURCE_PACKAGE for deterministic local verification.",
+      );
+      process.exit(0);
+    }
+  }
 }
 
+const raw = existsSync(statusPath) ? readFileSync(statusPath, "utf8") : "";
 const frontmatterMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 if (raw && !frontmatterMatch) {
   failures.push("Current implementation page is missing frontmatter.");
@@ -49,7 +79,9 @@ const sourceVersion = scalar("sourceVersion");
 const sourceCommit = scalar("sourceCommit");
 const verifiedAt = scalar("verifiedAt");
 const actualVersion =
-  typeof sourcePackage.version === "string" ? sourcePackage.version.trim() : "";
+  sourcePackage && typeof sourcePackage.version === "string"
+    ? sourcePackage.version.trim()
+    : "";
 
 if (sourceBranch !== "dev") {
   failures.push('sourceBranch must be dev, got "' + (sourceBranch || "<missing>") + '".');
@@ -93,13 +125,15 @@ if (verifiedMatch) {
 }
 
 let actualCommit = "";
-try {
-  actualCommit = execFileSync("git", ["-C", sourceRoot, "rev-parse", "HEAD"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"],
-  }).trim();
-} catch {
-  warnings.push("Could not resolve checked-out Mira dev commit; sourceCommit audit skipped.");
+if (existsSync(sourceRoot)) {
+  try {
+    actualCommit = execFileSync("git", ["-C", sourceRoot, "rev-parse", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    warnings.push("Could not resolve checked-out Mira dev commit; sourceCommit audit skipped.");
+  }
 }
 
 if (sourceCommit && actualCommit && sourceCommit !== actualCommit) {
@@ -121,6 +155,7 @@ if (failures.length > 0) {
 }
 
 console.log(
-  "Current implementation freshness passed: dev version " + actualVersion +
-    ", verified " + verifiedAt + ", max age " + maxAgeDays + " days.",
+  "Current implementation freshness passed via " + sourceMode +
+    ": dev version " + actualVersion + ", verified " + verifiedAt +
+    ", max age " + maxAgeDays + " days.",
 );
