@@ -1,7 +1,7 @@
 ---
 title: 当 Agent Runtime 变成 API，真正不能外包的是什么？
 description: OpenAI 把 Codex harness 做成托管 Agents API 后，一个更基础的边界变得清楚：推理循环、执行环境和真正拥有权限的控制面，不应该被当成同一件事。
-group: 工程现场
+group: Mira 雷达
 order: 35
 date: 2026年9月14日
 readTime: 9 分钟阅读
