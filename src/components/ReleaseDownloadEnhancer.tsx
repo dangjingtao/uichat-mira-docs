@@ -31,10 +31,11 @@ type MobileDownloadTarget = {
 };
 
 const latestReleaseUrl =
-  "https://api.github.com/repos/dangjingtao/uichat-mira/releases/latest";
+  "https://api.github.com/repos/uichat-mira/mira-desktop/releases/latest";
 const fallbackReleaseUrl =
-  "https://github.com/dangjingtao/uichat-mira/releases/latest";
+  "https://github.com/uichat-mira/mira-desktop/releases/latest";
 const r2PublicBaseUrl = "https://assets.tomz.io/mira/latest";
+const r2MacIntelBaseUrl = "https://assets.tomz.io/mira/macos-intel/latest";
 const mobileReleasesUrl =
   "https://api.github.com/repos/uichat-mira/mira-mobile/releases?per_page=20";
 const mobileReleasesPageUrl =
@@ -72,12 +73,20 @@ function mobileR2AssetUrl(asset: ReleaseAsset) {
   return `${mobileR2DevBaseUrl}/${encodeURIComponent(asset.name)}`;
 }
 
+function isMacIntelAsset(asset: ReleaseAsset) {
+  return /^macos-intel_/i.test(asset.name) && /\.dmg$/i.test(asset.name);
+}
+
 function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
   const version = releaseTag.replace(/^v/i, "");
 
   // GitHub release uploads normalize spaces in asset basenames to dots, while
   // the R2 sync keeps the original package filenames. Reconstruct only the
   // known product-name portion and leave version/extension dots untouched.
+  if (isMacIntelAsset(asset)) {
+    return asset.name.replace(/^macos-intel_UIChat\.Mira-/i, "macos-intel_UIChat Mira-");
+  }
+
   if (/^electron-win_/i.test(asset.name) && version) {
     const githubSuffix = `UIChat.Mira.Setup.${version}.exe`;
     const r2Suffix = `UIChat Mira Setup ${version}.exe`;
@@ -97,7 +106,8 @@ function r2AssetName(asset: ReleaseAsset, releaseTag: string) {
 }
 
 function r2AssetUrl(asset: ReleaseAsset, releaseTag: string) {
-  return `${r2PublicBaseUrl}/${encodeURIComponent(r2AssetName(asset, releaseTag))}`;
+  const baseUrl = isMacIntelAsset(asset) ? r2MacIntelBaseUrl : r2PublicBaseUrl;
+  return `${baseUrl}/${encodeURIComponent(r2AssetName(asset, releaseTag))}`;
 }
 
 function classifyDownloads(
@@ -123,6 +133,7 @@ function classifyDownloads(
   const tauriMsi = assets.find(
     (asset) => /tauri/i.test(asset.name) && /\.msi$/i.test(asset.name),
   );
+  const macIntelDmg = assets.find(isMacIntelAsset);
   const fallback = assets.find((asset) => /\.(exe|msi)$/i.test(asset.name));
 
   const recommended = electronSetup || tauriNsis || tauriMsi || fallback;
@@ -148,6 +159,12 @@ function classifyDownloads(
   pushOption("electron", "Windows 安装版", "Electron · EXE · 推荐", electronSetup);
   pushOption("tauri-nsis", "Tauri 安装版", "轻量实验版 · EXE", tauriNsis);
   pushOption("tauri-msi", "Tauri MSI", "企业或批量部署", tauriMsi);
+  pushOption(
+    "macos-intel",
+    "macOS Intel",
+    "Electron · DMG · Intel · 未签名",
+    macIntelDmg,
+  );
 
   const mobileVersion = mobileRelease
     ? mobileVersionFromTag(mobileRelease.tag_name)
@@ -199,6 +216,7 @@ function classifyDownloads(
       ? r2AssetUrl(recommended, releaseTag)
       : fallbackReleaseUrl,
     options,
+    macIntelAvailable: Boolean(macIntelDmg),
     mobileTargets,
     mobileReleasePageUrl: mobileRelease?.html_url || mobileReleasesPageUrl,
   };
@@ -393,6 +411,18 @@ export default function ReleaseDownloadEnhancer() {
               ) : (
                 <div className="release-download-empty">正在读取最新构建产物…</div>
               )}
+              {!downloads.macIntelAvailable ? (
+                <div
+                  className="release-download-option-pending"
+                  aria-disabled="true"
+                >
+                  <div className="release-download-option-title">
+                    <span>macOS Intel</span>
+                    <span className="release-download-pending-badge">即将提供</span>
+                  </div>
+                  <small>Electron · DMG · 发布成功后自动开放</small>
+                </div>
+              ) : null}
             </div>
 
             <a
