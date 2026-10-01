@@ -6,11 +6,9 @@ function markdownFiles(directory: string): string[] {
   if (!existsSync(directory)) return [];
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = resolve(directory, entry.name);
-    return entry.isDirectory()
-      ? markdownFiles(path)
-      : entry.name.endsWith(".md")
-        ? [path]
-        : [];
+    if (entry.isDirectory()) return markdownFiles(path);
+    if (entry.name.endsWith(".md")) return [path];
+    return [];
   });
 }
 
