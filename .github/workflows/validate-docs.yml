@@ -46,6 +46,9 @@ jobs:
       - name: Verify MiraDocs content compatibility
         run: pnpm run verify:mira-docs
 
+      - name: Test current-status freshness semantics
+        run: node --test scripts/verify-current-status.test.mjs
+
       - name: Build GitHub Pages candidate
         run: pnpm run build:github-pages
 
