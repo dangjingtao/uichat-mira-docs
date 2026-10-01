@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { requireBlogCategory } from "../src/content/blog-taxonomy";
+import { getBlogCategory } from "../src/content/blog-taxonomy";
 
 function markdownFiles(directory: string): string[] {
   if (!existsSync(directory)) return [];
@@ -14,7 +14,7 @@ function markdownFiles(directory: string): string[] {
   });
 }
 
-export function blogTaxonomyCheck(blogsRoot: string) {
+export function blogTaxonomyCheck(blogsRoot = resolve(process.cwd(), "src/pages/blogs")) {
   return {
     name: "blog-taxonomy-check",
     buildStart(this: { error(message: string): never }) {
@@ -26,10 +26,8 @@ export function blogTaxonomyCheck(blogsRoot: string) {
 
         if (!group) this.error(`博客缺少 group：${relative}`);
 
-        let category;
-        try {
-          category = requireBlogCategory(group);
-        } catch {
+        const category = getBlogCategory(group);
+        if (!category) {
           this.error(`博客分类未登记：${relative}，group 为“${group}”`);
         }
 
