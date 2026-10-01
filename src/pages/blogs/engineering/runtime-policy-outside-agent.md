@@ -1,7 +1,7 @@
 ---
 title: 批准了一条命令，不等于控制住它接下来做的一切
 description: NVIDIA OpenShell 把 Agent 权限控制推进到工作负载之外，也照出了一个容易忽略的边界：审批一次调用，与约束它启动的进程、网络和凭证并不是同一件事。
-group: 工程现场
+group: Mira 雷达
 order: 45
 date: 2026年9月29日
 readTime: 7 分钟阅读
