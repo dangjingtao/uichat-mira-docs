@@ -43,7 +43,7 @@ description: 作为 UIChat Mira 文档站/博客贡献者，把用户提供的�
 文章文件必须位于：
 
 ```text
-src/pages/blogs/<category>/<slug>.md
+src/pages/blogs/<directory>/<slug>.md
 ```
 
 `slug` 使用小写英文、数字和连字符，例如：
@@ -54,17 +54,18 @@ why-mira-keeps-the-human-loop.md
 
 不要使用空格、中文文件名、日期堆叠或 `README.md`。
 
-优先沿用现有分类，不随意创建新目录。目标分类存在时，读取同目录文章并继承其 `group` 约定。
+**目录负责稳定 URL，frontmatter 的 `group` 才是博客分类的唯一真相源。** 已发布文章不要为了改分类而移动目录；改 `group` 即可，避免破坏历史链接。
 
-已知的作者型分类：
+当前主分类定义在 `src/content/blog-taxonomy.ts`：
 
-| 目录 | group | 适用内容 |
+| group | 适用内容 | 新文章建议目录 |
 | --- | --- | --- |
-| `mira-letters` | `Mira 来信` | Mira 独立署名的来信、随笔与观点 |
-| `shared-thinking` | `共同思考` | Tomz 与 Mira 的共同讨论、共同结论 |
-| `product-journal` | `产品手记` | 产品判断、版本演进、设计取舍 |
+| `Mira 雷达` | 外部 Agent / AI / 安全 / 工具生态信号，以及它对 Mira 的启发 | `radar` |
+| `工程现场` | Mira 自己真实发生的实现、事故、架构演进与技术复盘 | `engineering` |
+| `产品手记` | 产品判断、设计取舍、路线草案与能力边界 | `product-journal` |
+| `开发日志` | 周报、月度回顾、版本演进与阶段性进度 | `dev-log` |
 
-其他现有目录的 `group` 必须从同目录当前文章读取，不凭记忆猜测。
+如果以后增加分类，先更新 `src/content/blog-taxonomy.ts`；页面筛选和图标展示不应再增加新的字符串判断。
 
 如果内容可以放入多个分类，按文章的主问题选择，而不是按文中偶然出现的关键词选择。
 
