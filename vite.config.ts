@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { miraDocs } from "@uichat-mira/docs/vite";
 import { miraDocsStaticBuild } from "./mira-docs-static-geo";
+import { blogTaxonomyCheck } from "./scripts/blog-taxonomy-check";
 import { seo as seoConfig, siteUrl } from "./src/site.config";
 
 const productDescription =
@@ -36,6 +37,7 @@ export default defineConfig(({ mode }) => {
           return path || "/";
         },
       }),
+      blogTaxonomyCheck(),
       react(),
       tailwindcss(),
       VitePWA({
