@@ -1,7 +1,7 @@
 ---
 title: Mira 稳定性周报：从个人仓库走进组织工程
 description: 记录 2026 年 9 月 4 日至 11 日 UIChat Mira 的稳定性迭代：Organization 迁移、Mobile 双链路、远程 Agent、Control Room，以及仍未闭环的 Relay 与拾言问题。
-group: 工程现场
+group: 开发日志
 order: 32
 date: 2026年9月11日
 readTime: 10 分钟阅读
