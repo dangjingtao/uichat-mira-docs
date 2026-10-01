@@ -14,12 +14,26 @@ const sourceRoot = resolve(
 const remoteSourcePackageUrl =
   "https://raw.githubusercontent.com/uichat-mira/mira-desktop/dev/package.json";
 const maxAgeDays = Number(process.env.CURRENT_STATUS_MAX_AGE_DAYS || "14");
+const freshnessPolicy =
+  process.env.CURRENT_STATUS_FRESHNESS_POLICY === "warn" ? "warn" : "fail";
 const strictEnvironment =
   process.env.CI === "true" ||
   process.env.GITHUB_ACTIONS === "true" ||
   process.env.CF_PAGES === "1";
 const failures = [];
+const freshnessFindings = [];
 const warnings = [];
+
+const workflowWarning = (message) => {
+  if (process.env.GITHUB_ACTIONS !== "true") return;
+  const escaped = message
+    .replace(/%/g, "%25")
+    .replace(/\r/g, "%0D")
+    .replace(/\n/g, "%0A");
+  console.log(
+    "::warning title=Current implementation snapshot is stale::" + escaped,
+  );
+};
 
 if (!existsSync(statusPath)) {
   failures.push("Current implementation page not found: " + statusPath);
@@ -86,12 +100,15 @@ const actualVersion =
 if (sourceBranch !== "dev") {
   failures.push('sourceBranch must be dev, got "' + (sourceBranch || "<missing>") + '".');
 }
+if (!sourceVersion) {
+  failures.push("sourceVersion is missing from current implementation frontmatter.");
+}
 if (!actualVersion) {
   failures.push("Mira dev package.json does not contain a valid version.");
-} else if (sourceVersion !== actualVersion) {
-  failures.push(
+} else if (sourceVersion && sourceVersion !== actualVersion) {
+  freshnessFindings.push(
     "Current implementation version is stale: docs=" +
-      (sourceVersion || "<missing>") + ", dev=" + actualVersion + ".",
+      sourceVersion + ", dev=" + actualVersion + ".",
   );
 }
 
@@ -118,16 +135,18 @@ if (!verifiedMatch) {
     if (ageDays < -1) {
       failures.push("verifiedAt is in the future: " + verifiedAt + ".");
     } else if (ageDays > maxAgeDays) {
-      failures.push(
+      freshnessFindings.push(
         "Current implementation verification is " + ageDays +
-          " days old; maximum allowed age is " + maxAgeDays + " days.",
+          " days old; expected freshness is within " + maxAgeDays + " days.",
       );
     }
   }
 }
 
 if (actualVersion && !raw.includes("当前根包版本为 \`" + actualVersion + "\`")) {
-  failures.push("Current implementation body does not state root version " + actualVersion + ".");
+  freshnessFindings.push(
+    "Current implementation body does not state root version " + actualVersion + ".",
+  );
 }
 if (verifiedMatch) {
   const zhDate =
@@ -155,12 +174,24 @@ if (sourceCommit && actualCommit && sourceCommit !== actualCommit) {
   warnings.push(
     "Mira dev advanced since the recorded audit commit: docs=" +
       sourceCommit.slice(0, 7) + ", dev=" + actualCommit.slice(0, 7) +
-      ". Version and verification-age gates still decide freshness.",
+      ". Version and verification-age checks still determine snapshot freshness.",
   );
 }
 
 for (const warning of warnings) {
   console.warn("Current status freshness warning: " + warning);
+}
+
+if (freshnessFindings.length > 0) {
+  if (freshnessPolicy === "warn") {
+    console.warn("Current implementation freshness drift detected:");
+    for (const finding of freshnessFindings) {
+      console.warn("- " + finding);
+      workflowWarning(finding);
+    }
+  } else {
+    failures.push(...freshnessFindings);
+  }
 }
 
 if (failures.length > 0) {
@@ -169,8 +200,15 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(
-  "Current implementation freshness passed via " + sourceMode +
-    ": dev version " + actualVersion + ", verified " + verifiedAt +
-    ", max age " + maxAgeDays + " days.",
-);
+if (freshnessFindings.length > 0) {
+  console.log(
+    "Current implementation freshness audit completed with non-blocking warnings via " +
+      sourceMode + ".",
+  );
+} else {
+  console.log(
+    "Current implementation freshness passed via " + sourceMode +
+      ": dev version " + actualVersion + ", verified " + verifiedAt +
+      ", max age " + maxAgeDays + " days.",
+  );
+}
