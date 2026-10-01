@@ -161,6 +161,37 @@
   font-weight: 400;
 }
 
+.release-download-option-pending {
+  display: flex;
+  min-height: 54px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  cursor: default;
+}
+
+.release-download-option-pending small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.release-download-pending-badge {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
+  padding: 1px 6px;
+  border: 1px dashed var(--hairline);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .release-download-menu .release-download-all {
   display: flex;
   min-height: 40px;
