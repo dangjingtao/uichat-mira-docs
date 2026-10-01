@@ -23,7 +23,7 @@ export function requireBlogCategory(label: string): BlogCategory {
 }
 
 export function orderBlogCategories(groups: Iterable<string>): string[] {
-  const categoryRank = new Map(
+  const categoryRank = new Map<string, number>(
     blogCategories.map((category, index) => [category.label, index]),
   );
   return [...new Set(groups)]
