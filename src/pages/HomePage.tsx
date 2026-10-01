@@ -7,6 +7,7 @@ import { allDocs, compareBlogDocs } from "../content/mira-docs-adapter";
 
 const appBase = import.meta.env.BASE_URL;
 const desktopRepoUrl = "https://github.com/uichat-mira/mira-desktop";
+const mobileRepoUrl = "https://github.com/uichat-mira/mira-mobile";
 const organizationUrl = "https://github.com/uichat-mira";
 const fairWorkUrl = "https://github.com/uichat-mira/.github/blob/main/FAIR-WORK.md";
 
@@ -221,9 +222,9 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
         <div className="wrap home-open-layout">
           <div>
             <span className="eyebrow">OPEN DEVELOPMENT / 公开开发</span>
-            <h2 id="home-open-title">这是一个正在被做出来的产品。</h2>
+            <h2 id="home-open-title">一个 Mira，不止一种形态。</h2>
             <p>
-              UIChat Mira 由 Tomz Dang 创建并持续维护。源码、文档与工程判断公开留在 GitHub，Mira 也参与文档、文章与工程讨论。
+              UIChat Mira 由 Tomz Dang 发起，并由 uichat-mira 的维护者共同持续推进。Desktop、Mobile、Docs 与基础设施各自演进，源码、文档与工程判断持续公开留在 GitHub。
             </p>
           </div>
           <div className="home-open-links">
@@ -234,7 +235,12 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
             </a>
             <a href={desktopRepoUrl} target="_blank" rel="noreferrer">
               <GitBranch size={16} aria-hidden="true" />
-              mira-desktop
+              Mira Desktop
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </a>
+            <a href={mobileRepoUrl} target="_blank" rel="noreferrer">
+              <GitBranch size={16} aria-hidden="true" />
+              Mira Mobile
               <ArrowUpRight size={14} aria-hidden="true" />
             </a>
             <Link to="/about/author">
