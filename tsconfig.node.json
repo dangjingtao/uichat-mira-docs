@@ -13,6 +13,8 @@
     "vite.config.ts",
     "mira-docs-static.ts",
     "mira-docs-static-geo.ts",
+    "scripts/blog-taxonomy-check.ts",
+    "src/content/blog-taxonomy.ts",
     "src/site.config.ts"
   ]
 }
