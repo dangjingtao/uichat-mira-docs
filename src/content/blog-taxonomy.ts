@@ -7,7 +7,7 @@ export const blogCategories = [
 
 export type BlogCategoryIconKey = (typeof blogCategories)[number]["icon"];
 
-const categoryRank = new Map(
+const categoryRank = new Map<string, number>(
   blogCategories.map((category, index) => [category.label, index]),
 );
 
