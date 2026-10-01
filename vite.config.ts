@@ -1,6 +1,3 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,53 +6,8 @@ import { miraDocs } from "@uichat-mira/docs/vite";
 import { miraDocsStaticBuild } from "./mira-docs-static-geo";
 import { seo as seoConfig, siteUrl } from "./src/site.config";
 
-const projectRoot = dirname(fileURLToPath(import.meta.url));
-const pagesRoot = resolve(projectRoot, "src/pages");
-
 const productDescription =
   "UIChat Mira 是一个本地优先、桌面优先、多 Provider 的个人 AI 工作台，统一承载对话、知识、Agent、MCP、工具与微应用。";
-
-const blogDirectoryByGroup: Record<string, string> = {
-  "产品手记": "product-journal",
-  "工程现场": "engineering",
-  "共同思考": "shared-thinking",
-  "Mira 来信": "mira-letters",
-  "开发者生活": "developer-life",
-  "一起学智能体": "agent-learning",
-};
-
-function markdownFiles(directory: string): string[] {
-  if (!existsSync(directory)) return [];
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = resolve(directory, entry.name);
-    return entry.isDirectory()
-      ? markdownFiles(path)
-      : entry.name.endsWith(".md")
-        ? [path]
-        : [];
-  });
-}
-
-function blogDirectoryCheck() {
-  return {
-    name: "blog-directory-check",
-    buildStart(this: any) {
-      const blogsRoot = resolve(pagesRoot, "blogs");
-      for (const file of markdownFiles(blogsRoot)) {
-        const relative = file.slice(blogsRoot.length + 1).replace(/\\/g, "/");
-        const directory = relative.split("/")[0];
-        const source = readFileSync(file, "utf8");
-        const group = source.match(/^group:\s*(.+)$/m)?.[1]?.trim();
-        const expected = group ? blogDirectoryByGroup[group] : undefined;
-        if (expected && directory !== expected) {
-          this.warn(
-            `博客目录与分类不一致：${relative}，group 为“${group}”，建议放入 blogs/${expected}/。目录移动会改变文章 URL，请单独确认。`,
-          );
-        }
-      }
-    },
-  };
-}
 
 export default defineConfig(({ mode }) => {
   // Cloudflare Pages injects CF_PAGES=1. Treat it as a root deployment even if
@@ -84,7 +36,6 @@ export default defineConfig(({ mode }) => {
           return path || "/";
         },
       }),
-      blogDirectoryCheck(),
       react(),
       tailwindcss(),
       VitePWA({
