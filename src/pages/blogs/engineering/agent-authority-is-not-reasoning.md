@@ -1,7 +1,7 @@
 ---
 title: Agent 为什么会在第十轮忘掉第一轮的边界
 description: Anthropic 的真实越界事故说明，模型能记住规则，不等于规则能约束执行；Mira 的实践则把权限判断放回每一次具体动作。
-group: 工程现场
+group: Mira 雷达
 order: 33
 date: 2026年9月12日
 readTime: 8 分钟阅读
