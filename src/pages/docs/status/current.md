@@ -1,30 +1,33 @@
 ---
 title: 当前实现快照
-description: 以 2026-09-14 的 dev 分支为准，说明 Provider、Knowledge Base、Evaluation、Agent、Tool Runtime、Forge、MicroApps Hub 与已知边界。
+description: 以 2026-10-02 的 dev 分支为准，说明 Chat / Workspace、Provider、Knowledge Base、Evaluation、Agent、Tool Runtime、Forge、MicroApps 与桌面发布边界。
 group: 现状与方向
 order: 17
 sourceBranch: dev
-sourceVersion: 0.100.1
-sourceCommit: 0e313cf4f2f1ffc791c47334f90439e1e25b077e
-verifiedAt: 2026-09-14
+sourceVersion: 0.102.0
+sourceCommit: 961b70813ff9e0ad3814188bf9677ab104249369
+verifiedAt: 2026-10-02
 ---
 
 # 当前实现快照
 
-> 本页核对日期为 2026 年 9 月 14 日，核对基线为 `dev@0e313cf`。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
+> 本页核对日期为 2026 年 10 月 2 日，核对基线为 `dev@961b708`。它描述当前可验证实现，不把设计方向、历史方案或待修复合同写成已经交付的能力。
 
 ## 版本与定位
 
-当前根包版本为 `0.100.1`，项目描述仍是：
+当前根包版本为 `0.102.0`，项目描述仍是：
 
 > An intelligent agent cabin that starts with a chat and returns to your side.
 
-Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核心定位。聊天是入口，模型、知识、角色、工具、任务与产物在同一个工作环境里协作。
+Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核心定位。聊天仍是入口，但 0.102.0 已把应用导航、Agent 默认路径与 Workspace 所有权进一步收口：模型、知识、角色、工具、任务与产物在同一个工作环境里协作，而具体执行根、审批与产物来源保持可追踪。
+
+当前 `0.102.0` 候选已经沿 `dev → test → prod` 晋级到 Desktop `prod@44b19a27`；正式 GitHub Release 仍由匹配的 `v0.102.0` tag 触发。实现快照继续以 `dev` 为核验源，因为本站的 freshness gate 与主仓库当前真相文档都以 `dev` 为准。
 
 ## 已有产品域
 
 当前源码已经覆盖：
 
+- 应用级 Navigation Rail 与独立工作区入口；
 - 对话工作区；
 - Provider Connection、模型目录、角色绑定与调用解析；
 - 多知识库、文本索引、混合检索与 RAG；
@@ -37,6 +40,51 @@ Mira 仍以桌面端、本地优先、多 Provider 的个人 AI 工作台为核�
 - 桌面端构建、调试与发布链路。
 
 不同页面或后端入口已经存在，不等于每项能力都达到同样成熟度。公开说明继续区分稳定、部分可用、实验中与方向性能力。
+
+## Chat、导航与 Workspace 当前快照
+
+0.102.0 的桌面入口已经不是“所有能力都塞在聊天侧栏”：
+
+- 全局 Navigation Rail 承担应用级导航；
+- Knowledge、Evaluation、Development、About、Remote 与 Forge 等能力拥有独立工作区；
+- Chat 继续作为主要交互入口，但不再承担所有产品域的导航职责。
+
+新 Conversation 的 Welcome draft 当前默认：
+
+```text
+agentEnabled = true
+```
+
+因此：
+
+- 新对话首次发送默认进入 Agent Runtime；
+- 主发送按钮仍表达普通“发送”，不再要求用户先理解一个额外的 Agent 模式；
+- Agent 开关暂时保留为历史 Normal / RAG 路径的兼容退路；
+- 关闭后 UI 显式标记为“兼容 Chat”；
+- 已有 Thread 保留自己持久化的 `agentEnabled`，不会被 Welcome 默认值改写。
+
+Agent 的 Workspace 所有权现在只有一套主合同：
+
+```text
+显式 thread.workspaceId
+→ ChatWorkspace.rootPath
+
+没有显式 workspaceId
+→ deterministic private per-conversation workspace
+→ AgentRun.runtimeInput.workspaceRoot
+```
+
+其中：
+
+- 未显式选择 Workspace 的 Agent 不再自动绑定共享 `Mira BASE`；
+- private workspace 不进入 Workspace picker、列表或侧栏分组；
+- `conversation-workdirs` 只保留为兼容既有本地文件的物理目录名，不再对应独立数据库 / runtime identity；
+- 一个 AgentRun 只冻结一个 `workspaceRoot`；
+- approval resume 复用该 Run 创建时冻结的 `workspaceRoot`；
+- Artifact 固化创建时的 `sourceRootPath + sourceRelativePath`，不会跟随 Thread 后续切换 Workspace 重解释。
+
+详细合同见主仓库的 `docs/CHAT_CURRENT_TRUTH.md` 与 `docs/chat/workspace.md`。
+
 
 ## Provider 与模型当前快照
 
@@ -219,13 +267,15 @@ Evaluation Package
 
 更准确的口径是：
 
-- `AgentRun` 保存一次任务的状态、Evidence、审批、checkpoint 与最终交付；
+- Desktop 新 Conversation 默认进入 Agent 路径，历史 `agentEnabled=false` Thread 继续保留兼容 Chat；
+- `AgentRun` 保存一次任务的状态、Evidence、审批、checkpoint、冻结的 `workspaceRoot` 与最终交付；
 - `AgentGraph` 是稳定运行时门面；
 - `Pi Loop` 是应用默认 Main Agent 运行时；
 - `LangGraph` 保留为显式兼容、历史测试与回归对照运行时；
 - Main Planner 维护用户全局目标，并决定下一步与最终完成；
 - 每次 Agent 运行会取得独立的 run-control lease 与 `AbortSignal`；同一 `runId` 的新 lease 会使旧 controller 失效，已取消运行会以 `cancelled` 状态收口而不是继续写入普通完成结果；
-- Harness 负责具体工具的公共工具面、暴露、冻结调用、Policy、审批、执行与审计。
+- Harness 负责具体工具的公共工具面、暴露、冻结调用、Policy、审批、执行与审计；
+- exact approval / resume 当前按 `toolId + toolCallId + inputHash` 校验，并恢复原 frozen invocation，不重新让 Planner 猜参数。
 
 ## 三类执行路径
 
@@ -336,6 +386,26 @@ MicroApps Hub 中还有不属于严格 Registry 的真实入口：
 
 页面卡片、Definition、Runtime、External Invoke 和 Agent Access 不能互相代替。
 
+## 桌面平台与发布当前快照
+
+Windows 仍是当前完整 Release Factory 与 Tauri 发布的主合同。
+
+Intel macOS Electron 已经从“探索能不能打包”进入真实兼容性发布链：
+
+- 在真实 `darwin-x64` 上完成 Electron app / DMG 构建；
+- bundled Node 22 可以启动 backend；
+- `/health`、SQLite、sqlite-vec、Forge 初始化、数据库重启复用与 graceful shutdown 已有实测证据；
+- GitHub Actions 使用独立 Intel Mac workflow，不再拖住 Windows `Build Desktop Apps` workflow；
+- `prod` 成功构建可以同步独立 R2 前缀 `mira/macos-intel/latest/`；
+- 正式 `v*` 发布时，Mac R2 成功后才把 DMG 附加到 GitHub Release，官网以该 Release 资产作为 Mac 下载 ready 标记。
+
+当前边界仍然明确：
+
+- Intel DMG 未做 Developer ID 签名与公证；
+- Native Messaging、Piper 等部分 Windows 专属能力在 macOS 下显式 unavailable；
+- 当前 Intel lane 是兼容性发布能力，不等于所有 macOS 专属能力已经完整交付。
+
+
 ## 已知实现偏差
 
 ### Provider 状态语义
@@ -384,27 +454,20 @@ Agent retrieve 和 Evaluation retrieve 当前都通过完整 RAG Graph，包括 
 
 Settled recoverable contract 是：恢复预算耗尽后生成 guarded answer，Graph 以 `completed` 收口，并明确说明未完成项和失败影响。
 
-截至本次核对，`dev` 当前实现仍会在该场景直接进入 `error`，使 Graph `failed` 并跳过 Generate。这个行为被记录为高优先级实现漂移，不是新的目标合同。
-
-### Approval 身份漂移
-
-Settled exact-invocation 合同使用：
-
-```text
-toolId + toolCallId + inputHash
-```
-
-当前 `dev` 的 frozen call 和审批请求会保存 `toolCallId`，但核心 approval grant matcher 实际仍只匹配：
-
-```text
-toolId + inputHash
-```
-
-这意味着当前实现尚未把 `toolCallId` 纳入 grant 身份判断。该问题已经被记录，但本轮公开文档更新没有修改 Runtime。
+截至 2026 年 10 月 2 日核对，`server/src/agent/planner/node.ts` 的 `getRecoveryExhaustedPlannerConclusion(...)` 仍直接返回 `nextAction.type = error`；该场景会进入 failed 并跳过 guarded Generate。这个行为仍是已知合同漂移，不是新的目标合同。
 
 ## 当前阶段
 
-2026 年 8 月起，Mira 进入功能稳定迭代阶段。当前优先级是：
+到 0.102.0，Mira 已经完成一轮明显的“从功能堆叠转向默认路径收口”：
+
+- 新对话默认 Agent，但保留兼容 Chat；
+- Agent Workspace 所有权收敛为显式 ChatWorkspace 或 private per-conversation workspace；
+- 应用级 Navigation Rail 把多个产品域从聊天侧栏 / 设置页拆成独立工作区；
+- Agent / SubAgent 的 schema、resume、UI running ownership 等边界继续收紧；
+- Windows 全量 Server CI 与 Sonar / AI Review 等工程门已接入；
+- Intel macOS Electron 已进入独立构建与分发链。
+
+仍需继续处理的真实欠账包括：
 
 - 让新用户可以稳定完成第一次模型配置；
 - 区分模型绑定、目录同步与真实调用状态；
@@ -413,9 +476,9 @@ toolId + inputHash
 - 让 Evaluation 指标名称、算法和报告保持一致；
 - 修复 Evaluation queued / running 重启后的生命周期；
 - 修复 Agent / Evaluation retrieve 的无用 Generate；
-- 修复已经确认的 Provider、Agent 和 Tool 合同漂移；
+- 修复仍存在的 Provider、Agent 与 Tool 合同漂移，尤其是 recovery exhausted 终止语义；
 - 减少提前收尾和错误工具选择；
-- 稳定审批与 checkpoint resume；
+- 继续用 exact approval、checkpoint resume 与 frozen workspace root 的回归测试保护已收口合同；
 - 提高 Provider Observation、RAG Sources、Evaluation 解释、Evidence、Artifact 与 execution trace 的可信度；
 - 用回归测试保护已经形成的公共面和状态语义；
 - 逐项验证 Studio、Integration Invoke 与 Agent 接入，不用新卡片掩盖能力未收稳；
