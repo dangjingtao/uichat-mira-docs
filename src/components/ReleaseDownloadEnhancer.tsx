@@ -21,8 +21,9 @@ type DownloadOption = {
   label: string;
   version: string;
   meta: string;
-  githubUrl: string;
-  r2Url: string;
+  githubUrl?: string;
+  r2Url?: string;
+  pending?: boolean;
 };
 
 type MobileDownloadTarget = {
@@ -159,12 +160,22 @@ function classifyDownloads(
   pushOption("electron", "Windows 安装版", "Electron · EXE · 推荐", electronSetup);
   pushOption("tauri-nsis", "Tauri 安装版", "轻量实验版 · EXE", tauriNsis);
   pushOption("tauri-msi", "Tauri MSI", "企业或批量部署", tauriMsi);
-  pushOption(
-    "macos-intel",
-    "macOS Intel",
-    "Electron · DMG · Intel · 未签名",
-    macIntelDmg,
-  );
+  if (macIntelDmg) {
+    pushOption(
+      "macos-intel",
+      "macOS Intel",
+      "Electron · DMG · Intel · 未签名",
+      macIntelDmg,
+    );
+  } else {
+    options.push({
+      key: "macos-intel-pending",
+      label: "macOS Intel",
+      version: "",
+      meta: "Electron · DMG · 发布成功后自动开放",
+      pending: true,
+    });
+  }
 
   const mobileVersion = mobileRelease
     ? mobileVersionFromTag(mobileRelease.tag_name)
@@ -216,7 +227,6 @@ function classifyDownloads(
       ? r2AssetUrl(recommended, releaseTag)
       : fallbackReleaseUrl,
     options,
-    macIntelAvailable: Boolean(macIntelDmg),
     mobileTargets,
     mobileReleasePageUrl: mobileRelease?.html_url || mobileReleasesPageUrl,
   };
@@ -389,40 +399,45 @@ export default function ReleaseDownloadEnhancer() {
 
             <div className="release-download-options">
               {downloads.options.length ? (
-                downloads.options.map((option) => (
-                  <a
-                    key={option.key}
-                    href={source === "r2" ? option.r2Url : option.githubUrl}
-                    role="menuitem"
-                  >
-                    <div className="release-download-option-title">
-                      <span>{option.label}</span>
-                      {option.version ? (
-                        <span className="release-download-version">
-                          {option.version}
+                downloads.options.map((option) =>
+                  option.pending ? (
+                    <div
+                      key={option.key}
+                      className="release-download-option-pending"
+                      role="menuitem"
+                      aria-disabled="true"
+                    >
+                      <div className="release-download-option-title">
+                        <span>{option.label}</span>
+                        <span className="release-download-pending-badge">
+                          即将提供
                         </span>
-                      ) : null}
+                      </div>
+                      <small>{option.meta}</small>
                     </div>
-                    <small>
-                      {option.meta} · {source === "r2" ? "R2 镜像" : "GitHub"}
-                    </small>
-                  </a>
-                ))
+                  ) : (
+                    <a
+                      key={option.key}
+                      href={source === "r2" ? option.r2Url : option.githubUrl}
+                      role="menuitem"
+                    >
+                      <div className="release-download-option-title">
+                        <span>{option.label}</span>
+                        {option.version ? (
+                          <span className="release-download-version">
+                            {option.version}
+                          </span>
+                        ) : null}
+                      </div>
+                      <small>
+                        {option.meta} · {source === "r2" ? "R2 镜像" : "GitHub"}
+                      </small>
+                    </a>
+                  ),
+                )
               ) : (
                 <div className="release-download-empty">正在读取最新构建产物…</div>
               )}
-              {!downloads.macIntelAvailable ? (
-                <div
-                  className="release-download-option-pending"
-                  aria-disabled="true"
-                >
-                  <div className="release-download-option-title">
-                    <span>macOS Intel</span>
-                    <span className="release-download-pending-badge">即将提供</span>
-                  </div>
-                  <small>Electron · DMG · 发布成功后自动开放</small>
-                </div>
-              ) : null}
             </div>
 
             <a
