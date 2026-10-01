@@ -47,6 +47,11 @@ import {
   type AuthorKey,
   type Doc,
 } from "./content/mira-docs-adapter";
+import {
+  blogCategoryIconKey,
+  orderBlogCategories,
+  type BlogCategoryIconKey,
+} from "./content/blog-taxonomy";
 import HomePage from "./pages/HomePage";
 
 type LinkItem = { label: string; href: string };
@@ -1228,14 +1233,15 @@ function docsByDirectory(docs: Doc[]) {
       return 0;
     });
 }
+const blogCategoryIcons: Record<BlogCategoryIconKey, LucideIcon> = {
+  compass: Compass,
+  code: Code2,
+  sparkles: Sparkles,
+  file: FileCode2,
+};
+
 function blogCategoryIcon(category: string): LucideIcon {
-  if (category.includes("产品")) return Sparkles;
-  if (category.includes("工程")) return Code2;
-  if (category.includes("Mira")) return Sparkles;
-  if (category.includes("开发者")) return Compass;
-  if (category.includes("共同")) return Lightbulb;
-  if (category.includes("模型")) return Cpu;
-  return Compass;
+  return blogCategoryIcons[blogCategoryIconKey(category)];
 }
 type BlogMaintainer = {
   key: string;
@@ -1248,15 +1254,15 @@ const blogMaintainers: readonly BlogMaintainer[] = [
   {
     key: "tomz",
     title: "Tomz Dang",
-    body: "UIChat Mira 的创造者与维护者。记录真实的产品判断、工程取舍和一路踩过的坑。",
-    meta: ["产品手记", "工程现场"],
+    body: "UIChat Mira 的发起者。记录产品判断、工程取舍、开发过程和一路踩过的坑。",
+    meta: ["产品手记", "工程现场", "开发日志"],
     avatar: authorAvatarUrl,
   },
   {
     key: "mira",
     title: "Mira",
-    body: "AI 写作者，也是 UIChat Mira 的同行者。写技术、产品，以及人与 AI 之间尚未写完的故事。",
-    meta: ["Mira 来信", "共同思考"],
+    body: "AI 写作者，也是 UIChat Mira 的同行者。持续追踪 Agent 世界的新信号，也参与技术与产品写作。",
+    meta: ["Mira 雷达", "工程现场"],
     avatar: miraAvatarUrl,
   },
 ] as const;
@@ -1499,11 +1505,11 @@ function DocsLayout() {
 function BlogListPage({ area }: { area: SiteArea }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const blogCategories = [...new Set(
+  const blogCategories = orderBlogCategories(
     area.docs
       .map((doc) => doc.group.trim())
       .filter((group) => group && group !== "归档"),
-  )];
+  );
   const tabs = ["全部", ...blogCategories, "归档"];
   const requestedCategory = new URLSearchParams(location.search).get("category") || "全部";
   const activeCategory = tabs.includes(requestedCategory) ? requestedCategory : "全部";
@@ -1530,7 +1536,7 @@ function BlogListPage({ area }: { area: SiteArea }) {
               做产品的地方。
             </h1>
             <p className="blog-lede">
-              记录 UIChat Mira 的产品演进、工程实践，以及我们对人与 AI 关系的长期思考。
+              记录 Mira 雷达捕获的外部信号、产品判断、工程实践与持续开发过程。
             </p>
           </div>
           <BlogHeaderVisual />
