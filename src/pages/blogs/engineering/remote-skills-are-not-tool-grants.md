@@ -1,7 +1,7 @@
 ---
 title: 当 Agent 可以远程下载“技能”，它到底获得了什么？
 description: MCP 正式定义 Skills 扩展后，一个关键边界变得更清楚：拿到一份技能说明，不等于拿到本机工具、脚本执行权或长期授权。
-group: 工程现场
+group: Mira 雷达
 order: 40
 date: 2026年9月25日
 readTime: 8 分钟阅读
