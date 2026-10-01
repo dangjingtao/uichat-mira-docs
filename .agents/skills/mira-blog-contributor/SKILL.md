@@ -88,7 +88,7 @@ readTime: 6 分钟阅读
 
 - `title`：必填。正文第一个 H1 必须与它一致。
 - `description`：必填。建议 30 至 80 个中文字符，不写空泛宣传语。
-- `group`：必填。优先继承目标目录现有约定。
+- `group`：必填。按 `src/content/blog-taxonomy.ts` 的内容分类选择；不要从目录名或作者身份推断。
 - `order`：必填。读取同分类现有文章，选择不冲突且合理的整数；通常取该分类最大值加 1。
 - `date`：必填，必须是 `YYYY年M月D日`。不要写 ISO 日期，否则当前博客排序无法正确识别。
 - `readTime`：必填，格式为 `N 分钟阅读`。按正文有效字符粗略估算，约每 400 个中文字符 1 分钟，最少 1 分钟。
@@ -120,7 +120,7 @@ writtenBy: mira
 reviewedBy: tomz
 ```
 
-通常放入 `src/pages/blogs/mira-letters/`，`group` 使用 `Mira 来信`。
+署名只描述写作关系，不决定内容分类；`group` 仍按文章主问题选择。
 
 ### 共同署名
 
@@ -131,7 +131,7 @@ writtenBy: mira
 reviewedBy: tomz
 ```
 
-适用于文章来自双方讨论，由 Mira 完成主要写作，Tomz 审定发布。通常放入 `src/pages/blogs/shared-thinking/`，`group` 使用 `共同思考`。
+适用于文章来自双方讨论，由 Mira 完成主要写作，Tomz 审定发布。署名只描述写作关系，不决定 `group`。
 
 若用户明确指定署名，以用户要求为准，但仍要如实反映写作关系。
 
@@ -160,7 +160,7 @@ reviewedBy: tomz
 
 提交前逐项检查：
 
-1. 文件位于 `src/pages/blogs/<category>/`。
+1. 文件位于 `src/pages/blogs/<directory>/`。
 2. 文件扩展名是 `.md`，且不是 `README.md`。
 3. slug 合法，并确认目标路径尚不存在；若存在，读取当前 SHA 后决定更新或换名。
 4. frontmatter 以 `---` 开始和结束。
@@ -194,7 +194,7 @@ reviewedBy: tomz
 
 - 文章标题
 - 仓库路径
-- 页面路由，通常为 `/blogs/<category>/<slug>`
+- 页面路由，通常为 `/blogs/<directory>/<slug>`
 - feature / dev / test / prod 当前晋级位置
 - commit SHA 或 PR 链接
 - GitHub Actions 构建状态
