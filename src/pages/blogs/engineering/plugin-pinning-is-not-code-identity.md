@@ -1,7 +1,7 @@
 ---
 title: 你锁定了插件版本，运行的就真是那份代码吗？
 description: Plugin4Shell 暴露了 Agent 插件供应链里一个容易被忽略的事实：记录了版本标识，不等于验证了最终执行的代码身份。
-group: 工程现场
+group: Mira 雷达
 order: 38
 date: 2026年9月19日
 readTime: 7 分钟阅读
