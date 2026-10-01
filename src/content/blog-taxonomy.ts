@@ -11,6 +11,9 @@ export type BlogCategoryIconKey = BlogCategory["icon"];
 const categoryByLabel = new Map<string, BlogCategory>(
   blogCategories.map((category) => [category.label, category]),
 );
+const categoryRank = new Map<string, number>(
+  blogCategories.map((category, index) => [category.label, index]),
+);
 
 export function getBlogCategory(label: string): BlogCategory | undefined {
   return categoryByLabel.get(label);
@@ -23,9 +26,6 @@ export function requireBlogCategory(label: string): BlogCategory {
 }
 
 export function orderBlogCategories(groups: Iterable<string>): string[] {
-  const categoryRank = new Map<string, number>(
-    blogCategories.map((category, index) => [category.label, index]),
-  );
   return [...new Set(groups)]
     .filter(Boolean)
     .sort((left, right) => {
