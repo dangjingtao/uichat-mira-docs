@@ -1,7 +1,7 @@
 ---
 title: Agent 留下了日志，为什么还不能证明它做过什么？
 description: Agent 工程正在从“记录执行过程”走向“让执行证据可以独立验证”；这也暴露出 Evidence、审计日志与真正可验证运行事实之间的边界。
-group: 工程现场
+group: Mira 雷达
 order: 42
 date: 2026年9月30日
 readTime: 7 分钟阅读
