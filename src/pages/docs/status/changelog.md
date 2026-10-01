@@ -1,6 +1,6 @@
 ---
 title: 更新日志
-description: Mira Desktop 自 v0.101.0 以来的待发布变化，以及当前 Release / R2 / macOS Intel 发布链说明。
+description: Mira Desktop v0.102.0 的版本说明，以及当前 Release / R2 / macOS Intel 发布状态。
 group: 现状与方向
 order: 19
 ---
@@ -9,14 +9,18 @@ order: 19
 
 > 本页是面向官网读者的公开版更新说明。版本事实与最终发布记录以 [Mira Desktop CHANGELOG](https://github.com/uichat-mira/mira-desktop/blob/dev/CHANGELOG.md) 和 [GitHub Releases](https://github.com/uichat-mira/mira-desktop/releases) 为准。
 
-## 待发布 · 自 v0.101.0 以来
+## v0.102.0 · 发布候选已进入 prod
 
-Mira Desktop 当前根包版本仍是 `0.101.0`。下面这些变化已经进入 `dev`，但**还没有被命名成下一个正式版本**，因此这里不提前写成 `v0.102.0`。
+Mira Desktop 的版本准备已经完成，根包与衍生包版本都已同步到 `0.102.0`，并按 `dev → test → prod` 推进到生产分支。
+
+当前状态需要区分两层：**代码已经进入 `prod`，但正式 GitHub Release 还没有发布**。正式发布仍以 `v0.102.0` tag 为触发条件；在 tag 推送并完成 Release Production 之前，公开最新稳定 Release 仍是 `v0.101.0`。
 
 核对基线：
 
-- 上一正式版本：`v0.101.0`（2026-09-19）
-- 当前开发基线：`dev@e4826ed`
+- 上一正式 Release：`v0.101.0`（2026-09-19）
+- `0.102.0` 生产候选：`prod@44b19a27`
+- 当前正式 Release：仍为 `v0.101.0`
+- `v0.102.0` tag：尚未创建
 - 相比 `v0.101.0`：约 198 个 commits
 
 ### 导航从“聊天侧栏”长成应用级工作台
@@ -116,7 +120,7 @@ Intel macOS Electron 已经在真实 `darwin-x64` 环境完成一轮完整验证
 
 会，但有一个前提：**tag 必须与 `package.json` 的版本完全一致。**
 
-例如未来准备发布 `v0.102.0`，必须先把根包版本正式准备成 `0.102.0`，再推送 `v0.102.0` tag。直接在当前 `0.101.0` 上打 `v0.102.0`，Release workflow 会主动失败。
+当前 `0.102.0` 的版本同步已经完成，生产候选也已进入 `prod`。下一步只需要把 `v0.102.0` tag 指向当前生产候选；Release workflow 会校验 tag 与 `package.json` 版本一致。
 
 `v*` tag 推送后，当前自动链会执行：
 
@@ -143,6 +147,6 @@ GitHub Release 的正文会通过 `generate_release_notes: true` 自动生成。
 
 需要逐条追源码时，可以直接查看：
 
-- [v0.101.0 → dev 完整比较](https://github.com/uichat-mira/mira-desktop/compare/v0.101.0...dev)
+- [v0.101.0 → prod 完整比较](https://github.com/uichat-mira/mira-desktop/compare/v0.101.0...prod)
 - [Mira Desktop CHANGELOG](https://github.com/uichat-mira/mira-desktop/blob/dev/CHANGELOG.md)
 - [Mira Desktop Releases](https://github.com/uichat-mira/mira-desktop/releases)
