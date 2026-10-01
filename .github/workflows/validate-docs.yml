@@ -46,6 +46,9 @@ jobs:
       - name: Verify MiraDocs content compatibility
         run: pnpm run verify:mira-docs
 
+      - name: Test current-status freshness semantics
+        run: node --test scripts/verify-current-status.test.mjs
+
       - name: Build GitHub Pages candidate
         run: pnpm run build:github-pages
 
@@ -76,4 +79,5 @@ jobs:
         env:
           MIRA_SOURCE_PACKAGE: .source/uichat-mira/package.json
           MIRA_SOURCE_ROOT: .source/uichat-mira
+          CURRENT_STATUS_FRESHNESS_POLICY: warn
         run: node scripts/verify-current-status.mjs
