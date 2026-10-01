@@ -54,18 +54,18 @@ why-mira-keeps-the-human-loop.md
 
 不要使用空格、中文文件名、日期堆叠或 `README.md`。
 
-**目录负责稳定 URL，frontmatter 的 `group` 才是博客分类的唯一真相源。** 已发布文章不要为了改分类而移动目录；改 `group` 即可，避免破坏历史链接。
+**目录、frontmatter `group` 与分类定义必须一致。** 分类由 `src/content/blog-taxonomy.ts` 唯一定义；修改文章分类时必须同时移动到该分类目录。目录就是公开 URL 的一部分，当前不维护旧路径兼容或重定向。
 
 当前主分类定义在 `src/content/blog-taxonomy.ts`：
 
-| group | 适用内容 | 新文章建议目录 |
+| group | 适用内容 | 目录 |
 | --- | --- | --- |
 | `Mira 雷达` | 外部 Agent / AI / 安全 / 工具生态信号，以及它对 Mira 的启发 | `radar` |
 | `工程现场` | Mira 自己真实发生的实现、事故、架构演进与技术复盘 | `engineering` |
 | `产品手记` | 产品判断、设计取舍、路线草案与能力边界 | `product-journal` |
 | `开发日志` | 周报、月度回顾、版本演进与阶段性进度 | `dev-log` |
 
-如果以后增加分类，先更新 `src/content/blog-taxonomy.ts`；页面筛选和图标展示不应再增加新的字符串判断。
+如果以后增加分类，只在 `src/content/blog-taxonomy.ts` 增加定义；构建会校验每篇文章的 `group` 是否已登记、物理目录是否与分类一致。页面筛选和图标展示不应再增加新的字符串判断。
 
 如果内容可以放入多个分类，按文章的主问题选择，而不是按文中偶然出现的关键词选择。
 
@@ -88,7 +88,7 @@ readTime: 6 分钟阅读
 
 - `title`：必填。正文第一个 H1 必须与它一致。
 - `description`：必填。建议 30 至 80 个中文字符，不写空泛宣传语。
-- `group`：必填。按 `src/content/blog-taxonomy.ts` 的内容分类选择；不要从目录名或作者身份推断。
+- `group`：必填。按 `src/content/blog-taxonomy.ts` 的内容分类选择，并将文件放在该分类对应目录；作者身份不决定分类。
 - `order`：必填。读取同分类现有文章，选择不冲突且合理的整数；通常取该分类最大值加 1。
 - `date`：必填，必须是 `YYYY年M月D日`。不要写 ISO 日期，否则当前博客排序无法正确识别。
 - `readTime`：必填，格式为 `N 分钟阅读`。按正文有效字符粗略估算，约每 400 个中文字符 1 分钟，最少 1 分钟。
@@ -160,7 +160,7 @@ reviewedBy: tomz
 
 提交前逐项检查：
 
-1. 文件位于 `src/pages/blogs/<directory>/`。
+1. 文件位于 `src/pages/blogs/<directory>/`，且目录与 `group` 在 `src/content/blog-taxonomy.ts` 中的定义完全一致。
 2. 文件扩展名是 `.md`，且不是 `README.md`。
 3. slug 合法，并确认目标路径尚不存在；若存在，读取当前 SHA 后决定更新或换名。
 4. frontmatter 以 `---` 开始和结束。
