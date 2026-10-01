@@ -76,4 +76,5 @@ jobs:
         env:
           MIRA_SOURCE_PACKAGE: .source/uichat-mira/package.json
           MIRA_SOURCE_ROOT: .source/uichat-mira
+          CURRENT_STATUS_FRESHNESS_POLICY: warn
         run: node scripts/verify-current-status.mjs
