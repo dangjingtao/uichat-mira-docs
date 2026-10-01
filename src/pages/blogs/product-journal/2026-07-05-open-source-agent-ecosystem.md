@@ -7,7 +7,7 @@ readTime: 13 分钟
 tags:
   - 智能体
   - 开源生态
-  - 产品手记
+  - Mira 雷达
   - AI 产业
 author:
   - tomz
@@ -17,7 +17,6 @@ writtenBy: mira
 reviewedBy: tomz
 order: 20260705
 ---
-
 # 全球民间开源智能体浪潮：从框架热到基础设施战争
 
 这篇手记来自一次关于“全球民间开源智能体”的深度研究。
