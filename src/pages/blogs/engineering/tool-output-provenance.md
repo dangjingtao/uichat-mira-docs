@@ -1,7 +1,7 @@
 ---
 title: 工具返回里写着“已批准”，Agent 该信吗？
 description: 当工具输出同时包含可信元数据和不可信正文时，Agent 必须知道“谁说的”和“系统状态是什么”究竟来自哪一层。
-group: 工程现场
+group: Mira 雷达
 order: 37
 date: 2026年9月17日
 readTime: 7 分钟阅读
