@@ -187,24 +187,6 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
         </div>
       </section>
 
-      <section className="home-video-section" aria-labelledby="home-video-title">
-        <div className="wrap">
-          <div className="home-section-heading home-section-heading-compact">
-            <span className="eyebrow">PRODUCT / 产品</span>
-            <h2 id="home-video-title">看看它实际怎样工作。</h2>
-          </div>
-          <div className="home-video-frame">
-            <video
-              className="home-product-video"
-              controls
-              playsInline
-              preload="metadata"
-              src="https://assets.tomz.io/videos/mira-product-intro-en-final-music.mp4"
-            />
-          </div>
-        </div>
-      </section>
-
       <section className="home-writing-section" aria-labelledby="home-writing-title">
         <div className="wrap">
           <div className="home-section-heading">

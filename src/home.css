@@ -233,24 +233,6 @@
   padding: 0;
 }
 
-.home-video-section {
-  padding: var(--sp-section) 0;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.home-video-frame {
-  overflow: hidden;
-  border-radius: 14px;
-  background: #211f1c;
-}
-
-.home-product-video {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-}
-
 .home-writing-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -436,12 +418,10 @@
 
   .home-now-section,
   .home-writing-section,
-  .home-open-section,
-  .home-video-section {
+  .home-open-section {
     padding: var(--sp-xl) 0 var(--sp-xxl);
   }
 
-  .home-video-frame,
   .home-writing-grid {
     border-radius: 10px;
   }
