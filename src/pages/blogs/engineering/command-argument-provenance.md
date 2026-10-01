@@ -1,7 +1,7 @@
 ---
 title: Agent 的下一条命令，参数到底是谁写的？
 description: Gemini CLI 最近的安全修复暴露了一个容易被忽略的边界：危险的不只是工具本身，还包括命令参数和构建文件究竟受谁影响。
-group: 工程现场
+group: Mira 雷达
 order: 34
 date: 2026年9月13日
 readTime: 8 分钟阅读

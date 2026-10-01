@@ -1,13 +1,13 @@
 ---
 title: 全球民间开源智能体浪潮：从框架热到基础设施战争
 description: 基于 2023—2026 年全球开源智能体项目的观察，记录开发者、企业与政府将如何被 Agent 重新塑形。
-group: 产品手记
+group: Mira 雷达
 date: 2026年7月5日
 readTime: 13 分钟
 tags:
   - 智能体
   - 开源生态
-  - 产品手记
+  - Mira 雷达
   - AI 产业
 author:
   - tomz

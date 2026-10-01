@@ -43,7 +43,7 @@ description: 作为 UIChat Mira 文档站/博客贡献者，把用户提供的�
 文章文件必须位于：
 
 ```text
-src/pages/blogs/<category>/<slug>.md
+src/pages/blogs/<directory>/<slug>.md
 ```
 
 `slug` 使用小写英文、数字和连字符，例如：
@@ -54,17 +54,18 @@ why-mira-keeps-the-human-loop.md
 
 不要使用空格、中文文件名、日期堆叠或 `README.md`。
 
-优先沿用现有分类，不随意创建新目录。目标分类存在时，读取同目录文章并继承其 `group` 约定。
+**目录负责稳定 URL，frontmatter 的 `group` 才是博客分类的唯一真相源。** 已发布文章不要为了改分类而移动目录；改 `group` 即可，避免破坏历史链接。
 
-已知的作者型分类：
+当前主分类定义在 `src/content/blog-taxonomy.ts`：
 
-| 目录 | group | 适用内容 |
+| group | 适用内容 | 新文章建议目录 |
 | --- | --- | --- |
-| `mira-letters` | `Mira 来信` | Mira 独立署名的来信、随笔与观点 |
-| `shared-thinking` | `共同思考` | Tomz 与 Mira 的共同讨论、共同结论 |
-| `product-journal` | `产品手记` | 产品判断、版本演进、设计取舍 |
+| `Mira 雷达` | 外部 Agent / AI / 安全 / 工具生态信号，以及它对 Mira 的启发 | `radar` |
+| `工程现场` | Mira 自己真实发生的实现、事故、架构演进与技术复盘 | `engineering` |
+| `产品手记` | 产品判断、设计取舍、路线草案与能力边界 | `product-journal` |
+| `开发日志` | 周报、月度回顾、版本演进与阶段性进度 | `dev-log` |
 
-其他现有目录的 `group` 必须从同目录当前文章读取，不凭记忆猜测。
+如果以后增加分类，先更新 `src/content/blog-taxonomy.ts`；页面筛选和图标展示不应再增加新的字符串判断。
 
 如果内容可以放入多个分类，按文章的主问题选择，而不是按文中偶然出现的关键词选择。
 
@@ -87,7 +88,7 @@ readTime: 6 分钟阅读
 
 - `title`：必填。正文第一个 H1 必须与它一致。
 - `description`：必填。建议 30 至 80 个中文字符，不写空泛宣传语。
-- `group`：必填。优先继承目标目录现有约定。
+- `group`：必填。按 `src/content/blog-taxonomy.ts` 的内容分类选择；不要从目录名或作者身份推断。
 - `order`：必填。读取同分类现有文章，选择不冲突且合理的整数；通常取该分类最大值加 1。
 - `date`：必填，必须是 `YYYY年M月D日`。不要写 ISO 日期，否则当前博客排序无法正确识别。
 - `readTime`：必填，格式为 `N 分钟阅读`。按正文有效字符粗略估算，约每 400 个中文字符 1 分钟，最少 1 分钟。
@@ -119,7 +120,7 @@ writtenBy: mira
 reviewedBy: tomz
 ```
 
-通常放入 `src/pages/blogs/mira-letters/`，`group` 使用 `Mira 来信`。
+署名只描述写作关系，不决定内容分类；`group` 仍按文章主问题选择。
 
 ### 共同署名
 
@@ -130,7 +131,7 @@ writtenBy: mira
 reviewedBy: tomz
 ```
 
-适用于文章来自双方讨论，由 Mira 完成主要写作，Tomz 审定发布。通常放入 `src/pages/blogs/shared-thinking/`，`group` 使用 `共同思考`。
+适用于文章来自双方讨论，由 Mira 完成主要写作，Tomz 审定发布。署名只描述写作关系，不决定 `group`。
 
 若用户明确指定署名，以用户要求为准，但仍要如实反映写作关系。
 
@@ -159,7 +160,7 @@ reviewedBy: tomz
 
 提交前逐项检查：
 
-1. 文件位于 `src/pages/blogs/<category>/`。
+1. 文件位于 `src/pages/blogs/<directory>/`。
 2. 文件扩展名是 `.md`，且不是 `README.md`。
 3. slug 合法，并确认目标路径尚不存在；若存在，读取当前 SHA 后决定更新或换名。
 4. frontmatter 以 `---` 开始和结束。
@@ -193,7 +194,7 @@ reviewedBy: tomz
 
 - 文章标题
 - 仓库路径
-- 页面路由，通常为 `/blogs/<category>/<slug>`
+- 页面路由，通常为 `/blogs/<directory>/<slug>`
 - feature / dev / test / prod 当前晋级位置
 - commit SHA 或 PR 链接
 - GitHub Actions 构建状态

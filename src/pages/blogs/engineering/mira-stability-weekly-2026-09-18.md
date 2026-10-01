@@ -1,7 +1,7 @@
 ---
 title: Mira 稳定性周报：9 月 11–18 日
 description: 记录 2026 年 9 月 11 日至 18 日 UIChat Mira 在 Desktop、Mobile、Docs 与 Control Room 的稳定性迭代、回归风险和未闭环工作。
-group: 工程现场
+group: 开发日志
 order: 38
 date: 2026年9月18日
 readTime: 12 分钟阅读

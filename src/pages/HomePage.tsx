@@ -65,8 +65,8 @@ const nowItems = [
   {
     key: "log",
     label: "LOG",
-    title: "工程与产品记录",
-    description: "周记、工程现场与产品判断持续公开，保留 Mira 是怎样一步步长出来的。",
+    title: "博客与开发记录",
+    description: "Mira 雷达、工程现场、产品手记与开发日志持续公开，保留 Mira 是怎样一步步长出来的。",
     href: docHref("/blogs"),
   },
 ] as const;
@@ -193,7 +193,7 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
           <div className="home-section-heading">
             <span className="eyebrow">LATEST / 最近写下的</span>
             <h2 id="home-writing-title">产品不是只在 Release 里发生。</h2>
-            <p>这里留下最近的产品判断、工程现场和人与 AI 之间还没有写完的部分。</p>
+            <p>这里留下最近的 Mira 雷达、产品判断、工程现场与开发记录。</p>
           </div>
           <div className="home-writing-grid">
             {recentPosts.map((doc) => (

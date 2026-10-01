@@ -1,7 +1,7 @@
 ---
 title: 每一步都合法，Agent 为什么还是可能越界？
 description: 单次工具调用通过策略检查，并不意味着整段 Agent 会话安全；真正困难的是跨轮次、跨动作和累计副作用的治理。
-group: 工程现场
+group: Mira 雷达
 order: 39
 date: 2026年9月22日
 readTime: 7 分钟阅读

@@ -1,7 +1,7 @@
 ---
 title: 八月开发检讨：楼是交了，施工队得整顿一下
 description: 从 Mira Desktop 与 Mobile 的八月 commit 回看一次 AI 施工月：Relay-first、跨仓库返工、任务台账、Mac 兼容，以及为什么 Agent 不能给自己签字。
-group: 工程现场
+group: 开发日志
 order: 17
 date: 2026年8月28日
 readTime: 9 分钟阅读

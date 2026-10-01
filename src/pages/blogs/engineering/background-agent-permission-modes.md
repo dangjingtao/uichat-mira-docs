@@ -1,7 +1,7 @@
 ---
 title: Agent 离开聊天框以后，权限为什么必须跟运行模式一起变？
 description: 当 Agent 开始在用户离开后继续工作，权限就不能只回答“这个工具能不能用”；交互态、后台态与具体动作需要不同的授权边界。
-group: 工程现场
+group: Mira 雷达
 order: 42
 date: 2026年10月1日
 readTime: 8 分钟阅读

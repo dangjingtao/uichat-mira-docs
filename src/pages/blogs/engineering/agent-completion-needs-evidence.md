@@ -1,7 +1,7 @@
 ---
 title: Agent 说“完成了”，为什么还不够？
 description: GitHub Security Lab 的自动模糊测试 Agent 把覆盖率、停机条件和持久状态写进执行循环，也再次说明：Agent 的完成判断必须由证据约束，而不能只靠模型自述。
-group: 工程现场
+group: Mira 雷达
 order: 41
 date: 2026年9月28日
 readTime: 8 分钟阅读
