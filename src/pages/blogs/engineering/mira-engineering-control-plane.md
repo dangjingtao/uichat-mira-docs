@@ -264,7 +264,7 @@ type ExecutionContext = {
 
 Branch 最好能和 Issue 建立稳定关联，例如 fix/123-mobile-pairing；PR 再通过 Closes #123 或 GitHub Development linkage，把施工结果重新交回 Work Item。
 
-这里还有一个我们在 Mira Agent 自身设计中长期坚持的原则：**看见工具不等于拥有执行权**。Agent 能调用什么，应该由 Harness / Policy / Approval / Runtime availability 决定，而不是因为 system prompt 写了“你可以做任何事情”。Mira 当前 Agent 对工具、Approval 和 Evidence 的边界另见[《Mira Agent 现在到底是什么》](/blogs/engineering/mira-agent-current-truth)与[Harness 与工具边界](/docs/architecture/harness)。
+这里还有一个我们在 Mira Agent 自身设计中长期坚持的原则：**看见工具不等于拥有执行权**。Agent 能调用什么，应该由 Harness / Policy / Approval / Runtime availability 决定，而不是因为 system prompt 写了“你可以做任何事情”。Mira 当前 Agent 对工具、Approval 和 Evidence 的边界另见[《Mira Agent 现在到底是什么》](/blogs/engineering/mira-agent-current-truth)与[Harness 与工具边界](/api/architecture/harness)。
 
 工程控制平面里的 Coding Agent 也应该采用同一类思路：任务上下文和工具权限分别治理。
 

@@ -21,21 +21,21 @@ const capabilityItems: CapabilityItem[] = [
     title: "模型可以换，工作不必重来",
     description:
       "连接本地模型、云端 Provider 与 OpenAI-compatible 服务。模型是能力来源，不是工作空间的边界。",
-    href: docHref("/configuration/model-settings"),
+    href: docHref("/guide/configuration/model-settings"),
   },
   {
     id: "02",
     title: "对话成为长期工作",
     description:
       "对话、分支、角色、附件与历史留在同一个工作空间里。重要讨论可以继续整理，也可以继续做下去。",
-    href: docHref("/product/workspace"),
+    href: docHref("/guide/product/workspace"),
   },
   {
     id: "03",
     title: "知识不只被收藏",
     description:
       "文档进入索引、检索与 Sources。Mira 把知识带回任务，同时保留来源与验证路径。",
-    href: docHref("/product/knowledge"),
+    href: docHref("/guide/product/knowledge"),
   },
   {
     id: "04",
@@ -43,7 +43,7 @@ const capabilityItems: CapabilityItem[] = [
     description:
       "Agent、工具与 MCP 可以参与真实工作，但权限、审批、Evidence 与执行边界仍然可见。",
     detail: "Agent · Harness · MCP",
-    href: docHref("/architecture/agent"),
+    href: docHref("/api/architecture/agent"),
   },
 ];
 
@@ -53,14 +53,14 @@ const nowItems = [
     label: "CURRENT",
     title: "当前实现",
     description: "只记录已经能从代码、运行状态和可重复验证中确认的事实。",
-    href: docHref("/status/current"),
+    href: docHref("/guide/status/current"),
   },
   {
     key: "next",
     label: "NEXT",
     title: "下一段路",
     description: "计划和完成条件单独维护，不把还没有交付的东西写成现有能力。",
-    href: docHref("/status/roadmap"),
+    href: docHref("/guide/status/roadmap"),
   },
   {
     key: "log",
@@ -105,7 +105,7 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
                 <Download size={16} aria-hidden="true" />
                 下载 Mira
               </a>
-              <Link className="btn btn-secondary" to="/about/origin">
+              <Link className="btn btn-secondary" to="/guide/about/origin">
                 认识 Mira
               </Link>
             </div>
@@ -243,7 +243,7 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
               Mira Mobile
               <ArrowUpRight size={14} aria-hidden="true" />
             </a>
-            <Link to="/about/author">
+            <Link to="/guide/about/author">
               项目与维护者
               <ArrowUpRight size={14} aria-hidden="true" />
             </Link>

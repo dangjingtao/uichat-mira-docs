@@ -15,10 +15,9 @@ function markdownFiles(directory) {
   });
 }
 
-function legacyRoute(sourcePath) {
+function routeForSource(sourcePath) {
   const normalized = sourcePath.replace(/\\/g, "/").replace(/\.md$/i, "");
-  const withoutDocsRoot = normalized.replace(/^docs\//, "");
-  return `/${withoutDocsRoot}`.replace(/\/{2,}/g, "/");
+  return `/${normalized}`.replace(/\/{2,}/g, "/");
 }
 
 const failures = [];
@@ -32,7 +31,10 @@ for (const file of files) {
 
   try {
     const doc = parseMiraDoc(sourcePath, raw);
-    const route = legacyRoute(sourcePath);
+    const route = routeForSource(sourcePath);
+    if (sourcePath.startsWith("docs/")) {
+      failures.push(`旧 docs 物理根仍存在: ${sourcePath}`);
+    }
     const previous = routes.get(route);
 
     if (previous) {
