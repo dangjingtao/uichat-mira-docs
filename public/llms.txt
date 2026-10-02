@@ -14,7 +14,6 @@ The canonical product knowledge domain is https://mira.tomz.io/ . Product defini
 - [Harness and tool boundaries](https://mira.tomz.io/architecture/harness/): Tool governance, invocation boundaries, evidence, and runtime constraints.
 - [MCP](https://mira.tomz.io/configuration/mcp/): MCP discovery, connection, Agent access, tool exposure, policy, and approval boundaries.
 - [Current implementation](https://mira.tomz.io/status/current/): Current implementation snapshot. Prefer this page over roadmap assumptions when determining whether a feature exists today.
-- [MiraDocs](https://mira.tomz.io/mira-docs-api/): Documentation system used by the site.
 - [Blog](https://mira.tomz.io/blogs/): Product and engineering notes derived from real implementation work.
 
 ## Core concepts

@@ -109,8 +109,8 @@ if (existsSync(indexPath)) {
   if (html.includes(">视觉</a>") || html.includes(">Design Md</a>")) {
     failures.push("顶部导航仍残留独立视觉入口");
   }
-  if (!html.includes(">MiraDocs</a>")) {
-    failures.push("顶部导航缺少 MiraDocs");
+  if (html.includes(">MiraDocs</a>") || html.includes("/mira-docs-api")) {
+    failures.push("顶部导航仍残留 MiraDocs 入口");
   }
 }
 
@@ -124,28 +124,20 @@ if (existsSync(notFoundPath)) {
 const visualRootRoute = "/design-md";
 const visualRootPath = routeFile(visualRootRoute);
 if (!existsSync(visualRootPath)) {
-  failures.push("缺少视觉旧根路径兼容页");
+  failures.push("缺少视觉文档根页面");
 } else {
   const html = readFileSync(visualRootPath, "utf8");
-  if (html.includes("EMPTY SECTION") || html.includes("页面不存在")) {
-    failures.push("视觉旧根路径仍渲染为空目录或 404");
+  if (!html.includes("/design-md/视觉/product-design-system")) {
+    failures.push("视觉文档根页面缺少产品设计系统入口");
   }
-  if (!html.includes("视觉文档已归入 MiraDocs")) {
-    failures.push("视觉旧根路径没有明确迁移说明");
-  }
-  if (!html.includes("/mira-docs-api")) {
-    failures.push("视觉旧根路径没有指向 MiraDocs");
+  if (html.includes("MiraDocs") || html.includes("/mira-docs-api")) {
+    failures.push("视觉文档根页面仍残留 MiraDocs 迁移内容");
   }
 }
 
 const miraDocsAreaPath = routeFile("/mira-docs-api");
-if (!existsSync(miraDocsAreaPath)) {
-  failures.push("缺少 MiraDocs 区域静态页");
-} else {
-  const html = readFileSync(miraDocsAreaPath, "utf8");
-  if (!html.includes("/design-md/视觉/product-design-system")) {
-    failures.push("MiraDocs 区域没有纳入视觉内容");
-  }
+if (existsSync(miraDocsAreaPath)) {
+  failures.push("MiraDocs 公开区域仍被构建");
 }
 
 const designSystemRoute = "/design-md/视觉/product-design-system";
@@ -162,8 +154,8 @@ if (existsSync(designSystemPath)) {
     failures.push("产品设计系统静态页缺少合并后的正文内容");
   }
   const docnav = html.match(/<nav class="docnav">[\s\S]*?<\/nav>/)?.[0] || "";
-  if (!docnav.includes(">MiraDocs</a>")) {
-    failures.push("视觉文档侧栏没有归入 MiraDocs");
+  if (!docnav.includes(">视觉</a>")) {
+    failures.push("视觉文档侧栏缺少视觉根入口");
   }
   if (!docnav.includes("<h5>视觉</h5>")) {
     failures.push("视觉文档侧栏缺少统一视觉分组");
