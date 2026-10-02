@@ -51,12 +51,6 @@ import {
 import HomePage from "./pages/HomePage";
 
 type LinkItem = { label: string; href: string };
-type ThemeName = "claude" | "apple" | "supabase";
-const themeOptions: { name: ThemeName; label: string }[] = [
-  { name: "claude", label: "Claude" },
-  { name: "apple", label: "Apple" },
-  { name: "supabase", label: "Supabase" },
-];
 type DocSection = {
   key: string;
   title: string;
@@ -488,7 +482,7 @@ function RenderedMarkdown({ html, className = "markdown" }: { html: string; clas
     };
     void renderMermaid();
     const observer = new MutationObserver(() => void renderMermaid());
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     return () => observer.disconnect();
   }, [html]);
   return <div ref={containerRef} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
@@ -625,14 +619,10 @@ function MobileHeaderPanel({
   onSearch,
   onToggleTheme,
   darkMode,
-  themeName,
-  onSelectTheme,
 }: {
   onSearch: () => void;
   onToggleTheme: () => void;
   darkMode: boolean;
-  themeName: ThemeName;
-  onSelectTheme: (theme: ThemeName) => void;
 }) {
   return (
     <div className="mobile-header-panel">
@@ -652,22 +642,6 @@ function MobileHeaderPanel({
           {darkMode ? "浅色模式" : "暗黑模式"}
         </button>
       </div>
-      <div className="mobile-theme-picker">
-        <strong>主题</strong>
-        <div>
-          {themeOptions.map((theme) => (
-            <button
-              key={theme.name}
-              type="button"
-              className={theme.name === themeName ? "active" : ""}
-              aria-pressed={theme.name === themeName}
-              onClick={() => onSelectTheme(theme.name)}
-            >
-              {theme.label}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -676,22 +650,16 @@ function SiteHeader({
   onSearch,
   onToggleTheme,
   darkMode,
-  themeName,
-  onSelectTheme,
   wide = false,
 }: {
   onSearch: () => void;
   onToggleTheme: () => void;
   darkMode: boolean;
-  themeName: ThemeName;
-  onSelectTheme: (theme: ThemeName) => void;
   wide?: boolean;
 }) {
   const location = useLocation();
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
-    setOpenMenu(null);
     setMobileOpen(false);
   }, [location.pathname]);
   const currentDoc = allDocs.find(
@@ -733,37 +701,6 @@ function SiteHeader({
               </li>
             );
           })}
-          <li
-            className={`menu-dropdown${openMenu === "主题" ? " open" : ""}`}
-            onMouseEnter={() => setOpenMenu("主题")}
-            onMouseLeave={() => setOpenMenu(null)}
-          >
-            <button
-              type="button"
-              className="menu-dropdown-trigger"
-              aria-expanded={openMenu === "主题"}
-              onClick={() => setOpenMenu((value) => value === "主题" ? null : "主题")}
-            >
-              主题
-              <ChevronDown size={14} aria-hidden="true" />
-            </button>
-            <div className="menu-dropdown-panel theme-menu-panel">
-              {themeOptions.map((theme) => (
-                <button
-                  key={theme.name}
-                  type="button"
-                  className={`theme-menu-option${theme.name === themeName ? " active" : ""}`}
-                  aria-pressed={theme.name === themeName}
-                  onClick={() => {
-                    onSelectTheme(theme.name);
-                    setOpenMenu(null);
-                  }}
-                >
-                  <span>{theme.label}</span>
-                </button>
-              ))}
-            </div>
-          </li>
         </ul>
         <div className="nav-right">
           {showMobileDocShare ? (
@@ -785,8 +722,6 @@ function SiteHeader({
               onSearch={onSearch}
               onToggleTheme={onToggleTheme}
               darkMode={darkMode}
-              themeName={themeName}
-              onSelectTheme={onSelectTheme}
             />
           ) : null}
           <button
@@ -1001,13 +936,6 @@ function RoutedApp() {
   const location = useLocation();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [themeName, setThemeName] = useState<ThemeName>(() => {
-    if (typeof window === "undefined") return "claude";
-    const saved = window.localStorage.getItem("mira-color-theme");
-    return themeOptions.some((theme) => theme.name === saved)
-      ? (saved as ThemeName)
-      : "claude";
-  });
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
     const saved = window.localStorage.getItem("mira-theme");
@@ -1015,10 +943,6 @@ function RoutedApp() {
       ? saved === "dark"
       : window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeName;
-    window.localStorage.setItem("mira-color-theme", themeName);
-  }, [themeName]);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
     window.localStorage.setItem("mira-theme", darkMode ? "dark" : "light");
@@ -1053,8 +977,6 @@ function RoutedApp() {
         onSearch={openSearch}
         onToggleTheme={toggleTheme}
         darkMode={darkMode}
-        themeName={themeName}
-        onSelectTheme={setThemeName}
         wide={navIsWide}
       />
       <Routes>

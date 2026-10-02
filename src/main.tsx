@@ -14,8 +14,6 @@ import "@fontsource/jetbrains-mono/500.css";
 import App from "./App";
 import ReleaseDownloadEnhancer from "./components/ReleaseDownloadEnhancer";
 import "./claude.theme.css";
-import "./apple.theme.css";
-import "./Supabase.theme.css";
 import "./tailwind.css";
 import "./styles.css";
 import "./release-download.css";
@@ -25,14 +23,6 @@ import "./markdown.css";
 import "./blog-detail.css";
 import "./claude-visual.css";
 
-const themeKey = "mira-color-theme";
-const defaultTheme = "claude";
-const savedTheme =
-  typeof window !== "undefined" ? window.localStorage.getItem(themeKey) : null;
-const initialTheme =
-  savedTheme === "claude" || savedTheme === "apple" || savedTheme === "supabase"
-    ? savedTheme
-    : defaultTheme;
 
 // Keep the deployment root aligned with BrowserRouter's basename. GitHub Pages
 // mounts the app at /uichat-mira-docs/; stripping that final slash makes the
@@ -60,7 +50,6 @@ if (normalizedBuildBase !== "/" && window.location.pathname === normalizedBuildB
   }
 }
 
-document.documentElement.dataset.theme = initialTheme;
 
 const updateSW = registerSW({
   immediate: true,
