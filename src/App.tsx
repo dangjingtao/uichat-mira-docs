@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 import {
   Link,
-  Navigate,
   Outlet,
   Route,
   Routes,
@@ -77,11 +76,10 @@ type SiteArea = {
 };
 const githubUrl = "https://github.com/uichat-mira/mira-desktop";
 const appBase = import.meta.env.BASE_URL;
-const MIRA_DOCS_AREA_KEY = "mira-docs-api";
 const VISUAL_CONTENT_ROOT = "design-md";
 const VISUAL_NAV_DIRECTORY = "视觉";
 function logicalSiteAreaKey(root: string) {
-  return root === VISUAL_CONTENT_ROOT ? MIRA_DOCS_AREA_KEY : root;
+  return root;
 }
 function navigationDirectory(doc: Doc) {
   return doc.root === VISUAL_CONTENT_ROOT ? VISUAL_NAV_DIRECTORY : doc.directory;
@@ -197,12 +195,14 @@ const siteAreas: SiteArea[] = siteAreaRoots
     return {
       key: root,
       title:
-        first?.nav ||
-        (root === "blogs"
-          ? "博客"
-          : root
-              .replace(/[-_]+/g, " ")
-              .replace(/\b\w/g, (letter) => letter.toUpperCase())),
+        root === VISUAL_CONTENT_ROOT
+          ? "视觉"
+          : first?.nav ||
+            (root === "blogs"
+              ? "博客"
+              : root
+                  .replace(/[-_]+/g, " ")
+                  .replace(/\b\w/g, (letter) => letter.toUpperCase())),
       description: first?.description || "",
       docs,
       path,
@@ -516,7 +516,9 @@ function RenderedMarkdown({ html, className = "markdown" }: { html: string; clas
 
 const navItems: LinkItem[] = [
   { label: "文档", href: docHref("/about/origin") },
-  ...siteAreas.map((area) => ({ label: area.title, href: area.href })),
+  ...siteAreas
+    .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
+    .map((area) => ({ label: area.title, href: area.href })),
 ].sort((a, b) => {
   const keyFor = (item: LinkItem) =>
     item.label === "文档"
@@ -735,12 +737,6 @@ function SiteHeader({
           (doc) => doc.root === "docs" && doc.path === location.pathname,
         )
       );
-    if (
-      target === `/${MIRA_DOCS_AREA_KEY}` &&
-      currentDoc?.root === VISUAL_CONTENT_ROOT
-    ) {
-      return true;
-    }
     return (
       location.pathname === target || location.pathname.startsWith(`${target}/`)
     );
@@ -1140,10 +1136,6 @@ function RoutedApp() {
         />
         <Route element={<DocsLayout />}>
           <Route path="/sitemap" element={<DocPage path="/sitemap" />} />
-          <Route
-            path={`/${VISUAL_CONTENT_ROOT}`}
-            element={<Navigate replace to={`/${MIRA_DOCS_AREA_KEY}`} />}
-          />
           {siteAreas.map((area) => (
             <Route
               key={area.key}

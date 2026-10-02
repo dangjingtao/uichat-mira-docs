@@ -4,7 +4,6 @@
  */
 export const topNavigationOrder = [
   "docs",
-  "mira-docs-api",
   "blogs",
 ] as const;
 
