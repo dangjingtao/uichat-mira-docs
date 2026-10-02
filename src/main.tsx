@@ -18,6 +18,7 @@ import "./tailwind.css";
 import "./styles.css";
 import "./release-download.css";
 import "./home.css";
+import "./mobile-landing.css";
 import "./blog-list.css";
 import "./markdown.css";
 import "./blog-detail.css";

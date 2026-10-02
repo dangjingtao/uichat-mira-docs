@@ -12,6 +12,11 @@ import {
   type MiraDocsStaticBuildOptions,
   type MiraDocsStaticRoute,
 } from "@uichat-mira/docs/vite";
+import {
+  mobileLandingFacts,
+  mobileLandingMeta,
+  mobileLandingPaths,
+} from "./src/content/mobile-landing";
 
 type StaticDoc = MiraDoc & {
   root: string;
@@ -300,12 +305,33 @@ function areaBody(
         `<li><a href="${docHref(doc.path, context)}">${miraDocsEscapeHtml(doc.title)}</a><p>${miraDocsEscapeHtml(doc.description)}</p></li>`,
     )
     .join("");
-  const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${miraDocsEscapeHtml(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}</ol></section></section></main>`;
+  const specialLinks =
+    root === mobileLandingMeta.root
+      ? `<li><a href="${docHref(mobileLandingMeta.path, context)}">${miraDocsEscapeHtml(mobileLandingMeta.title)}</a><p>${miraDocsEscapeHtml(mobileLandingMeta.description)}</p></li>`
+      : "";
+  const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>${miraDocsEscapeHtml(title)}</h1></div><section class="docs-sitemap-grid"><section class="area-overview-card"><ol>${links}${specialLinks}</ol></section></section></main>`;
   return `${staticSiteHeader(context)}<div class="docs-app seo-static-docs-app"><div class="docs-shell">${main}</div></div>`;
 }
 
 function homeBody(context: MiraDocsStaticBuildContext): string {
   const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
+  return `${staticSiteHeader(context)}${main}`;
+}
+
+function mobileLandingBody(context: MiraDocsStaticBuildContext): string {
+  const pathCards = mobileLandingPaths
+    .map(
+      (item) =>
+        `<article><span>${miraDocsEscapeHtml(item.eyebrow)}</span><h2>${miraDocsEscapeHtml(item.title)}</h2><p>${miraDocsEscapeHtml(item.description)}</p><code>${miraDocsEscapeHtml(item.endpoint)}</code></article>`,
+    )
+    .join("");
+  const facts = mobileLandingFacts
+    .map(
+      (item) =>
+        `<li><strong>${miraDocsEscapeHtml(item.title)}</strong><p>${miraDocsEscapeHtml(item.description)}</p></li>`,
+    )
+    .join("");
+  const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><span class="doc-eyebrow">MIRA MOBILE · PREVIEW</span><h1>Mira，跟你一起出门。</h1><p class="doc-lede">${miraDocsEscapeHtml(mobileLandingMeta.description)}</p></div><p><img src="${docHref("/images/product/mira-hero-desktop-mobile.svg", context)}" alt="Mira Desktop 与 Mobile 协同工作示意" /></p><section><h2>同一个 Mira，两种进入方式。</h2>${pathCards}</section><section><h2>现在已经跑起来的部分。</h2><ul>${facts}</ul></section><section><h2>不是把 Desktop 塞进一块更小的屏幕。</h2><p>手机更适合发起、继续、查看和确认；需要桌面环境和更重能力时，再连接 Desktop Host。</p></section><p><a href="https://github.com/uichat-mira/mira-mobile/releases">下载 Mira Mobile</a> · <a href="https://github.com/uichat-mira/mira-mobile">查看源码</a></p></main>`;
   return `${staticSiteHeader(context)}${main}`;
 }
 
@@ -419,6 +445,26 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
       jsonLd: websiteJsonLd(context, `/${root}`),
     });
   }
+
+  result.push({
+    path: mobileLandingMeta.path,
+    title: mobileLandingMeta.title,
+    description: mobileLandingMeta.description,
+    body: mobileLandingBody(context),
+    type: "website",
+    image: "/images/product/mira-hero-desktop-mobile.svg",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: mobileLandingMeta.title,
+      description: mobileLandingMeta.description,
+      url: miraDocsAbsoluteRouteUrl(
+        context.config.siteUrl || "",
+        context.base,
+        mobileLandingMeta.path,
+      ),
+    },
+  });
 
   for (const doc of docs) {
     const { previous, next } = siblingDocs(doc, docs);

@@ -42,7 +42,7 @@ const mobileReleasesUrl =
 const mobileReleasesPageUrl =
   "https://github.com/uichat-mira/mira-mobile/releases";
 const mobileR2DevBaseUrl = "https://assets.tomz.io/mira/mobile/dev/latest";
-const mobileProductUrl = `${import.meta.env.BASE_URL}mobile`;
+const mobileProductUrl = `${import.meta.env.BASE_URL}guide/about/mobile`;
 
 function formatVersion(value: string) {
   const version = value.trim();
