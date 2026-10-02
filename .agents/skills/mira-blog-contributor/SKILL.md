@@ -33,7 +33,7 @@ description: 作为 UIChat Mira 文档站/博客贡献者，把用户提供的�
 
 1. `dev` 分支的 `package.json`
 2. `dev` 分支 `src/App.tsx` 中 Markdown glob、frontmatter 解析、博客排序和作者解析相关代码
-3. `dev` 分支 `src/pages/mira-docs-api/guide/authoring.md`
+3. `dev` 分支 `src/content/blog-taxonomy.ts`
 4. 目标博客目录中至少一篇最近的现有文章
 
 如果说明文档与运行时代码冲突，以当前 `dev` 分支代码为准。
