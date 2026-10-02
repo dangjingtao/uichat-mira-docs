@@ -118,7 +118,7 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
 
           <figure className="home-product-shot">
             <img
-              src={`${appBase}images/guide/product/mira-hero-desktop-mobile.svg`}
+              src={`${appBase}images/product/mira-hero-desktop-mobile.svg`}
               alt="Mira Desktop 与 Mobile 协同示意"
             />
             <figcaption>Mira Desktop + Mobile · 产品关系示意</figcaption>
@@ -130,7 +130,7 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
         <div className="wrap">
           <div className="fair-work-desktop">
             <object
-              data={`${appBase}images/guide/product/mira-fair-work-statement.svg`}
+              data={`${appBase}images/product/mira-fair-work-statement.svg`}
               type="image/svg+xml"
               aria-label="Mira 反对 996。人不是资本的燃料。"
             >
@@ -142,7 +142,7 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
 
           <div className="fair-work-mobile">
             <object
-              data={`${appBase}images/guide/product/mira-fair-work-statement-mobile.svg`}
+              data={`${appBase}images/product/mira-fair-work-statement-mobile.svg`}
               type="image/svg+xml"
               aria-label="Mira 公平劳动声明"
             >

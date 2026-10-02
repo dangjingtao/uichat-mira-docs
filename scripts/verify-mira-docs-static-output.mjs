@@ -116,6 +116,16 @@ for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath]) {
   if (!existsSync(file)) failures.push(`缺少构建产物: ${file}`);
 }
 
+const requiredHomeAssets = [
+  "images/product/mira-hero-desktop-mobile.svg",
+  "images/product/mira-fair-work-statement.svg",
+  "images/product/mira-fair-work-statement-mobile.svg",
+];
+for (const asset of requiredHomeAssets) {
+  const file = resolve(distRoot, asset);
+  if (!existsSync(file)) failures.push(`首页静态资源缺失: ${asset}`);
+}
+
 if (existsSync(indexPath)) {
   const html = readFileSync(indexPath, "utf8");
   if (!html.includes(`<link rel="canonical" href="${siteUrl}${expectedBase}/">`)) {
