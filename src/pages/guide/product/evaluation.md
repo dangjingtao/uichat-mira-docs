@@ -43,7 +43,7 @@ Knowledge Base Chunk
 
 它不承担 Run 的 LLM Judge。Faithfulness、Relevance 和 Completeness 当前由本地词项重合启发式计算。
 
-模型配置见：[模型设置](/docs/configuration/model-settings)。
+模型配置见：[模型设置](/guide/configuration/model-settings)。
 
 ## 产品入口
 
@@ -182,7 +182,7 @@ Dataset 中至少需要：
 - 至少一条非空 question；
 - 无 validation error。
 
-详细格式见：[Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)。
+详细格式见：[Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)。
 
 ## 校验结果
 
@@ -308,7 +308,7 @@ Run failed
 
 当前没有 RAGAS、LLM Judge、人工评分、统计显著性或 Token / Cost 指标。
 
-完整算法见：[Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)。
+完整算法见：[Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)。
 
 ## 评测中心
 
@@ -388,8 +388,8 @@ Mira 当前 `mrr` 不是标准 rank MRR，不能与外部基准直接比较。
 
 ## 相关文档
 
-- [模型设置](/docs/configuration/model-settings)
-- [知识库与 RAG](/docs/product/knowledge)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
-- [当前实现快照](/docs/status/current)
+- [模型设置](/guide/configuration/model-settings)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)
+- [当前实现快照](/guide/status/current)

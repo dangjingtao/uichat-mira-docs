@@ -183,7 +183,7 @@ Integration Connection
 
 ## 相关文档
 
-- [微应用中心](/docs/product/microapps)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
-- [MCP](/docs/configuration/mcp)
-- [可控自主原则](/docs/philosophy/controlled-agency)
+- [微应用中心](/guide/product/microapps)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)
+- [MCP](/guide/configuration/mcp)
+- [可控自主原则](/guide/philosophy/controlled-agency)

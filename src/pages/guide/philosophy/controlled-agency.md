@@ -147,7 +147,7 @@ Mira 当前不实现：
 
 ## 相关文档
 
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [Agent 策略](/docs/architecture/agent-strategy)
-- [证据优先原则](/docs/philosophy/evidence)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [Agent 策略](/api/architecture/agent-strategy)
+- [证据优先原则](/guide/philosophy/evidence)

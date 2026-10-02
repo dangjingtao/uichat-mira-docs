@@ -148,7 +148,7 @@ Artifact 是 Evidence 的一种，但还需要独立验证：
 
 ## 相关文档
 
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [知识库与评测](/docs/product/knowledge)
-- [当前实现快照](/docs/status/current)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [知识库与评测](/guide/product/knowledge)
+- [当前实现快照](/guide/status/current)

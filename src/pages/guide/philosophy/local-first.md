@@ -124,7 +124,7 @@ Local-first 带来以下工程责任：
 
 ## 相关文档
 
-- [桌面运行时](/docs/architecture/runtime)
-- [Provider 与上下文](/docs/architecture/provider-context)
-- [MCP](/docs/configuration/mcp)
-- [企业集成](/docs/product/enterprise-integrations)
+- [桌面运行时](/api/architecture/runtime)
+- [Provider 与上下文](/api/architecture/provider-context)
+- [MCP](/guide/configuration/mcp)
+- [企业集成](/guide/product/enterprise-integrations)
