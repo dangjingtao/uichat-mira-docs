@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 
-const statusPath = resolve(process.cwd(), "src/pages/docs/status/current.md");
+const statusPath = resolve(process.cwd(), "src/pages/guide/status/current.md");
 const sourcePackagePath = resolve(
   process.cwd(),
   process.env.MIRA_SOURCE_PACKAGE || ".source/uichat-mira/package.json",

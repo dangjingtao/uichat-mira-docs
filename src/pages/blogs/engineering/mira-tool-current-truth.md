@@ -204,8 +204,8 @@ Invocation completed
 
 相关说明：
 
-- [工具工作台](/docs/configuration/tools)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [MCP](/docs/configuration/mcp)
-- [当前实现快照](/docs/status/current)
+- [工具工作台](/guide/configuration/tools)
+- [Harness 与工具边界](/api/architecture/harness)
+- [MCP](/guide/configuration/mcp)
+- [当前实现快照](/guide/status/current)
 - [Mira Agent 现在到底是什么](/blogs/engineering/mira-agent-current-truth)

@@ -130,9 +130,9 @@ Settled recoverable contract 是：某次工具失败可以进入 Planner recove
 
 相关说明：
 
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Agent 策略](/docs/architecture/agent-strategy)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [工具工作台](/docs/configuration/tools)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Agent 策略](/api/architecture/agent-strategy)
+- [Harness 与工具边界](/api/architecture/harness)
+- [工具工作台](/guide/configuration/tools)
 - [Mira 的工具现在到底是什么](/blogs/engineering/mira-tool-current-truth)
-- [可控的自主](/docs/philosophy/controlled-agency)
+- [可控的自主](/guide/philosophy/controlled-agency)

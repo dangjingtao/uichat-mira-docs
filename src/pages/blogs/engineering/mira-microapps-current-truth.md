@@ -176,8 +176,8 @@ News Hub 通过 `news_search`，Mail Center 通过 `mail_query`，GitHub 通过�
 
 相关说明：
 
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
-- [产品地图](/docs/about/product-map)
-- [当前实现快照](/docs/status/current)
-- [Harness 与工具边界](/docs/architecture/harness)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)
+- [产品地图](/guide/about/product-map)
+- [当前实现快照](/guide/status/current)
+- [Harness 与工具边界](/api/architecture/harness)
 - [Mira 的工具现在到底是什么](/blogs/engineering/mira-tool-current-truth)

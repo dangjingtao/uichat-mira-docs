@@ -26,9 +26,8 @@ function dataString(data, key) {
   return String(value);
 }
 
-function routeFor(sourcePath, doc) {
-  const path = doc.path.replace(/^\/docs(?=\/|$)/, "");
-  return path || "/";
+function routeFor(_sourcePath, doc) {
+  return doc.path || "/";
 }
 
 function routeFile(route) {
@@ -79,9 +78,34 @@ for (const file of markdownFiles(pagesRoot)) {
   docsByRoute.set(route, doc);
 }
 
+const legacyDocRoots = [
+  "/about",
+  "/philosophy",
+  "/product",
+  "/configuration",
+  "/status",
+  "/architecture",
+  "/engineering",
+];
+visibleRoutes.add("/guide");
+visibleRoutes.add("/api");
+
+const legacyHrefPattern =
+  /href="(?:https:\/\/mira\.tomz\.io)?\/(?:docs\/)?(?:about|philosophy|product|configuration|status|architecture|engineering)(?:\/|")/;
+
 for (const route of visibleRoutes) {
+  if (legacyDocRoots.some((root) => route === root || route.startsWith(`${root}/`))) {
+    failures.push(`仍生成旧文档路由: ${route}`);
+  }
   const file = routeFile(route);
-  if (!existsSync(file)) failures.push(`缺少静态页面: ${route} -> ${file}`);
+  if (!existsSync(file)) {
+    failures.push(`缺少静态页面: ${route} -> ${file}`);
+    continue;
+  }
+  const html = readFileSync(file, "utf8");
+  if (legacyHrefPattern.test(html)) {
+    failures.push(`静态页面仍包含旧文档链接: ${route}`);
+  }
 }
 
 const indexPath = resolve(distRoot, "index.html");
@@ -90,6 +114,16 @@ const sitemapPath = resolve(distRoot, "sitemap.xml");
 const robotsPath = resolve(distRoot, "robots.txt");
 for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath]) {
   if (!existsSync(file)) failures.push(`缺少构建产物: ${file}`);
+}
+
+const requiredHomeAssets = [
+  "images/product/mira-hero-desktop-mobile.svg",
+  "images/product/mira-fair-work-statement.svg",
+  "images/product/mira-fair-work-statement-mobile.svg",
+];
+for (const asset of requiredHomeAssets) {
+  const file = resolve(distRoot, asset);
+  if (!existsSync(file)) failures.push(`首页静态资源缺失: ${asset}`);
 }
 
 if (existsSync(indexPath)) {
@@ -111,6 +145,12 @@ if (existsSync(indexPath)) {
   }
   if (html.includes(">MiraDocs</a>") || html.includes("/mira-docs-api")) {
     failures.push("顶部导航仍残留 MiraDocs 入口");
+  }
+  if (!html.includes(">指南</a>") || !html.includes(">API</a>")) {
+    failures.push("顶部导航缺少指南或 API");
+  }
+  if (html.includes(">文档</a>")) {
+    failures.push("顶部导航仍残留旧文档入口");
   }
 }
 
