@@ -3,7 +3,7 @@ title: Mira Mobile
 description: 随身使用 Mira：直接连接自己的模型，或连接桌面端 Mira。
 group: 认识 Mira
 order: 4
-path: /mobile
+path: /guide/about/mobile
 type: page
 ---
 

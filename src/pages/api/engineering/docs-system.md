@@ -27,7 +27,7 @@ order: 15
 
 ### tomz.io 公共文档
 
-`uichat-mira-docs` 中的 `src/pages/docs/` 用于：
+`uichat-mira-docs` 中的 `src/pages/guide/` 与 `src/pages/api/` 用于：
 
 - 解释当前产品定义；
 - 提供用户操作说明；
@@ -181,7 +181,7 @@ Frontmatter 不替代正文中的状态说明。对于 Partial、Experimental �
 
 ## 相关文档
 
-- [Sitemap](/docs/sitemap)
-- [当前实现快照](/docs/status/current)
-- [下一段路](/docs/status/roadmap)
-- [开发与验证](/docs/engineering/development)
+- [Sitemap](/guide/sitemap)
+- [当前实现快照](/guide/status/current)
+- [下一段路](/guide/status/roadmap)
+- [开发与验证](/api/engineering/development)

@@ -17,7 +17,7 @@ UIChat Mira 是一个**本地优先、桌面优先、多 Provider 的个人 AI �
 
 ## 文档范围
 
-本页定义 UIChat Mira 当前的产品定位和一级能力边界。具体运行时、工具合同与功能状态以对应架构页和[当前实现快照](/docs/status/current)为准。
+本页定义 UIChat Mira 当前的产品定位和一级能力边界。具体运行时、工具合同与功能状态以对应架构页和[当前实现快照](/guide/status/current)为准。
 
 本页不用于记录：
 
@@ -110,12 +110,12 @@ Mira 当前不是：
 → 验证与失败语义
 ```
 
-当前事实见：[当前实现快照](/docs/status/current)。
+当前事实见：[当前实现快照](/guide/status/current)。
 
 ## 相关文档
 
-- [产品地图](/docs/about/product-map)
-- [桌面运行时](/docs/architecture/runtime)
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [产品地图](/guide/about/product-map)
+- [桌面运行时](/api/architecture/runtime)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)
