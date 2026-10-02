@@ -168,8 +168,8 @@ MicroApps Hub 当前不保证：
 
 ## 相关文档
 
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
-- [企业集成](/docs/product/enterprise-integrations)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [工具工作台](/docs/configuration/tools)
-- [当前实现快照](/docs/status/current)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)
+- [企业集成](/guide/product/enterprise-integrations)
+- [Harness 与工具边界](/api/architecture/harness)
+- [工具工作台](/guide/configuration/tools)
+- [当前实现快照](/guide/status/current)

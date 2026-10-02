@@ -148,7 +148,7 @@ rerank
 
 `imageGeneration` 与 `voice` 存在于全局角色 schema，但 Image Generation Studio 和 TTS Studio 当前主要使用独立 Provider 配置。
 
-详细步骤见：[模型设置](/docs/configuration/model-settings)。架构说明见：[Provider 与模型运行时](/docs/architecture/provider-context)。
+详细步骤见：[模型设置](/guide/configuration/model-settings)。架构说明见：[Provider 与模型运行时](/api/architecture/provider-context)。
 
 ## Knowledge Base 与 RAG 当前快照
 
@@ -208,7 +208,7 @@ Knowledge Base
 - 一个 Thread 当前只绑定一个 Knowledge Base；
 - Knowledge Base 不是长期记忆，也不是任意文档解析器。
 
-详细操作见：[知识库与 RAG](/docs/product/knowledge)。架构说明见：[Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)。
+详细操作见：[知识库与 RAG](/guide/product/knowledge)。架构说明见：[Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)。
 
 ## Evaluation 当前快照
 
@@ -259,7 +259,7 @@ Evaluation Package
 - Center 无分页、Compare、Baseline、Retry、Cancel 或 Release Gate；
 - 指标适合当前实例的回归和定位，不是标准研究基准或专业正确性证明。
 
-详细操作见：[评测工作台](/docs/product/evaluation)。架构与算法见：[Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)。
+详细操作见：[评测工作台](/guide/product/evaluation)。架构与算法见：[Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)。
 
 ## Agent 当前运行时
 
@@ -490,10 +490,10 @@ Settled recoverable contract 是：恢复预算耗尽后生成 guarded answer，
 
 延伸阅读：
 
-- [模型设置](/docs/configuration/model-settings)
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [知识库与 RAG](/docs/product/knowledge)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [评测工作台](/docs/product/evaluation)
-- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [模型设置](/guide/configuration/model-settings)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [评测工作台](/guide/product/evaluation)
+- [Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)

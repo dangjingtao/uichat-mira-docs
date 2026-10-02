@@ -11,7 +11,7 @@ order: 18
 
 本页记录从当前代码和已知缺陷出发的近期工程方向。
 
-这里的内容属于计划和优先级，不代表已经交付。当前能力见：[当前实现快照](/docs/status/current)。
+这里的内容属于计划和优先级，不代表已经交付。当前能力见：[当前实现快照](/guide/status/current)。
 
 ## 当前阶段
 
@@ -135,8 +135,8 @@ order: 18
 
 ## 相关文档
 
-- [当前实现快照](/docs/status/current)
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
-- [开发与验证](/docs/engineering/development)
+- [当前实现快照](/guide/status/current)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)
+- [开发与验证](/api/engineering/development)

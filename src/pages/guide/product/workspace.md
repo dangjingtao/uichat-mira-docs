@@ -109,7 +109,7 @@ Agent Thread 必须绑定 Workspace。没有手工选择时，Mira 会使用默�
 
 Knowledge Base 在 Agent 模式下不再走独立 RAG 页面路径，而作为 Agent 可使用的检索输入。
 
-Agent 的审批和恢复语义见：[Agent 当前运行真相](/docs/architecture/agent)。
+Agent 的审批和恢复语义见：[Agent 当前运行真相](/api/architecture/agent)。
 
 ## Role 与上下文摘要
 
@@ -298,9 +298,9 @@ ON DELETE CASCADE
 
 ## 相关文档
 
-- [Chat 与 UChat Runtime](/docs/architecture/chat-runtime)
-- [模型设置](/docs/configuration/model-settings)
-- [知识库与 RAG](/docs/product/knowledge)
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [Chat 与 UChat Runtime](/api/architecture/chat-runtime)
+- [模型设置](/guide/configuration/model-settings)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)

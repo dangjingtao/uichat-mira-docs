@@ -293,9 +293,9 @@ imageEnabled = true
 
 ## 相关文档
 
-- [Role Runtime 与请求上下文](/docs/architecture/role-runtime)
-- [对话工作区](/docs/product/workspace)
-- [Chat 与 UChat Runtime](/docs/architecture/chat-runtime)
-- [模型设置](/docs/configuration/model-settings)
-- [知识库与 RAG](/docs/product/knowledge)
-- [Agent 当前运行真相](/docs/architecture/agent)
+- [Role Runtime 与请求上下文](/api/architecture/role-runtime)
+- [对话工作区](/guide/product/workspace)
+- [Chat 与 UChat Runtime](/api/architecture/chat-runtime)
+- [模型设置](/guide/configuration/model-settings)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Agent 当前运行真相](/api/architecture/agent)

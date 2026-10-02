@@ -51,7 +51,7 @@ embedding role 已绑定
 
 从后端索引链看，生成向量的直接依赖是 Embedding；主模型用于后续 Chat 和 RAG 生成。这两层不要混淆。
 
-模型设置见：[模型设置](/docs/configuration/model-settings)。
+模型设置见：[模型设置](/guide/configuration/model-settings)。
 
 ## 完成标准
 
@@ -451,9 +451,9 @@ Mira 当前没有承诺：
 
 ## 相关文档
 
-- [模型设置](/docs/configuration/model-settings)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [对话工作区](/docs/product/workspace)
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [证据优先原则](/docs/philosophy/evidence)
-- [当前实现快照](/docs/status/current)
+- [模型设置](/guide/configuration/model-settings)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [对话工作区](/guide/product/workspace)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [证据优先原则](/guide/philosophy/evidence)
+- [当前实现快照](/guide/status/current)
