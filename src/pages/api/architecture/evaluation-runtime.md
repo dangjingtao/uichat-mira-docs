@@ -454,8 +454,8 @@ Evaluation 当前不是：
 
 ## 相关文档
 
-- [评测工作台](/docs/product/evaluation)
-- [知识库与 RAG](/docs/product/knowledge)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [模型设置](/docs/configuration/model-settings)
-- [当前实现快照](/docs/status/current)
+- [评测工作台](/guide/product/evaluation)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [模型设置](/guide/configuration/model-settings)
+- [当前实现快照](/guide/status/current)

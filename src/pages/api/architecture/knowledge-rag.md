@@ -19,7 +19,7 @@ order: 14
 - Chat、Agent 和企业集成怎样复用 RAG；
 - 当前有哪些实现偏差。
 
-产品操作见：[知识库与 RAG](/docs/product/knowledge)。
+产品操作见：[知识库与 RAG](/guide/product/knowledge)。
 
 ## 当前结论
 
@@ -409,9 +409,9 @@ Knowledge Base 与 RAG Runtime 当前不是：
 
 ## 相关文档
 
-- [知识库与 RAG](/docs/product/knowledge)
-- [模型设置](/docs/configuration/model-settings)
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [证据优先原则](/docs/philosophy/evidence)
-- [当前实现快照](/docs/status/current)
+- [知识库与 RAG](/guide/product/knowledge)
+- [模型设置](/guide/configuration/model-settings)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [证据优先原则](/guide/philosophy/evidence)
+- [当前实现快照](/guide/status/current)

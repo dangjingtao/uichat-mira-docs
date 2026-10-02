@@ -431,9 +431,9 @@ Chat Runtime 当前没有承诺：
 
 ## 相关文档
 
-- [对话工作区](/docs/product/workspace)
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [对话工作区](/guide/product/workspace)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)

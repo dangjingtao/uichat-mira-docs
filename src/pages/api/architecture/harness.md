@@ -197,6 +197,6 @@ Evidence 将这些事实累计到 AgentRun，再由 Main Planner 判断全局目
 
 进一步阅读：
 
-- [工具工作台](/docs/configuration/tools)
-- [MCP](/docs/configuration/mcp)
-- [Mira 的工具现在到底是什么](/blogs/engineering/mira-tool-current-truth)
+- [工具工作台](/guide/configuration/tools)
+- [MCP](/guide/configuration/mcp)
+- [Mira 的工具现在到底是什么](/blogs/api/engineering/mira-tool-current-truth)
