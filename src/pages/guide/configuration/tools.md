@@ -158,4 +158,4 @@ Tool Result
 
 - [Harness 与工具边界](/api/architecture/harness)
 - [MCP](/guide/configuration/mcp)
-- [Mira 的工具现在到底是什么](/blogs/api/engineering/mira-tool-current-truth)
+- [Mira 的工具现在到底是什么](/blogs/engineering/mira-tool-current-truth)
