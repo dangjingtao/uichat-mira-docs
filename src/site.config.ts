@@ -3,7 +3,8 @@
  * unlisted directories are appended in their generated order.
  */
 export const topNavigationOrder = [
-  "docs",
+  "guide",
+  "api",
   "blogs",
 ] as const;
 
@@ -14,5 +15,12 @@ export const seo = {
 } as const;
 
 export const directoryLabels: Record<string, string> = {
+  about: "认识 Mira",
+  philosophy: "产品哲学",
+  product: "产品能力",
+  configuration: "配置",
+  status: "现状与方向",
+  architecture: "架构",
+  engineering: "工程",
   视觉: "视觉",
 };

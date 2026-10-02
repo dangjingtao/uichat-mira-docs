@@ -123,7 +123,8 @@ function pageNavigation(
 function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
   const links = [
     ["首页", "/"],
-    ["文档", "/about/origin"],
+    ["指南", "/guide"],
+    ["API", "/api"],
     ["博客", "/blogs"],
   ] as const;
   const navigation = links
@@ -147,11 +148,20 @@ function staticNavigationDirectory(doc: StaticDoc): string {
 }
 
 function staticDirectoryTitle(directory: string): string {
+  const labels: Record<string, string> = {
+    about: "认识 Mira",
+    philosophy: "产品哲学",
+    product: "产品能力",
+    configuration: "配置",
+    status: "现状与方向",
+    architecture: "架构",
+    engineering: "工程",
+  };
   if (!directory) return "文档";
   return directory
     .split("/")
     .filter(Boolean)
-    .map((part) => part.replace(/[-_]+/g, " "))
+    .map((part) => labels[part] || part.replace(/[-_]+/g, " "))
     .join(" / ");
 }
 
@@ -174,11 +184,15 @@ function staticDocNav(
     group.push(candidate);
     groups.set(directory, group);
   }
-  const rootPath = logicalRoot === "docs" ? "/" : `/${logicalRoot}`;
+  const rootPath = `/${logicalRoot}`;
   const rootTitle =
-    logicalRoot === VISUAL_CONTENT_ROOT
-      ? "视觉"
-      : scoped
+    logicalRoot === "guide"
+      ? "指南"
+      : logicalRoot === "api"
+        ? "API"
+        : logicalRoot === VISUAL_CONTENT_ROOT
+          ? "视觉"
+          : scoped
           .filter((candidate) => candidate.root === logicalRoot)
           .map((candidate) => dataString(candidate.data, "nav"))
           .find(Boolean) ||
@@ -270,11 +284,15 @@ function areaBody(
   context: MiraDocsStaticBuildContext,
 ): string {
   const title =
-    root === "blogs"
-      ? "博客"
-      : root === VISUAL_CONTENT_ROOT
-        ? "视觉"
-        : docs.find((doc: StaticDoc) => doc.root === root)?.title || root;
+    root === "guide"
+      ? "指南"
+      : root === "api"
+        ? "API"
+        : root === "blogs"
+          ? "博客"
+          : root === VISUAL_CONTENT_ROOT
+            ? "视觉"
+            : docs.find((doc: StaticDoc) => doc.root === root)?.title || root;
   const links = docs
     .filter((doc: StaticDoc) => logicalStaticAreaKey(doc.root) === root)
     .map(
@@ -381,11 +399,17 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
     ...new Set(docs.map((doc: StaticDoc) => logicalStaticAreaKey(doc.root))),
   ];
   for (const root of roots) {
-    if (root === "docs") continue;
     const rootDocs = docs.filter(
       (doc: StaticDoc) => logicalStaticAreaKey(doc.root) === root,
     );
-    const title = root === "blogs" ? "博客" : rootDocs[0]?.title || root;
+    const title =
+      root === "guide"
+        ? "指南"
+        : root === "api"
+          ? "API"
+          : root === "blogs"
+            ? "博客"
+            : rootDocs[0]?.title || root;
     result.push({
       path: `/${root}`,
       title,

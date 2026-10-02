@@ -234,7 +234,7 @@ jobs:
           grep -Fq "UIChat Mira" /tmp/deployment-home.html
           grep -Fq "UIChat Mira" /tmp/production-home.html
 
-          DOC_PATH="/about/origin/"
+          DOC_PATH="/guide/about/origin/"
           fetch "${DEPLOYMENT_URL}${DOC_PATH}" /tmp/deployment-doc.html
           fetch "${PRODUCTION_URL}${DOC_PATH}" /tmp/production-doc.html
           grep -Fq "UIChat Mira 是什么" /tmp/deployment-doc.html

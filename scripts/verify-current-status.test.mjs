@@ -25,7 +25,7 @@ function todayFixture() {
 
 function runVerifier({ sourceVersion = "0.100.1", actualVersion = "0.101.0", policy = "" } = {}) {
   const root = mkdtempSync(join(tmpdir(), "mira-current-status-"));
-  const statusPath = join(root, "src/pages/docs/status/current.md");
+  const statusPath = join(root, "src/pages/guide/status/current.md");
   const sourcePackagePath = join(root, ".source/uichat-mira/package.json");
   const { iso, zh } = todayFixture();
 
