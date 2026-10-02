@@ -12,7 +12,6 @@ import {
   mobileLandingPaths,
 } from "../content/mobile-landing";
 
-const appBase = import.meta.env.BASE_URL;
 const mobileRepoUrl = "https://github.com/uichat-mira/mira-mobile";
 const mobileReleasesUrl = "https://github.com/uichat-mira/mira-mobile/releases";
 
