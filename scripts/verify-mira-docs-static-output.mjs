@@ -87,12 +87,25 @@ const legacyDocRoots = [
   "/architecture",
   "/engineering",
 ];
+visibleRoutes.add("/guide");
+visibleRoutes.add("/api");
+
+const legacyHrefPattern =
+  /href="(?:https:\/\/mira\.tomz\.io)?\/(?:docs\/)?(?:about|philosophy|product|configuration|status|architecture|engineering)(?:\/|")/;
+
 for (const route of visibleRoutes) {
   if (legacyDocRoots.some((root) => route === root || route.startsWith(`${root}/`))) {
     failures.push(`仍生成旧文档路由: ${route}`);
   }
   const file = routeFile(route);
-  if (!existsSync(file)) failures.push(`缺少静态页面: ${route} -> ${file}`);
+  if (!existsSync(file)) {
+    failures.push(`缺少静态页面: ${route} -> ${file}`);
+    continue;
+  }
+  const html = readFileSync(file, "utf8");
+  if (legacyHrefPattern.test(html)) {
+    failures.push(`静态页面仍包含旧文档链接: ${route}`);
+  }
 }
 
 const indexPath = resolve(distRoot, "index.html");

@@ -464,16 +464,16 @@ const navItems: LinkItem[] = siteAreas
   .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
   .map((area) => ({ label: area.title, href: area.href }))
   .sort((a, b) => {
-  const keyFor = (item: LinkItem) =>
-    item.href.replace(appBase, "").split("/")[0];
-  const rank = (item: LinkItem) => {
+    const keyFor = (item: LinkItem) =>
+      item.href.replace(appBase, "").split("/")[0];
+    const rank = (item: LinkItem) => {
     const index = topNavigationOrder.indexOf(
       keyFor(item) as (typeof topNavigationOrder)[number],
     );
-    return index === -1 ? topNavigationOrder.length : index;
-  };
-  return rank(a) - rank(b);
-});
+      return index === -1 ? topNavigationOrder.length : index;
+    };
+    return rank(a) - rank(b);
+  });
 
 function Footer({ className = "" }: { className?: string }) {
   return (

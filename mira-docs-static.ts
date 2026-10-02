@@ -399,11 +399,17 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
     ...new Set(docs.map((doc: StaticDoc) => logicalStaticAreaKey(doc.root))),
   ];
   for (const root of roots) {
-    if (root === "docs") continue;
     const rootDocs = docs.filter(
       (doc: StaticDoc) => logicalStaticAreaKey(doc.root) === root,
     );
-    const title = root === "blogs" ? "博客" : rootDocs[0]?.title || root;
+    const title =
+      root === "guide"
+        ? "指南"
+        : root === "api"
+          ? "API"
+          : root === "blogs"
+            ? "博客"
+            : rootDocs[0]?.title || root;
     result.push({
       path: `/${root}`,
       title,
