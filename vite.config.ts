@@ -32,10 +32,7 @@ export default defineConfig(({ mode }) => {
         },
         staticRoutes: seoConfig.enabled ? miraDocsStaticBuild : false,
         exclude: (sourcePath) => /(^|\/)README\.md$/i.test(sourcePath),
-        route: (_sourcePath, doc) => {
-          const path = doc.path.replace(/^\/docs(?=\/|$)/, "");
-          return path || "/";
-        },
+        route: (_sourcePath, doc) => doc.path || "/",
       }),
       blogTaxonomyCheck(),
       react(),

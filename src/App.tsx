@@ -51,12 +51,6 @@ import {
 import HomePage from "./pages/HomePage";
 
 type LinkItem = { label: string; href: string };
-type DocSection = {
-  key: string;
-  title: string;
-  description: string;
-  docs: Doc[];
-};
 type SiteArea = {
   key: string;
   title: string;
@@ -86,15 +80,6 @@ function decodedPathname(path: string) {
   }
 }
 
-const sectionInfo: Record<string, { key: string; description: string }> = {
-  "认识 Mira": { key: "about", description: "品牌、作者与产品全貌" },
-  产品哲学: { key: "philosophy", description: "我们相信什么，又刻意拒绝什么" },
-  产品能力: { key: "product", description: "用户真正能够使用的工作空间" },
-  架构: { key: "architecture", description: "运行时、Agent 与能力边界" },
-  工程: { key: "engineering", description: "源码、文档与构建系统" },
-  现状与方向: { key: "status", description: "代码事实与下一段路" },
-  导航: { key: "navigation", description: "全站阅读地图" },
-};
 function seedFromString(value: string) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -166,19 +151,14 @@ function resolveCoverSource(doc: Doc) {
   const fallbackSvg = generateOrbitCoverSvg(doc.path || doc.title);
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(fallbackSvg)}`;
 }
-const docsRootDocs = allDocs.filter((doc) => doc.root === "docs");
-const extraRootDocs = allDocs.filter((doc) => doc.root !== "docs");
 const siteAreaRoots = [
   ...new Set(
-    [
-      ...pageDirectories.filter((root) => root !== "docs"),
-      ...extraRootDocs.map((doc) => doc.root),
-    ].map(logicalSiteAreaKey),
+    [...pageDirectories, ...allDocs.map((doc) => doc.root)].map(logicalSiteAreaKey),
   ),
 ];
 const siteAreas: SiteArea[] = siteAreaRoots
   .map((root) => {
-    const docs = extraRootDocs
+    const docs = allDocs
       .filter((doc) => logicalSiteAreaKey(doc.root) === root)
       .sort(compareDocs);
     const first = docs.find((doc) => doc.root === root) ?? docs[0];
@@ -186,14 +166,18 @@ const siteAreas: SiteArea[] = siteAreaRoots
     return {
       key: root,
       title:
-        root === VISUAL_CONTENT_ROOT
-          ? "视觉"
-          : first?.nav ||
-            (root === "blogs"
-              ? "博客"
-              : root
-                  .replace(/[-_]+/g, " ")
-                  .replace(/\b\w/g, (letter) => letter.toUpperCase())),
+        root === "guide"
+          ? "指南"
+          : root === "api"
+            ? "API"
+            : root === VISUAL_CONTENT_ROOT
+              ? "视觉"
+              : first?.nav ||
+                (root === "blogs"
+                  ? "博客"
+                  : root
+                      .replace(/[-_]+/g, " ")
+                      .replace(/\b\w/g, (letter) => letter.toUpperCase())),
       description: first?.description || "",
       docs,
       path,
@@ -201,20 +185,8 @@ const siteAreas: SiteArea[] = siteAreaRoots
     };
   })
   .filter((area) => area.docs.length > 0);
-const docSections: DocSection[] = Object.entries(sectionInfo)
-  .map(([title, info]) => ({
-    key: info.key,
-    title,
-    description: info.description,
-    docs: docsRootDocs.filter((doc) => doc.group === title),
-  }))
-  .filter((section) => section.docs.length);
 const articleDocs = allDocs.filter((doc) => doc.group !== "导航");
-const nonEmptySiteAreas = siteAreas.filter((area) => area.docs.length > 0);
-const visibleSections = [
-  ...docSections.filter((section) => section.key !== "navigation"),
-  ...nonEmptySiteAreas,
-];
+const visibleSections = siteAreas.filter((area) => area.docs.length > 0);
 const sitemapData: SitemapGalaxyData = {
   root: "网站地图",
   sections: visibleSections.map((section) => ({
@@ -239,7 +211,7 @@ type ContextGraphNode = {
 const contextGraphNodes: ContextGraphNode[] = [{
   label: "网站地图",
   kind: "section",
-  href: "/sitemap",
+  href: "/guide/sitemap",
   parent: -1,
 }];
 visibleSections.forEach((section) => {
@@ -247,7 +219,7 @@ visibleSections.forEach((section) => {
   contextGraphNodes.push({
     label: section.title,
     kind: "section",
-    href: section.docs[0]?.path || "/sitemap",
+    href: section.docs[0]?.path || "/guide/sitemap",
     parent: 0,
   });
   section.docs.slice(0, 2).forEach((doc) => {
@@ -281,7 +253,7 @@ const defaultPageTitle = "本地优先的多模型智能体";
 
 function getPageTitle(pathname: string) {
   if (pathname === "/") return defaultPageTitle;
-  if (pathname === "/sitemap") return "站点地图";
+  if (pathname === "/guide/sitemap") return "站点地图";
 
   const doc = allDocs.find((item) => item.path === pathname);
   if (doc) return doc.title;
@@ -488,16 +460,12 @@ function RenderedMarkdown({ html, className = "markdown" }: { html: string; clas
   return <div ref={containerRef} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-const navItems: LinkItem[] = [
-  { label: "文档", href: docHref("/about/origin") },
-  ...siteAreas
-    .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
-    .map((area) => ({ label: area.title, href: area.href })),
-].sort((a, b) => {
+const navItems: LinkItem[] = siteAreas
+  .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
+  .map((area) => ({ label: area.title, href: area.href }))
+  .sort((a, b) => {
   const keyFor = (item: LinkItem) =>
-    item.label === "文档"
-      ? "docs"
-      : item.href.replace(appBase, "").split("/")[0];
+    item.href.replace(appBase, "").split("/")[0];
   const rank = (item: LinkItem) => {
     const index = topNavigationOrder.indexOf(
       keyFor(item) as (typeof topNavigationOrder)[number],
@@ -667,18 +635,12 @@ function SiteHeader({
   );
   const isActive = (item: LinkItem) => {
     const target = item.href.slice(Math.max(appBase.length - 1, 0));
-    if (item.label === "文档")
-      return (
-        location.pathname === "/sitemap" ||
-        allDocs.some(
-          (doc) => doc.root === "docs" && doc.path === location.pathname,
-        )
-      );
     return (
       location.pathname === target || location.pathname.startsWith(`${target}/`)
     );
   };
-  const showMobileDocShare = currentDoc?.root === "docs";
+  const showMobileDocShare =
+    currentDoc?.root === "guide" || currentDoc?.root === "api";
   return (
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
       <div className="wrap">
@@ -803,7 +765,7 @@ function NotFoundPage({ onSearch }: { onSearch: () => void }) {
             <button className="btn btn-secondary" type="button" onClick={onSearch}>
               搜索站内内容
             </button>
-            <Link className="not-found-doc-link" to="/about/origin">
+            <Link className="not-found-doc-link" to="/guide/about/origin">
               查看 Mira 文档 →
             </Link>
           </div>
@@ -991,7 +953,7 @@ function RoutedApp() {
           }
         />
         <Route element={<DocsLayout />}>
-          <Route path="/sitemap" element={<DocPage path="/sitemap" />} />
+          <Route path="/guide/sitemap" element={<DocPage path="/guide/sitemap" />} />
           {siteAreas.map((area) => (
             <Route
               key={area.key}
@@ -1000,7 +962,7 @@ function RoutedApp() {
             />
           ))}
           {allDocs
-            .filter((doc) => doc.path !== "/sitemap")
+            .filter((doc) => doc.path !== "/guide/sitemap")
             .map((doc) => (
               <Route
                 key={doc.path}
@@ -1027,32 +989,6 @@ export default function App() {
   return <RoutedApp />;
 }
 
-function DocNav({ current }: { current: string }) {
-  return (
-    <nav className="docnav">
-      <h5>文档目录</h5>
-      {docSections
-        .filter((section) => section.key !== "navigation")
-        .map((section) => (
-          <div className="docnav-group" key={section.key}>
-            <h5>{section.title}</h5>
-            <ul>
-              {section.docs.map((doc) => (
-                <li key={doc.path}>
-                  <Link
-                    className={current === doc.path ? "active" : ""}
-                    to={doc.path}
-                  >
-                    {doc.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-    </nav>
-  );
-}
 function directoryTitle(directory: string) {
   if (directoryLabels[directory]) return directoryLabels[directory];
   return directory
@@ -1264,7 +1200,8 @@ function MobileDocsBar({ currentDoc, tocOpen, onMenu, onToc }: { currentDoc?: Do
   </div>;
 }
 function MobileDocsDrawer({ area, current, onClose }: { area?: SiteArea; current: string; onClose: () => void }) {
-  return <div className="mobile-docs-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mobile-docs-drawer" aria-label="文档菜单"><div className="mobile-docs-drawer-head"><span>菜单</span><button type="button" onClick={onClose} aria-label="关闭菜单"><X size={18} aria-hidden="true" /></button></div>{area ? <AreaDocNav area={area} current={current} /> : <DocNav current={current} />}</aside></div>;
+  if (!area) return null;
+  return <div className="mobile-docs-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mobile-docs-drawer" aria-label="文档菜单"><div className="mobile-docs-drawer-head"><span>菜单</span><button type="button" onClick={onClose} aria-label="关闭菜单"><X size={18} aria-hidden="true" /></button></div><AreaDocNav area={area} current={current} /></aside></div>;
 }
 function MobilePageToc({ doc, onClose }: { doc: Doc; onClose: () => void }) {
   return <div className="mobile-page-toc" id="mobile-page-toc"><div className="mobile-page-toc-head"><span>页面导航</span><button type="button" onClick={onClose} aria-label="关闭页面导航"><X size={17} aria-hidden="true" /></button></div><ul>{doc.headings.map((heading) => <li key={heading.id}><a href={`#${heading.id}`} onClick={onClose}>{heading.text}</a></li>)}</ul></div>;
@@ -1333,12 +1270,9 @@ function DocsLayout() {
       {mobileMenuOpen && !isBlogArea ? <MobileDocsDrawer area={currentArea} current={location.pathname} onClose={() => setMobileMenuOpen(false)} /> : null}
       {mobileTocOpen && currentDoc && !isBlogArea ? <MobilePageToc doc={currentDoc} onClose={() => setMobileTocOpen(false)} /> : null}
       <div className={`docs-shell${isBlogArea ? " blog-shell" : ""}`}>
-        {!isBlogArea &&
-          (currentArea ? (
+        {!isBlogArea && currentArea ? (
           <AreaDocNav area={currentArea} current={location.pathname} />
-        ) : (
-          <DocNav current={location.pathname} />
-        ))}
+        ) : null}
         <main className={`doc-main${isBlogArea ? " blog-main" : ""}`}>
           <Outlet />
         </main>
@@ -1755,7 +1689,7 @@ function DocPage({ path }: { path: string }) {
         <ShareButton title={doc.title} text={doc.description} />
       </div>
       <RenderedMarkdown html={html} />
-      {path === "/sitemap" ? (
+      {path === "/guide/sitemap" ? (
         <DynamicSitemap />
       ) : (
         <div className="page-nav">
