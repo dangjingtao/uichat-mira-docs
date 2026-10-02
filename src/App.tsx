@@ -49,6 +49,8 @@ import {
   type BlogCategoryIconKey,
 } from "./content/blog-taxonomy";
 import HomePage from "./pages/HomePage";
+import MobileLandingPage from "./pages/MobileLandingPage";
+import { mobileLandingMeta } from "./content/mobile-landing";
 
 type LinkItem = { label: string; href: string };
 type SiteArea = {
@@ -640,7 +642,8 @@ function SiteHeader({
     );
   };
   const showMobileDocShare =
-    currentDoc?.root === "guide" || currentDoc?.root === "api";
+    currentDoc?.path !== mobileLandingMeta.path &&
+    (currentDoc?.root === "guide" || currentDoc?.root === "api");
   return (
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
       <div className="wrap">
@@ -952,6 +955,10 @@ function RoutedApp() {
             />
           }
         />
+        <Route
+          path={mobileLandingMeta.path}
+          element={<MobileLandingPage footer={<Footer />} />}
+        />
         <Route element={<DocsLayout />}>
           <Route path="/guide/sitemap" element={<DocPage path="/guide/sitemap" />} />
           {siteAreas.map((area) => (
@@ -962,7 +969,11 @@ function RoutedApp() {
             />
           ))}
           {allDocs
-            .filter((doc) => doc.path !== "/guide/sitemap")
+            .filter(
+              (doc) =>
+                doc.path !== "/guide/sitemap" &&
+                doc.path !== mobileLandingMeta.path,
+            )
             .map((doc) => (
               <Route
                 key={doc.path}
