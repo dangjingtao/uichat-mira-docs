@@ -130,8 +130,11 @@ if (!existsSync(mobileLandingPath)) {
   if (!html.includes("Mira，跟你一起出门。")) {
     failures.push("Mira Mobile landing page 静态页面缺少主标题");
   }
-  if (!html.includes("images/product/mira-hero-desktop-mobile.svg")) {
-    failures.push("Mira Mobile landing page 缺少产品协同视觉");
+  if (!html.includes('class="mobile-landing-phone"')) {
+    failures.push("Mira Mobile landing page 缺少手机界面视觉");
+  }
+  if (!html.includes("DESKTOP HOST CONNECTED")) {
+    failures.push("Mira Mobile landing page 缺少 Desktop Host 连接语义");
   }
 }
 
