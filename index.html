@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="supabase">
+<html lang="zh-CN" data-theme="claude">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,14 +14,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <title>UIChat Mira · 本地优先的个人 AI 工作台</title>
-  <script>
-    try {
-      const theme = localStorage.getItem("mira-color-theme");
-      if (["claude", "apple", "supabase"].includes(theme)) {
-        document.documentElement.dataset.theme = theme;
-      }
-    } catch {}
-  </script>
 </head>
 <body>
   <div id="root"></div>
