@@ -11,7 +11,7 @@ order: 13
 
 本页说明 Mira 如何从模型设置解析出一次真实模型调用。
 
-用户操作步骤见：[模型设置](/docs/configuration/model-settings)。
+用户操作步骤见：[模型设置](/guide/configuration/model-settings)。
 
 本页不负责：
 
@@ -366,7 +366,7 @@ Mira 当前没有承诺：
 
 ## 相关文档
 
-- [模型设置](/docs/configuration/model-settings)
-- [产品地图](/docs/about/product-map)
-- [当前实现快照](/docs/status/current)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [模型设置](/guide/configuration/model-settings)
+- [产品地图](/guide/about/product-map)
+- [当前实现快照](/guide/status/current)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)

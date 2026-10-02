@@ -183,8 +183,8 @@ Mira 当前不是一个所有应用都服从同一 Runtime 的「微应用操作
 
 相关说明：
 
-- [产品地图](/docs/about/product-map)
-- [当前实现快照](/docs/status/current)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [Mira Agent 当前运行真相](/docs/architecture/agent)
-- [Mira 的微应用现在到底是什么](/blogs/engineering/mira-microapps-current-truth)
+- [产品地图](/guide/about/product-map)
+- [当前实现快照](/guide/status/current)
+- [Harness 与工具边界](/api/architecture/harness)
+- [Mira Agent 当前运行真相](/api/architecture/agent)
+- [Mira 的微应用现在到底是什么](/blogs/api/engineering/mira-microapps-current-truth)

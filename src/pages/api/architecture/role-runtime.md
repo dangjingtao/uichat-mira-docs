@@ -383,9 +383,9 @@ Desktop 还有一份可本地化 starter builder，但当前没有实际调用�
 
 ## 相关文档
 
-- [角色工作台](/docs/product/roles-microapps)
-- [对话工作区](/docs/product/workspace)
-- [Chat 与 UChat Runtime](/docs/architecture/chat-runtime)
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [Agent 当前运行真相](/docs/architecture/agent)
+- [角色工作台](/guide/product/roles-microapps)
+- [对话工作区](/guide/product/workspace)
+- [Chat 与 UChat Runtime](/api/architecture/chat-runtime)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [Agent 当前运行真相](/api/architecture/agent)
