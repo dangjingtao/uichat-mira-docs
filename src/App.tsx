@@ -10,7 +10,6 @@ import { marked } from "marked";
 import type { SitemapGalaxyData } from "./components/SitemapGalaxy";
 import hljs from "highlight.js/lib/common";
 import {
-  ArrowUpRight,
   ChevronDown,
   Code2,
   Compass,
@@ -52,8 +51,6 @@ import {
 import HomePage from "./pages/HomePage";
 
 type LinkItem = { label: string; href: string };
-type ConfiguredNavItem = { label: string; href: string };
-type ConfiguredNavGroup = { label: string; items: ConfiguredNavItem[] };
 type ThemeName = "claude" | "apple" | "supabase";
 const themeOptions: { name: ThemeName; label: string }[] = [
   { name: "claude", label: "Claude" },
@@ -371,23 +368,6 @@ function getDocSignature(doc: Doc) {
     accentClassName: "",
   };
 }
-const configuredHeaderNav: ConfiguredNavGroup[] = [
-  {
-    label: "项目",
-    items: [
-      { label: "UIChat", href: "https://docs.uichat.tomz.io/" },
-      {
-        label: "open-proxy-apis",
-        href: "https://github.com/dangjingtao/open-proxy-apis",
-      },
-      {
-        label: "local-rerank",
-        href: "https://github.com/dangjingtao/local-rerank",
-      },
-      { label: "typora-r2", href: "https://github.com/dangjingtao/typora-r2" },
-    ],
-  },
-];
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => (
     {
@@ -665,17 +645,6 @@ function MobileHeaderPanel({
             {item.label}
           </Link>
         ))}
-        {configuredHeaderNav.map((group) => (
-          <div className="mobile-header-group" key={group.label}>
-            <strong>{group.label}</strong>
-            {group.items.map((item) => (
-              <a key={item.href} href={item.href} target="_blank" rel="noreferrer">
-                {item.label}
-                <ArrowUpRight size={13} aria-hidden="true" />
-              </a>
-            ))}
-          </div>
-        ))}
       </div>
       <div className="mobile-header-actions">
         <button type="button" onClick={onSearch}>搜索</button>
@@ -764,41 +733,6 @@ function SiteHeader({
               </li>
             );
           })}
-          {configuredHeaderNav.map((group) => (
-            <li
-              className={`menu-dropdown${openMenu === group.label ? " open" : ""}`}
-              key={group.label}
-              onMouseEnter={() => setOpenMenu(group.label)}
-              onMouseLeave={() => setOpenMenu(null)}
-            >
-              <button
-                type="button"
-                className="menu-dropdown-trigger"
-                aria-expanded={openMenu === group.label}
-                onClick={() =>
-                  setOpenMenu((value) =>
-                    value === group.label ? null : group.label,
-                  )
-                }
-              >
-                {group.label}
-                <ChevronDown size={14} aria-hidden="true" />
-              </button>
-              <div className="menu-dropdown-panel">
-                {group.items.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {item.label}
-                    <ArrowUpRight size={13} aria-hidden="true" />
-                  </a>
-                ))}
-              </div>
-            </li>
-          ))}
           <li
             className={`menu-dropdown${openMenu === "主题" ? " open" : ""}`}
             onMouseEnter={() => setOpenMenu("主题")}
