@@ -99,11 +99,10 @@ function docHref(path: string, context: MiraDocsStaticBuildContext): string {
   return `${basePath(context.base)}${path}`;
 }
 
-const MIRA_DOCS_AREA_KEY = "mira-docs-api";
 const VISUAL_CONTENT_ROOT = "design-md";
 const VISUAL_NAV_DIRECTORY = "视觉";
 function logicalStaticAreaKey(root: string): string {
-  return root === VISUAL_CONTENT_ROOT ? MIRA_DOCS_AREA_KEY : root;
+  return root;
 }
 
 function pageNavigation(
@@ -125,7 +124,6 @@ function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
   const links = [
     ["首页", "/"],
     ["文档", "/about/origin"],
-    ["MiraDocs", "/mira-docs-api"],
     ["博客", "/blogs"],
   ] as const;
   const navigation = links
@@ -178,8 +176,8 @@ function staticDocNav(
   }
   const rootPath = logicalRoot === "docs" ? "/" : `/${logicalRoot}`;
   const rootTitle =
-    logicalRoot === MIRA_DOCS_AREA_KEY
-      ? "MiraDocs"
+    logicalRoot === VISUAL_CONTENT_ROOT
+      ? "视觉"
       : scoped
           .filter((candidate) => candidate.root === logicalRoot)
           .map((candidate) => dataString(candidate.data, "nav"))
@@ -274,8 +272,8 @@ function areaBody(
   const title =
     root === "blogs"
       ? "博客"
-      : root === MIRA_DOCS_AREA_KEY
-        ? "MiraDocs"
+      : root === VISUAL_CONTENT_ROOT
+        ? "视觉"
         : docs.find((doc: StaticDoc) => doc.root === root)?.title || root;
   const links = docs
     .filter((doc: StaticDoc) => logicalStaticAreaKey(doc.root) === root)
@@ -290,12 +288,6 @@ function areaBody(
 
 function homeBody(context: MiraDocsStaticBuildContext): string {
   const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><h1>本地优先的多模型智能体</h1><p class="doc-lede">UIChat Mira 让对话、模型、角色、文件、知识与工具在同一个持续上下文中协同工作。</p></div></main>`;
-  return `${staticSiteHeader(context)}${main}`;
-}
-
-function visualRootRedirectBody(context: MiraDocsStaticBuildContext): string {
-  const target = docHref(`/${MIRA_DOCS_AREA_KEY}`, context);
-  const main = `<main class="doc-main seo-static-content"><div class="doc-not-found"><div class="doc-eyebrow">MIRADOCS · VISUAL</div><h1>视觉文档已归入 MiraDocs</h1><p>产品设计系统与主题参考仍保留原有文章地址，现在统一由 MiraDocs 导航承载。</p><a class="btn btn-primary" href="${target}">前往 MiraDocs</a></div><script>window.location.replace(${JSON.stringify(target)});</script></main>`;
   return `${staticSiteHeader(context)}${main}`;
 }
 
@@ -382,15 +374,6 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
       body: homeBody(context),
       type: "website",
       jsonLd: websiteJsonLd(context, "/"),
-    },
-    {
-      path: `/${VISUAL_CONTENT_ROOT}`,
-      title: "视觉文档已归入 MiraDocs",
-      description: "产品设计系统与主题参考现由 MiraDocs 统一导航。",
-      body: visualRootRedirectBody(context),
-      type: "website",
-      robots: "noindex,follow",
-      jsonLd: websiteJsonLd(context, `/${VISUAL_CONTENT_ROOT}`),
     },
   ];
 
