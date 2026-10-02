@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import {
   ArrowUpRight,
   Download,
-  Github,
+  GitBranch,
   Laptop,
   Smartphone,
 } from "lucide-react";
@@ -52,7 +52,7 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <Github size={16} aria-hidden="true" />
+                  <GitBranch size={16} aria-hidden="true" />
                   源码
                   <ArrowUpRight size={14} aria-hidden="true" />
                 </a>
