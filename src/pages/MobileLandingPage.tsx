@@ -12,10 +12,8 @@ import {
   mobileLandingPaths,
 } from "../content/mobile-landing";
 
-const appBase = import.meta.env.BASE_URL;
 const mobileRepoUrl = "https://github.com/uichat-mira/mira-mobile";
 const mobileReleasesUrl = "https://github.com/uichat-mira/mira-mobile/releases";
-const heroImageUrl = appBase + "images/product/mira-hero-desktop-mobile.svg";
 
 export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
   return (
@@ -62,13 +60,24 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
               </p>
             </div>
 
-            <figure className="mobile-landing-visual">
-              <img
-                src={heroImageUrl}
-                alt="Mira Desktop 与 Mobile 协同工作示意"
-              />
-              <figcaption>Mobile 可以独立使用，也可以把更重的工作交给 Desktop。</figcaption>
-            </figure>
+            <div className="mobile-landing-phone-stage" aria-hidden="true">
+              <div className="mobile-landing-phone-orbit" />
+              <div className="mobile-landing-phone">
+                <div className="mobile-landing-phone-screen">
+                  <div className="mobile-landing-phone-notch" />
+                  <div className="mobile-landing-phone-brand">Mira</div>
+                  <div className="mobile-landing-phone-bubble me">
+                    今晚回去继续刚才那段对话。
+                  </div>
+                  <div className="mobile-landing-phone-bubble">
+                    可以。你也可以连接桌面 Mira，把更重的工作交给电脑。
+                  </div>
+                  <div className="mobile-landing-phone-status">
+                    DESKTOP HOST CONNECTED
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
