@@ -13,6 +13,8 @@ import {
   type MiraDocsStaticRoute,
 } from "@uichat-mira/docs/vite";
 
+type DocScope = "product" | "technical";
+
 type StaticDoc = MiraDoc & {
   root: string;
   source: string;
@@ -123,7 +125,8 @@ function pageNavigation(
 function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
   const links = [
     ["首页", "/"],
-    ["文档", "/about/origin"],
+    ["产品文档", "/about/origin"],
+    ["技术文档", "/architecture/runtime"],
     ["博客", "/blogs"],
   ] as const;
   const navigation = links
@@ -138,6 +141,12 @@ function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
 function staticDirectory(doc: StaticDoc): string {
   const parts = doc.path.split("/").filter(Boolean);
   return parts.slice(1, -1).join("/");
+}
+
+function staticDocScope(doc: StaticDoc): DocScope {
+  return doc.path.startsWith("/architecture/") || doc.path.startsWith("/engineering/")
+    ? "technical"
+    : "product";
 }
 
 function staticNavigationDirectory(doc: StaticDoc): string {
@@ -161,8 +170,13 @@ function staticDocNav(
   context: MiraDocsStaticBuildContext,
 ): string {
   const logicalRoot = logicalStaticAreaKey(doc.root);
+  const docScope = logicalRoot === "docs" ? staticDocScope(doc) : undefined;
   const scoped = docs
-    .filter((candidate) => logicalStaticAreaKey(candidate.root) === logicalRoot)
+    .filter(
+      (candidate) =>
+        logicalStaticAreaKey(candidate.root) === logicalRoot &&
+        (!docScope || staticDocScope(candidate) === docScope),
+    )
     .sort(
       (left, right) =>
         left.order - right.order || left.path.localeCompare(right.path),
@@ -174,9 +188,18 @@ function staticDocNav(
     group.push(candidate);
     groups.set(directory, group);
   }
-  const rootPath = logicalRoot === "docs" ? "/" : `/${logicalRoot}`;
+  const rootPath =
+    logicalRoot === "docs"
+      ? docScope === "technical"
+        ? "/architecture/runtime"
+        : "/about/origin"
+      : `/${logicalRoot}`;
   const rootTitle =
-    logicalRoot === VISUAL_CONTENT_ROOT
+    logicalRoot === "docs"
+      ? docScope === "technical"
+        ? "技术文档"
+        : "产品文档"
+      : logicalRoot === VISUAL_CONTENT_ROOT
       ? "视觉"
       : scoped
           .filter((candidate) => candidate.root === logicalRoot)

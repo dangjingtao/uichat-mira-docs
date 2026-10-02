@@ -112,6 +112,12 @@ if (existsSync(indexPath)) {
   if (html.includes(">MiraDocs</a>") || html.includes("/mira-docs-api")) {
     failures.push("顶部导航仍残留 MiraDocs 入口");
   }
+  if (!html.includes(">产品文档</a>") || !html.includes(">技术文档</a>")) {
+    failures.push("顶部导航没有拆分产品文档与技术文档");
+  }
+  if (html.includes(">文档</a>")) {
+    failures.push("顶部导航仍残留旧的单一文档入口");
+  }
 }
 
 if (existsSync(notFoundPath)) {

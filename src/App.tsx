@@ -51,6 +51,7 @@ import {
 import HomePage from "./pages/HomePage";
 
 type LinkItem = { label: string; href: string };
+type DocScope = "product" | "technical";
 type DocSection = {
   key: string;
   title: string;
@@ -95,6 +96,20 @@ const sectionInfo: Record<string, { key: string; description: string }> = {
   现状与方向: { key: "status", description: "代码事实与下一段路" },
   导航: { key: "navigation", description: "全站阅读地图" },
 };
+const docScopeSectionKeys: Record<DocScope, ReadonlySet<string>> = {
+  product: new Set(["about", "philosophy", "product", "status"]),
+  technical: new Set(["architecture", "engineering"]),
+};
+function docScopeForDoc(doc?: Doc): DocScope | undefined {
+  if (!doc || doc.root !== "docs") return undefined;
+  if (
+    doc.path.startsWith("/architecture/") ||
+    doc.path.startsWith("/engineering/")
+  ) {
+    return "technical";
+  }
+  return "product";
+}
 function seedFromString(value: string) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -489,13 +504,14 @@ function RenderedMarkdown({ html, className = "markdown" }: { html: string; clas
 }
 
 const navItems: LinkItem[] = [
-  { label: "文档", href: docHref("/about/origin") },
+  { label: "产品文档", href: docHref("/about/origin") },
+  { label: "技术文档", href: docHref("/architecture/runtime") },
   ...siteAreas
     .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
     .map((area) => ({ label: area.title, href: area.href })),
 ].sort((a, b) => {
   const keyFor = (item: LinkItem) =>
-    item.label === "文档"
+    item.label === "产品文档" || item.label === "技术文档"
       ? "docs"
       : item.href.replace(appBase, "").split("/")[0];
   const rank = (item: LinkItem) => {
@@ -667,13 +683,12 @@ function SiteHeader({
   );
   const isActive = (item: LinkItem) => {
     const target = item.href.slice(Math.max(appBase.length - 1, 0));
-    if (item.label === "文档")
-      return (
-        location.pathname === "/sitemap" ||
-        allDocs.some(
-          (doc) => doc.root === "docs" && doc.path === location.pathname,
-        )
-      );
+    if (item.label === "产品文档") {
+      return currentDoc?.root === "docs" && docScopeForDoc(currentDoc) === "product";
+    }
+    if (item.label === "技术文档") {
+      return currentDoc?.root === "docs" && docScopeForDoc(currentDoc) === "technical";
+    }
     return (
       location.pathname === target || location.pathname.startsWith(`${target}/`)
     );
@@ -1027,12 +1042,17 @@ export default function App() {
   return <RoutedApp />;
 }
 
-function DocNav({ current }: { current: string }) {
+function DocNav({ current, scope }: { current: string; scope?: DocScope }) {
+  const sectionKeys = scope ? docScopeSectionKeys[scope] : undefined;
   return (
     <nav className="docnav">
-      <h5>文档目录</h5>
+      <h5>{scope === "technical" ? "技术文档" : "产品文档"}</h5>
       {docSections
-        .filter((section) => section.key !== "navigation")
+        .filter(
+          (section) =>
+            section.key !== "navigation" &&
+            (!sectionKeys || sectionKeys.has(section.key)),
+        )
         .map((section) => (
           <div className="docnav-group" key={section.key}>
             <h5>{section.title}</h5>
@@ -1263,8 +1283,8 @@ function MobileDocsBar({ currentDoc, tocOpen, onMenu, onToc }: { currentDoc?: Do
     </button>
   </div>;
 }
-function MobileDocsDrawer({ area, current, onClose }: { area?: SiteArea; current: string; onClose: () => void }) {
-  return <div className="mobile-docs-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mobile-docs-drawer" aria-label="文档菜单"><div className="mobile-docs-drawer-head"><span>菜单</span><button type="button" onClick={onClose} aria-label="关闭菜单"><X size={18} aria-hidden="true" /></button></div>{area ? <AreaDocNav area={area} current={current} /> : <DocNav current={current} />}</aside></div>;
+function MobileDocsDrawer({ area, current, scope, onClose }: { area?: SiteArea; current: string; scope?: DocScope; onClose: () => void }) {
+  return <div className="mobile-docs-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><aside className="mobile-docs-drawer" aria-label="文档菜单"><div className="mobile-docs-drawer-head"><span>菜单</span><button type="button" onClick={onClose} aria-label="关闭菜单"><X size={18} aria-hidden="true" /></button></div>{area ? <AreaDocNav area={area} current={current} /> : <DocNav current={current} scope={scope} />}</aside></div>;
 }
 function MobilePageToc({ doc, onClose }: { doc: Doc; onClose: () => void }) {
   return <div className="mobile-page-toc" id="mobile-page-toc"><div className="mobile-page-toc-head"><span>页面导航</span><button type="button" onClick={onClose} aria-label="关闭页面导航"><X size={17} aria-hidden="true" /></button></div><ul>{doc.headings.map((heading) => <li key={heading.id}><a href={`#${heading.id}`} onClick={onClose}>{heading.text}</a></li>)}</ul></div>;
@@ -1299,6 +1319,7 @@ function DocsLayout() {
           currentPath === area.path || currentPath.startsWith(`${area.path}/`),
       );
   const isBlogArea = currentArea?.key === "blogs";
+  const docScope = docScopeForDoc(currentDoc);
   const doc = currentDoc || allDocs[0];
   const [activeHeading, setActiveHeading] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1330,14 +1351,14 @@ function DocsLayout() {
   return (
     <div className={`docs-app${isBlogArea ? " blog-app" : ""}`}>
       {!isBlogArea && <MobileDocsBar currentDoc={currentDoc} tocOpen={mobileTocOpen} onMenu={() => setMobileMenuOpen(true)} onToc={() => setMobileTocOpen((value) => !value)} />}
-      {mobileMenuOpen && !isBlogArea ? <MobileDocsDrawer area={currentArea} current={location.pathname} onClose={() => setMobileMenuOpen(false)} /> : null}
+      {mobileMenuOpen && !isBlogArea ? <MobileDocsDrawer area={currentArea} current={location.pathname} scope={docScope} onClose={() => setMobileMenuOpen(false)} /> : null}
       {mobileTocOpen && currentDoc && !isBlogArea ? <MobilePageToc doc={currentDoc} onClose={() => setMobileTocOpen(false)} /> : null}
       <div className={`docs-shell${isBlogArea ? " blog-shell" : ""}`}>
         {!isBlogArea &&
           (currentArea ? (
           <AreaDocNav area={currentArea} current={location.pathname} />
         ) : (
-          <DocNav current={location.pathname} />
+          <DocNav current={location.pathname} scope={docScope} />
         ))}
         <main className={`doc-main${isBlogArea ? " blog-main" : ""}`}>
           <Outlet />
