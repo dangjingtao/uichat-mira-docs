@@ -318,6 +318,10 @@ function homeBody(context: MiraDocsStaticBuildContext): string {
   return `${staticSiteHeader(context)}${main}`;
 }
 
+function staticMobilePhoneMockup(): string {
+  return `<figure class="mobile-landing-phone-stage" aria-label="Mira Mobile 会话界面示意"><div class="mobile-landing-phone-orbit" aria-hidden="true"></div><div class="mobile-landing-phone"><div class="mobile-landing-phone-screen"><div class="mobile-landing-phone-notch" aria-hidden="true"></div><div class="mobile-landing-phone-brand">Mira</div><div class="mobile-landing-phone-bubble me">今晚回去继续刚才那段对话。</div><div class="mobile-landing-phone-bubble">可以。你也可以连接桌面 Mira，把更重的工作交给电脑。</div><div class="mobile-landing-phone-status">DESKTOP HOST CONNECTED</div></div></div></figure>`;
+}
+
 function mobileLandingBody(context: MiraDocsStaticBuildContext): string {
   const pathCards = mobileLandingPaths
     .map(
@@ -331,7 +335,7 @@ function mobileLandingBody(context: MiraDocsStaticBuildContext): string {
         `<li><strong>${miraDocsEscapeHtml(item.title)}</strong><p>${miraDocsEscapeHtml(item.description)}</p></li>`,
     )
     .join("");
-  const main = `<main class="doc-main seo-static-content"><div class="doc-title-block"><span class="doc-eyebrow">MIRA MOBILE · PREVIEW</span><h1>Mira，跟你一起出门。</h1><p class="doc-lede">${miraDocsEscapeHtml(mobileLandingMeta.description)}</p></div><p><img src="${docHref("/images/product/mira-hero-desktop-mobile.svg", context)}" alt="Mira Desktop 与 Mobile 协同工作示意" /></p><section><h2>同一个 Mira，两种进入方式。</h2>${pathCards}</section><section><h2>现在已经跑起来的部分。</h2><ul>${facts}</ul></section><section><h2>不是把 Desktop 塞进一块更小的屏幕。</h2><p>手机更适合发起、继续、查看和确认；需要桌面环境和更重能力时，再连接 Desktop Host。</p></section><p><a href="https://github.com/uichat-mira/mira-mobile/releases">下载 Mira Mobile</a> · <a href="https://github.com/uichat-mira/mira-mobile">查看源码</a></p></main>`;
+  const main = `<main class="mobile-landing-page seo-static-content"><div class="doc-title-block"><span class="doc-eyebrow">MIRA MOBILE · PREVIEW</span><h1>Mira，跟你一起出门。</h1><p class="doc-lede">${miraDocsEscapeHtml(mobileLandingMeta.description)}</p></div>${staticMobilePhoneMockup()}<section><h2>同一个 Mira，两种进入方式。</h2>${pathCards}</section><section><h2>现在已经跑起来的部分。</h2><ul>${facts}</ul></section><section><h2>不是把 Desktop 塞进一块更小的屏幕。</h2><p>手机更适合发起、继续、查看和确认；需要桌面环境和更重能力时，再连接 Desktop Host。</p></section><p><a href="https://github.com/uichat-mira/mira-mobile/releases">下载 Mira Mobile</a> · <a href="https://github.com/uichat-mira/mira-mobile">查看源码</a></p></main>`;
   return `${staticSiteHeader(context)}${main}`;
 }
 
