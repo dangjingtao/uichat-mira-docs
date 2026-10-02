@@ -89,6 +89,12 @@ const legacyDocRoots = [
 ];
 visibleRoutes.add("/guide");
 visibleRoutes.add("/api");
+visibleRoutes.add("/guide/about/mobile");
+
+const legacyMobileMarkdown = resolve(pagesRoot, "guide/about/mobile.md");
+if (existsSync(legacyMobileMarkdown)) {
+  failures.push("Mira Mobile landing page 不应再由 Markdown 实现");
+}
 
 const legacyHrefPattern =
   /href="(?:https:\/\/mira\.tomz\.io)?\/(?:docs\/)?(?:about|philosophy|product|configuration|status|architecture|engineering)(?:\/|")/;
@@ -114,6 +120,19 @@ const sitemapPath = resolve(distRoot, "sitemap.xml");
 const robotsPath = resolve(distRoot, "robots.txt");
 for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath]) {
   if (!existsSync(file)) failures.push(`缺少构建产物: ${file}`);
+}
+
+const mobileLandingPath = routeFile("/guide/about/mobile");
+if (!existsSync(mobileLandingPath)) {
+  failures.push("缺少 Mira Mobile landing page 静态页面");
+} else {
+  const html = readFileSync(mobileLandingPath, "utf8");
+  if (!html.includes("Mira，跟你一起出门。")) {
+    failures.push("Mira Mobile landing page 静态页面缺少主标题");
+  }
+  if (!html.includes("images/product/mira-hero-desktop-mobile.svg")) {
+    failures.push("Mira Mobile landing page 缺少产品协同视觉");
+  }
 }
 
 const requiredHomeAssets = [

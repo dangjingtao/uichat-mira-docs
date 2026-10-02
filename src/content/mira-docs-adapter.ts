@@ -6,6 +6,10 @@ import {
 import miraDocsContent, {
   roots as miraDocsRoots,
 } from "virtual:mira-docs/content";
+import {
+  mobileLandingMeta,
+  mobileLandingSearchText,
+} from "./mobile-landing";
 
 export type AuthorKey = "tomz" | "mira";
 export type WritingMode = "authored" | "co-authored";
@@ -195,7 +199,37 @@ export function compareBlogDocs(a: Doc, b: Doc): number {
   );
 }
 
-const parsedDocs = (miraDocsContent as MiraDoc[]).map(adaptSiteDoc);
+const specialDocs = [
+  {
+    path: mobileLandingMeta.path,
+    title: mobileLandingMeta.title,
+    description: mobileLandingMeta.description,
+    group: mobileLandingMeta.group,
+    order: mobileLandingMeta.order,
+    sourcePath: "guide/about/mobile",
+    data: {},
+    date: undefined,
+    tags: ["Mobile", "Android", "iOS"],
+    cover: "/images/product/mira-hero-desktop-mobile.svg",
+    source: mobileLandingSearchText,
+    root: mobileLandingMeta.root,
+    directory: mobileLandingMeta.directory,
+    nav: undefined,
+    merge: undefined,
+    mergeIndex: false,
+    author: ["tomz"],
+    writingMode: "authored",
+    writtenBy: "tomz",
+    reviewedBy: undefined,
+    commitUrl: undefined,
+    headings: [],
+  } as unknown as Doc,
+];
+
+const parsedDocs = [
+  ...(miraDocsContent as MiraDoc[]).map(adaptSiteDoc),
+  ...specialDocs,
+];
 
 export const allDocs = parsedDocs
   .filter((doc) => !doc.merge || doc.mergeIndex)
