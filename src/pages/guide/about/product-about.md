@@ -40,7 +40,7 @@ order: 4
 
 > UIChat Mira 是一个本地优先、桌面优先、多 Provider 的个人 AI 工作台。聊天是入口，模型、知识、角色、工具和任务在同一环境中协作。
 
-完整定义见：[Mira 是什么](/docs/about/origin)。
+完整定义见：[Mira 是什么](/guide/about/origin)。
 
 ## 信息来源
 
@@ -70,7 +70,7 @@ Static Product Copy
 - 记录作者私人信息；
 - 用愿景文字替代当前能力说明。
 
-功能状态见：[当前实现快照](/docs/status/current)。版本变化见 GitHub Release 和对应 Changelog。
+功能状态见：[当前实现快照](/guide/status/current)。版本变化见 GitHub Release 和对应 Changelog。
 
 ## 失败处理
 
@@ -83,6 +83,6 @@ Static Product Copy
 
 ## 相关文档
 
-- [Mira 是什么](/docs/about/origin)
-- [项目与维护者](/docs/about/author)
-- [当前实现快照](/docs/status/current)
+- [Mira 是什么](/guide/about/origin)
+- [项目与维护者](/guide/about/author)
+- [当前实现快照](/guide/status/current)

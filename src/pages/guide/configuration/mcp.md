@@ -160,5 +160,5 @@ Mira 可以面对两种常见服务。
 
 进一步阅读：
 
-- [工具工作台](/docs/configuration/tools)
-- [Harness 与工具边界](/docs/architecture/harness)
+- [工具工作台](/guide/configuration/tools)
+- [Harness 与工具边界](/api/architecture/harness)

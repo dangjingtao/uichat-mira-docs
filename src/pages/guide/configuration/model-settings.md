@@ -256,7 +256,7 @@ evaluation role 已配置
 != 已配置 Judge Model
 ```
 
-详细说明见：[评测工作台](/docs/product/evaluation)和[Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)。
+详细说明见：[评测工作台](/guide/product/evaluation)和[Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)。
 
 ### 向量模型
 
@@ -414,9 +414,9 @@ OpenAI-compatible 只表示协议形态接近，不保证所有服务的模型�
 
 ## 相关文档
 
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [应用基础信息](/docs/configuration/application-basics)
-- [知识库与 RAG](/docs/product/knowledge)
-- [评测工作台](/docs/product/evaluation)
-- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
-- [当前实现快照](/docs/status/current)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [应用基础信息](/guide/configuration/application-basics)
+- [知识库与 RAG](/guide/product/knowledge)
+- [评测工作台](/guide/product/evaluation)
+- [Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)
+- [当前实现快照](/guide/status/current)

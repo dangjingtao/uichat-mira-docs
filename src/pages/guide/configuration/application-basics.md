@@ -11,7 +11,7 @@ order: 10
 
 本页说明 UIChat Mira 当前最基础的产品资料、首次使用条件、运行形态和数据范围。
 
-具体模型配置见：[模型设置](/docs/configuration/model-settings)。版本与能力状态见：[当前实现快照](/docs/status/current)。
+具体模型配置见：[模型设置](/guide/configuration/model-settings)。版本与能力状态见：[当前实现快照](/guide/status/current)。
 
 ## 基本资料
 
@@ -29,7 +29,7 @@ order: 10
 | 核心入口 | Chat、模型、知识库、评测、角色、工具、MCP、微应用、企业集成 |
 | 项目口号 | 从聊天出发，最终回到「接住你」 |
 
-![UIChat Mira 设置导航与能力入口](/images/product/mira-settings-navigation.webp)
+![UIChat Mira 设置导航与能力入口](/images/guide/product/mira-settings-navigation.webp)
 
 *设置页集中提供模型、工具、MCP、知识库、评测、角色和微应用入口。*
 
@@ -50,7 +50,7 @@ Mira 安装完成后，不代表已经可以调用模型。
 
 推荐顺序：
 
-1. 打开[模型设置](/docs/configuration/model-settings)；
+1. 打开[模型设置](/guide/configuration/model-settings)；
 2. 只配置主模型；
 3. 新建普通 Chat；
 4. 发送最小测试消息；

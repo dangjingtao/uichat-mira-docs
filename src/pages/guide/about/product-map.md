@@ -11,7 +11,7 @@ order: 3
 
 本页提供 UIChat Mira 的一级产品地图，用于判断一项能力属于哪个产品域、通过什么入口使用，以及与其他模块如何连接。
 
-具体功能状态以[当前实现快照](/docs/status/current)和对应模块文档为准。
+具体功能状态以[当前实现快照](/guide/status/current)和对应模块文档为准。
 
 ## 产品域
 
@@ -55,7 +55,7 @@ Local File and Runtime Boundary
 → 在 Chat 中收到真实回复
 ```
 
-模型卡“已配置”和 Provider `connected` 都不是最终验收。详细步骤见：[模型设置](/docs/configuration/model-settings)。
+模型卡“已配置”和 Provider `connected` 都不是最终验收。详细步骤见：[模型设置](/guide/configuration/model-settings)。
 
 ## 主要调用路径
 
@@ -164,7 +164,7 @@ Template capability 不等于具体模型的 Vision、Tool Calling 或上下文�
 
 Image Generation 与 TTS 当前主要由各自 Studio 管理 Provider 配置，不应从主模型状态推断它们已经 ready。
 
-详细说明见：[Provider 与模型运行时](/docs/architecture/provider-context)。
+详细说明见：[Provider 与模型运行时](/api/architecture/provider-context)。
 
 ## Knowledge Base、RAG 与 Evaluation
 
@@ -200,10 +200,10 @@ Evaluation
 
 详细说明见：
 
-- [知识库与 RAG](/docs/product/knowledge)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [评测工作台](/docs/product/evaluation)
-- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [评测工作台](/guide/product/evaluation)
+- [Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)
 
 ## Agent 与工具关系
 
@@ -237,7 +237,7 @@ MicroApps Hub
 4. Integration Invoke；
 5. Agent Tool / Skill Access。
 
-详细说明见：[MicroApps 与独立 Runtime](/docs/architecture/microapps)。
+详细说明见：[MicroApps 与独立 Runtime](/api/architecture/microapps)。
 
 ## 当前边界
 
@@ -268,14 +268,14 @@ Mira 当前不提供：
 
 ## 相关文档
 
-- [Mira 是什么](/docs/about/origin)
-- [模型设置](/docs/configuration/model-settings)
-- [Provider 与模型运行时](/docs/architecture/provider-context)
-- [知识库与 RAG](/docs/product/knowledge)
-- [Knowledge Base 与 RAG Runtime](/docs/architecture/knowledge-rag)
-- [评测工作台](/docs/product/evaluation)
-- [Evaluation Runtime 与指标语义](/docs/architecture/evaluation-runtime)
-- [当前实现快照](/docs/status/current)
-- [Agent 当前运行真相](/docs/architecture/agent)
-- [Harness 与工具边界](/docs/architecture/harness)
-- [MicroApps 与独立 Runtime](/docs/architecture/microapps)
+- [Mira 是什么](/guide/about/origin)
+- [模型设置](/guide/configuration/model-settings)
+- [Provider 与模型运行时](/api/architecture/provider-context)
+- [知识库与 RAG](/guide/product/knowledge)
+- [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
+- [评测工作台](/guide/product/evaluation)
+- [Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)
+- [当前实现快照](/guide/status/current)
+- [Agent 当前运行真相](/api/architecture/agent)
+- [Harness 与工具边界](/api/architecture/harness)
+- [MicroApps 与独立 Runtime](/api/architecture/microapps)
