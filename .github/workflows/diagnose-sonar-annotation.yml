@@ -1,0 +1,37 @@
+name: Diagnose Sonar annotation
+
+on:
+  push:
+    branches:
+      - refactor/extract-markdown-renderer-20261003
+
+permissions:
+  contents: read
+  checks: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read Sonar check annotation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 36); do
+            check_id="$(gh api "repos/$REPO/commits/$SHA/check-runs?per_page=100" --jq '.check_runs[] | select(.name == "SonarCloud Code Analysis") | .id' | head -n 1)"
+            if [ -n "$check_id" ]; then
+              status="$(gh api "repos/$REPO/check-runs/$check_id" --jq '.status')"
+              echo "Sonar check: $check_id ($status)"
+              if [ "$status" = "completed" ]; then
+                gh api "repos/$REPO/check-runs/$check_id/annotations?per_page=100" \
+                  --jq '.[] | {path, start_line, end_line, annotation_level, title, message, raw_details}'
+                exit 0
+              fi
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for Sonar check" >&2
+          exit 1
