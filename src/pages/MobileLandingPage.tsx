@@ -17,20 +17,20 @@ const mobileReleasesUrl = "https://github.com/uichat-mira/mira-mobile/releases";
 
 export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
   return (
-    <div className="landing-page mobile-landing-page">
+    <div className="mobile-landing-page">
       <main>
         <section className="mobile-landing-hero">
-          <div className="landing-wrap mobile-landing-wrap mobile-landing-hero-grid">
+          <div className="mobile-landing-wrap mobile-landing-hero-grid">
             <div className="mobile-landing-hero-copy">
-              <span className="landing-label mobile-landing-kicker">MIRA MOBILE · PREVIEW</span>
+              <span className="mobile-landing-kicker">MIRA MOBILE · PREVIEW</span>
               <h1>Mira，跟你一起出门。</h1>
               <p className="mobile-landing-lede">
                 在手机上直接使用自己的模型，也可以连接桌面端 Mira，把更重的能力留在电脑。
                 Mobile 不是 Desktop 的缩小版，而是一个更贴身的入口。
               </p>
-              <div className="landing-actions mobile-landing-actions">
+              <div className="mobile-landing-actions">
                 <a
-                  className="landing-button mobile-landing-button primary"
+                  className="mobile-landing-button primary"
                   href={mobileReleasesUrl}
                   data-mobile-download="android"
                 >
@@ -38,14 +38,14 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
                   Android APK
                 </a>
                 <a
-                  className="landing-button mobile-landing-button"
+                  className="mobile-landing-button"
                   href={mobileReleasesUrl}
                   data-mobile-download="ios"
                 >
                   iOS IPA
                 </a>
                 <a
-                  className="landing-button mobile-landing-button quiet"
+                  className="mobile-landing-button quiet"
                   href={mobileRepoUrl}
                   target="_blank"
                   rel="noreferrer"
@@ -82,10 +82,10 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
         </section>
 
         <section className="mobile-landing-section">
-          <div className="landing-wrap mobile-landing-wrap">
+          <div className="mobile-landing-wrap">
             <div className="mobile-landing-heading">
               <div>
-                <span className="landing-label mobile-landing-section-index">01 / DUAL ENTRY</span>
+                <span className="mobile-landing-section-index">01 / DUAL ENTRY</span>
                 <h2>同一个 Mira，两种进入方式。</h2>
               </div>
               <p>
@@ -113,10 +113,10 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
         </section>
 
         <section className="mobile-landing-section">
-          <div className="landing-wrap mobile-landing-wrap">
+          <div className="mobile-landing-wrap">
             <div className="mobile-landing-heading compact">
               <div>
-                <span className="landing-label mobile-landing-section-index">02 / CURRENT</span>
+                <span className="mobile-landing-section-index">02 / CURRENT</span>
                 <h2>现在已经跑起来的部分。</h2>
               </div>
               <p>不把规划写成能力。这里仅列当前已有的 Mobile 基础能力。</p>
@@ -135,9 +135,9 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
         </section>
 
         <section className="mobile-landing-section mobile-landing-principle-section">
-          <div className="landing-wrap mobile-landing-wrap mobile-landing-principle">
+          <div className="mobile-landing-wrap mobile-landing-principle">
             <div>
-              <span className="landing-label mobile-landing-section-index">03 / ROLE</span>
+              <span className="mobile-landing-section-index">03 / ROLE</span>
               <h2>不是把 Desktop 塞进一块更小的屏幕。</h2>
             </div>
             <div className="mobile-landing-principle-copy">
@@ -158,18 +158,18 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
         </section>
 
         <section className="mobile-landing-section mobile-landing-download-section">
-          <div className="landing-wrap mobile-landing-wrap">
+          <div className="mobile-landing-wrap">
             <div className="mobile-landing-download">
               <div>
-                <span className="landing-label mobile-landing-section-index">PREVIEW</span>
+                <span className="mobile-landing-section-index">PREVIEW</span>
                 <h2>{mobileLandingMeta.title} 还在快速变化。</h2>
                 <p>
                   Android 是目前更直接的体验入口；iOS 真机包仍属于测试分发。
                 </p>
               </div>
-              <div className="landing-actions mobile-landing-download-actions">
+              <div className="mobile-landing-download-actions">
                 <a
-                  className="landing-button mobile-landing-button primary"
+                  className="mobile-landing-button primary"
                   href={mobileReleasesUrl}
                   data-mobile-download="android"
                 >
@@ -177,7 +177,7 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
                   Android APK
                 </a>
                 <a
-                  className="landing-button mobile-landing-button"
+                  className="mobile-landing-button"
                   href={mobileReleasesUrl}
                   data-mobile-download="ios"
                 >
