@@ -136,6 +136,9 @@ if (!existsSync(aboutLandingPath)) {
   if (!html.includes("People are not infrastructure.")) {
     failures.push("Mira Organization 关于页缺少公平劳动价值声明");
   }
+  if (!html.includes('id="fair-work"')) {
+    failures.push("Mira Organization 关于页缺少 fair-work 锚点");
+  }
   const blogIndex = html.indexOf(">博客</a>");
   const aboutIndex = html.indexOf(">关于</a>");
   if (blogIndex === -1 || aboutIndex === -1 || aboutIndex < blogIndex) {
@@ -161,16 +164,29 @@ if (!existsSync(mobileLandingPath)) {
 
 const requiredHomeAssets = [
   "images/product/mira-hero-desktop-mobile.svg",
-  "images/product/mira-fair-work-statement.svg",
-  "images/product/mira-fair-work-statement-mobile.svg",
 ];
 for (const asset of requiredHomeAssets) {
   const file = resolve(distRoot, asset);
   if (!existsSync(file)) failures.push(`首页静态资源缺失: ${asset}`);
 }
 
+for (const retiredAsset of [
+  "images/product/mira-fair-work-statement.svg",
+  "images/product/mira-fair-work-statement-mobile.svg",
+]) {
+  if (existsSync(resolve(distRoot, retiredAsset))) {
+    failures.push(`已退役的首页公平劳动海报仍存在: ${retiredAsset}`);
+  }
+}
+
 if (existsSync(indexPath)) {
   const html = readFileSync(indexPath, "utf8");
+  if (!html.includes("People are not infrastructure.")) {
+    failures.push("首页缺少 Mira Values 主句");
+  }
+  if (!html.includes("/about#fair-work")) {
+    failures.push("首页 Mira Values 缺少 About fair-work 链接");
+  }
   const homeBlogIndex = html.indexOf(">博客</a>");
   const homeAboutIndex = html.indexOf(">关于</a>");
   if (homeBlogIndex === -1 || homeAboutIndex === -1 || homeAboutIndex < homeBlogIndex) {

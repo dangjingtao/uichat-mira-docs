@@ -99,7 +99,7 @@ export default function AboutLandingPage({ footer }: { footer: ReactNode }) {
           </div>
         </section>
 
-        <section className="about-section about-fair-work-section">
+        <section id="fair-work" className="about-section about-fair-work-section">
           <div className="wrap about-fair-work">
             <div>
               <span className="about-index">03 / FAIR WORK</span>
