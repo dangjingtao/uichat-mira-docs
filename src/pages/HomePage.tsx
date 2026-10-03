@@ -123,33 +123,6 @@ export default function HomePage({ footer }: HomePageProps) {
         </div>
       </header>
 
-      <section className="home-fair-work" aria-label="Mira 公平劳动声明">
-        <div className="wrap">
-          <div className="fair-work-desktop">
-            <object
-              data={`${appBase}images/product/mira-fair-work-statement.svg`}
-              type="image/svg+xml"
-              aria-label="Mira 反对 996。人不是资本的燃料。"
-            >
-              <a href={fairWorkUrl} target="_blank" rel="noreferrer">
-                阅读公平劳动声明
-              </a>
-            </object>
-          </div>
-
-          <div className="fair-work-mobile">
-            <object
-              data={`${appBase}images/product/mira-fair-work-statement-mobile.svg`}
-              type="image/svg+xml"
-              aria-label="Mira 公平劳动声明"
-            >
-              <a href={fairWorkUrl} target="_blank" rel="noreferrer">
-                阅读公平劳动声明
-              </a>
-            </object>
-          </div>
-        </div>
-      </section>
 
       <section className="home-now-section" aria-labelledby="home-now-title">
         <div className="wrap">
@@ -235,6 +208,32 @@ export default function HomePage({ footer }: HomePageProps) {
               项目与维护者
               <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-values-section" aria-labelledby="home-values-title">
+        <div className="wrap home-values-layout">
+          <div className="home-values-copy">
+            <span className="eyebrow">MIRA VALUES</span>
+            <h2 id="home-values-title">People are not infrastructure.</h2>
+            <p className="home-values-cn">人不是基础设施。</p>
+            <p>Mira 反对 996，以及违法、强迫和无偿的过度劳动。</p>
+          </div>
+          <div className="home-values-links">
+            <Link className="text-link" to="/about#fair-work">
+              关于 Mira
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </Link>
+            <a
+              className="text-link"
+              href={fairWorkUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              公平劳动声明
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </a>
           </div>
         </div>
       </section>
