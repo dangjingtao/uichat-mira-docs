@@ -94,6 +94,23 @@
   place-items: center;
 }
 
+.mobile-landing-phone-orbit {
+  position: absolute;
+  width: min(100%, 520px);
+  aspect-ratio: 1.25;
+  border: 1px solid color-mix(in srgb, var(--mobile-accent) 34%, var(--hairline));
+  border-radius: 50%;
+  transform: rotate(-12deg);
+}
+
+.mobile-landing-phone-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 17%;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  transform: rotate(30deg);
+}
 
 .mobile-landing-phone {
   position: relative;
