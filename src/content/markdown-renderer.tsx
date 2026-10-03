@@ -128,10 +128,10 @@ async function renderMermaid(container: HTMLElement) {
 export function RenderedMarkdown({
   html,
   className = "markdown",
-}: {
+}: Readonly<{
   html: string;
   className?: string;
-}) {
+}>) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
