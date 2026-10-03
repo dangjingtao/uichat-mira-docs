@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowUpRight, Github, Radar, Scale } from "lucide-react";
+import { ArrowUpRight, GitBranch, Radar, Scale } from "lucide-react";
 import {
   aboutLandingMeta,
   aboutOrganizationLinks,
@@ -30,7 +30,7 @@ export default function AboutLandingPage({ footer }: { footer: ReactNode }) {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <Github size={16} aria-hidden="true" />
+                  <GitBranch size={16} aria-hidden="true" />
                   GitHub Organization
                   <ArrowUpRight size={14} aria-hidden="true" />
                 </a>
