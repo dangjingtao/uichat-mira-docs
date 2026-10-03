@@ -229,9 +229,6 @@
   border-bottom: 1px solid var(--hairline);
 }
 
-.sitemap-galaxy-home {
-  padding: 0;
-}
 
 .home-writing-grid {
   display: grid;
