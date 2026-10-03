@@ -1,12 +1,10 @@
 .mobile-landing-page {
   --mobile-accent: var(--primary, #c15f3c);
-  background: var(--canvas);
-  color: var(--ink);
+  --landing-accent: var(--mobile-accent);
 }
 
 .mobile-landing-wrap {
   width: min(1180px, calc(100% - 56px));
-  margin: 0 auto;
 }
 
 .mobile-landing-hero {
@@ -22,9 +20,7 @@
 
 .mobile-landing-kicker,
 .mobile-landing-section-index {
-  display: inline-block;
-  color: var(--mobile-accent);
-  font: 600 12px/1.3 var(--font-mono);
+  font-size: 12px;
   letter-spacing: .08em;
 }
 
@@ -44,37 +40,12 @@
 
 .mobile-landing-actions,
 .mobile-landing-download-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   margin-top: 32px;
 }
 
 .mobile-landing-button {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   padding: 0 18px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md, 10px);
-  background: var(--surface-card);
-  color: var(--ink);
-  font: 600 14px/1 var(--font-sans);
-  text-decoration: none;
-  transition: transform .16s ease, border-color .16s ease, background-color .16s ease;
-}
-
-.mobile-landing-button:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--mobile-accent) 55%, var(--hairline));
-}
-
-.mobile-landing-button.primary {
-  border-color: var(--mobile-accent);
-  background: var(--mobile-accent);
-  color: #fff;
+  font-size: 14px;
 }
 
 .mobile-landing-button.quiet {
@@ -420,8 +391,3 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .mobile-landing-button {
-    transition: none;
-  }
-}
