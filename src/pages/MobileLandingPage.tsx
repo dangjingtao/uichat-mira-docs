@@ -61,7 +61,6 @@ export default function MobileLandingPage({ footer }: { footer: ReactNode }) {
             </div>
 
             <div className="mobile-landing-phone-stage" aria-hidden="true">
-              <div className="mobile-landing-phone-orbit" />
               <div className="mobile-landing-phone">
                 <div className="mobile-landing-phone-screen">
                   <div className="mobile-landing-phone-notch" />
