@@ -119,9 +119,9 @@ async function renderMermaid(container: HTMLElement) {
     }));
   } catch (error) {
     console.warn("Mira Mermaid 图表渲染失败，已保留源码。", error);
-    nodes.forEach((node) => {
+    for (const node of nodes) {
       node.textContent = node.dataset.mermaidSource || "";
-    });
+    }
   }
 }
 
