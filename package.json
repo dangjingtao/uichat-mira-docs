@@ -29,7 +29,6 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.18.1",
-    "three": "^0.185.1",
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
@@ -37,7 +36,6 @@
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^5.0.4",
     "sharp": "^0.35.3",
     "tailwindcss": "^4.3.2",

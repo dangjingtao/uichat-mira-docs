@@ -7,7 +7,6 @@ import {
   type SyntheticEvent,
 } from "react";
 import { marked } from "marked";
-import type { SitemapGalaxyData } from "./components/SitemapGalaxy";
 import hljs from "highlight.js/lib/common";
 import {
   ChevronDown,
@@ -189,21 +188,6 @@ const siteAreas: SiteArea[] = siteAreaRoots
   .filter((area) => area.docs.length > 0);
 const articleDocs = allDocs.filter((doc) => doc.group !== "导航");
 const visibleSections = siteAreas.filter((area) => area.docs.length > 0);
-const sitemapData: SitemapGalaxyData = {
-  root: "网站地图",
-  sections: visibleSections.map((section) => ({
-    key: section.key,
-    title: section.title,
-    description: section.description,
-    path: section.docs[0]?.path || "/docs",
-    docs: section.docs.map((doc) => ({
-      title: doc.title,
-      path: doc.path,
-      description: doc.description,
-      date: doc.date,
-    })),
-  })),
-};
 type ContextGraphNode = {
   label: string;
   kind: "section" | "document";
@@ -948,11 +932,7 @@ function RoutedApp() {
         <Route
           path="/"
           element={
-            <HomePage
-              darkMode={darkMode}
-              sitemapData={sitemapData}
-              footer={<Footer />}
-            />
+            <HomePage footer={<Footer />} />
           }
         />
         <Route
