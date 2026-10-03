@@ -79,7 +79,6 @@ for (const file of markdownFiles(pagesRoot)) {
 }
 
 const legacyDocRoots = [
-  "/about",
   "/philosophy",
   "/product",
   "/configuration",
@@ -90,6 +89,7 @@ const legacyDocRoots = [
 visibleRoutes.add("/guide");
 visibleRoutes.add("/api");
 visibleRoutes.add("/guide/about/mobile");
+visibleRoutes.add("/about");
 
 const legacyMobileMarkdown = resolve(pagesRoot, "guide/about/mobile.md");
 if (existsSync(legacyMobileMarkdown)) {
@@ -97,10 +97,13 @@ if (existsSync(legacyMobileMarkdown)) {
 }
 
 const legacyHrefPattern =
-  /href="(?:https:\/\/mira\.tomz\.io)?\/(?:docs\/)?(?:about|philosophy|product|configuration|status|architecture|engineering)(?:\/|")/;
+  /href="(?:https:\/\/mira\.tomz\.io)?\/(?:(?:docs\/about)(?:\/|")|about\/|(?:docs\/)?(?:philosophy|product|configuration|status|architecture|engineering)(?:\/|"))/;
 
 for (const route of visibleRoutes) {
-  if (legacyDocRoots.some((root) => route === root || route.startsWith(`${root}/`))) {
+  if (
+    route.startsWith("/about/") ||
+    legacyDocRoots.some((root) => route === root || route.startsWith(`${root}/`))
+  ) {
     failures.push(`仍生成旧文档路由: ${route}`);
   }
   const file = routeFile(route);
@@ -120,6 +123,24 @@ const sitemapPath = resolve(distRoot, "sitemap.xml");
 const robotsPath = resolve(distRoot, "robots.txt");
 for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath]) {
   if (!existsSync(file)) failures.push(`缺少构建产物: ${file}`);
+}
+
+const aboutLandingPath = routeFile("/about");
+if (!existsSync(aboutLandingPath)) {
+  failures.push("缺少 Mira Organization 关于页静态页面");
+} else {
+  const html = readFileSync(aboutLandingPath, "utf8");
+  if (!html.includes("我们在做 Mira，也在公开它是怎样被做出来的。")) {
+    failures.push("Mira Organization 关于页缺少主标题");
+  }
+  if (!html.includes("People are not infrastructure.")) {
+    failures.push("Mira Organization 关于页缺少公平劳动价值声明");
+  }
+  const blogIndex = html.indexOf(">博客</a>");
+  const aboutIndex = html.indexOf(">关于</a>");
+  if (blogIndex === -1 || aboutIndex === -1 || aboutIndex < blogIndex) {
+    failures.push("顶部导航中的 关于 没有位于 博客 后面");
+  }
 }
 
 const mobileLandingPath = routeFile("/guide/about/mobile");
