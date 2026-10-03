@@ -1,11 +1,9 @@
 .about-landing-page {
-  background: var(--canvas);
-  color: var(--ink);
+  --landing-accent: var(--primary-active);
 }
 
 .about-wrap {
   width: min(1160px, calc(100% - 56px));
-  margin: 0 auto;
 }
 
 .about-hero {
@@ -22,9 +20,7 @@
 
 .about-kicker,
 .about-index {
-  display: inline-block;
-  color: var(--primary-active);
-  font: 600 11px/1.3 var(--font-mono);
+  font-size: 11px;
   letter-spacing: .09em;
 }
 
@@ -46,37 +42,12 @@
 }
 
 .about-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   margin-top: 28px;
 }
 
 .about-button {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
   padding: 0 17px;
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md, 10px);
-  background: var(--surface-card);
-  color: var(--ink);
-  font: 600 13px/1 var(--font-sans);
-  text-decoration: none;
-  transition: transform .16s ease, border-color .16s ease;
-}
-
-.about-button:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary-active) 54%, var(--hairline));
-}
-
-.about-button.primary {
-  border-color: var(--primary-active);
-  background: var(--primary-active);
-  color: #fff;
+  font-size: 13px;
 }
 
 .about-section {
@@ -285,7 +256,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .about-button,
   .about-project-card {
     transition: none;
   }
