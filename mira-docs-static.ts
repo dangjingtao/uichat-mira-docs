@@ -17,6 +17,12 @@ import {
   mobileLandingMeta,
   mobileLandingPaths,
 } from "./src/content/mobile-landing";
+import {
+  aboutLandingMeta,
+  aboutOrganizationLinks,
+  aboutPrinciples,
+  aboutProjects,
+} from "./src/content/about-landing";
 
 type StaticDoc = MiraDoc & {
   root: string;
@@ -131,6 +137,7 @@ function staticSiteHeader(context: MiraDocsStaticBuildContext): string {
     ["指南", "/guide"],
     ["API", "/api"],
     ["博客", "/blogs"],
+    ["关于", "/about"],
   ] as const;
   const navigation = links
     .map(
@@ -339,6 +346,13 @@ function mobileLandingBody(context: MiraDocsStaticBuildContext): string {
   return `${staticSiteHeader(context)}${main}`;
 }
 
+function aboutLandingBody(context: MiraDocsStaticBuildContext): string {
+  const projects = aboutProjects.map((project, index) => `<a class="about-project-card" href="${miraDocsEscapeHtml(project.href)}"><span>${String(index + 1).padStart(2, "0")}</span><h3>${miraDocsEscapeHtml(project.name)}</h3><strong>${miraDocsEscapeHtml(project.role)}</strong><p>${miraDocsEscapeHtml(project.description)}</p></a>`).join("");
+  const principles = aboutPrinciples.map((item, index) => `<article><span>${String(index + 1).padStart(2, "0")}</span><div><h3>${miraDocsEscapeHtml(item.title)}</h3><p>${miraDocsEscapeHtml(item.description)}</p></div></article>`).join("");
+  const main = `<main class="about-landing-page seo-static-content"><section class="about-hero"><div class="wrap"><span class="about-kicker">MIRA ORGANIZATION</span><h1>我们在做 Mira，也在公开它是怎样被做出来的。</h1><p>${miraDocsEscapeHtml(aboutLandingMeta.description)}</p><p><a href="${miraDocsEscapeHtml(aboutOrganizationLinks.github)}">GitHub Organization</a> · <a href="${miraDocsEscapeHtml(aboutOrganizationLinks.controlRoom)}">Control Room</a></p></div></section><section class="about-section"><div class="wrap"><h2>一个组织，不是一只越来越大的仓库。</h2><div class="about-project-grid">${projects}</div></div></section><section class="about-section"><div class="wrap"><h2>把能力做大，但把责任边界写清楚。</h2><div class="about-principle-list">${principles}</div></div></section><section class="about-section"><div class="wrap"><h2>People are not infrastructure.</h2><p>人不是基础设施。</p><p><a href="${miraDocsEscapeHtml(aboutOrganizationLinks.fairWork)}">阅读 Mira 公平劳动声明</a></p></div></section></main>`;
+  return `${staticSiteHeader(context)}${main}`;
+}
+
 function notFoundBody(context: MiraDocsStaticBuildContext): string {
   const main = `<main class="doc-main seo-static-content"><div class="doc-not-found"><h1>这条路径没有内容</h1><p>页面可能已经移动、被删除，或者地址输入有误。</p><a class="btn btn-primary" href="${basePath(context.base)}/">返回首页</a></div></main>`;
   return `${staticSiteHeader(context)}${main}`;
@@ -422,6 +436,15 @@ function routes(context: MiraDocsStaticBuildContext): MiraDocsStaticRoute[] {
       body: homeBody(context),
       type: "website",
       jsonLd: websiteJsonLd(context, "/"),
+    },
+    {
+      path: aboutLandingMeta.path,
+      title: aboutLandingMeta.title,
+      description: aboutLandingMeta.description,
+      body: aboutLandingBody(context),
+      type: "website",
+      image: "/mira-logo.png",
+      jsonLd: websiteJsonLd(context, aboutLandingMeta.path),
     },
   ];
 
