@@ -57,7 +57,7 @@ export function renderMarkdown(source: string) {
   let html = marked.parse(prepared, { gfm: true, renderer }) as string;
   htmlBlocks.forEach((block, index) => {
     const placeholder = `MIRA_HTML_BLOCK_${index}`;
-    html = html.replace(new RegExp(`<p>${placeholder}<\\/p>|${placeholder}`, "g"), block);
+    html = html.replace(new RegExp(`<p>${placeholder}</p>|${placeholder}`, "g"), block);
   });
   return html.replace(
     /<h([23])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/g,
