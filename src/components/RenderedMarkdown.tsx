@@ -87,6 +87,7 @@ export function RenderedMarkdown({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    const renderRoot = container;
     let rendering = false;
     let queued = false;
     async function renderMermaid() {
@@ -94,7 +95,7 @@ export function RenderedMarkdown({
         queued = true;
         return;
       }
-      const nodes = Array.from(container.querySelectorAll<HTMLElement>("[data-mermaid]"));
+      const nodes = Array.from(renderRoot.querySelectorAll<HTMLElement>("[data-mermaid]"));
       if (!nodes.length) return;
       rendering = true;
       try {
