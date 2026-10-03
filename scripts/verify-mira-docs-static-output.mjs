@@ -171,6 +171,11 @@ for (const asset of requiredHomeAssets) {
 
 if (existsSync(indexPath)) {
   const html = readFileSync(indexPath, "utf8");
+  const homeBlogIndex = html.indexOf(">博客</a>");
+  const homeAboutIndex = html.indexOf(">关于</a>");
+  if (homeBlogIndex === -1 || homeAboutIndex === -1 || homeAboutIndex < homeBlogIndex) {
+    failures.push("首页顶部导航中的 关于 没有位于 博客 后面");
+  }
   if (!html.includes(`<link rel="canonical" href="${siteUrl}${expectedBase}/">`)) {
     failures.push("首页 canonical 缺失或 base 不正确");
   }
