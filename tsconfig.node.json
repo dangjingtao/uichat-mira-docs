@@ -16,6 +16,7 @@
     "scripts/blog-taxonomy-check.ts",
     "src/content/blog-taxonomy.ts",
     "src/content/mobile-landing.ts",
+    "src/content/about-landing.ts",
     "src/site.config.ts"
   ]
 }
