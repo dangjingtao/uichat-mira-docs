@@ -1,0 +1,56 @@
+.landing-page {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.landing-wrap {
+  margin: 0 auto;
+}
+
+.landing-label {
+  display: inline-block;
+  color: var(--landing-accent);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.landing-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md, 10px);
+  background: var(--surface-card);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform .16s ease, border-color .16s ease, background-color .16s ease;
+}
+
+.landing-button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--landing-accent) 55%, var(--hairline));
+}
+
+.landing-button.primary {
+  border-color: var(--landing-accent);
+  background: var(--landing-accent);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-button {
+    transition: none;
+  }
+}
