@@ -49,7 +49,9 @@ import {
 } from "./content/blog-taxonomy";
 import HomePage from "./pages/HomePage";
 import MobileLandingPage from "./pages/MobileLandingPage";
+import AboutLandingPage from "./pages/AboutLandingPage";
 import { mobileLandingMeta } from "./content/mobile-landing";
+import { aboutLandingMeta } from "./content/about-landing";
 
 type LinkItem = { label: string; href: string };
 type SiteArea = {
@@ -446,10 +448,12 @@ function RenderedMarkdown({ html, className = "markdown" }: { html: string; clas
   return <div ref={containerRef} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-const navItems: LinkItem[] = siteAreas
-  .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
-  .map((area) => ({ label: area.title, href: area.href }))
-  .sort((a, b) => {
+const navItems: LinkItem[] = [
+  ...siteAreas
+    .filter((area) => area.key !== VISUAL_CONTENT_ROOT)
+    .map((area) => ({ label: area.title, href: area.href })),
+  { label: "关于", href: docHref(aboutLandingMeta.path) },
+].sort((a, b) => {
     const keyFor = (item: LinkItem) =>
       item.href.replace(appBase, "").split("/")[0];
     const rank = (item: LinkItem) => {
@@ -938,6 +942,10 @@ function RoutedApp() {
         <Route
           path={mobileLandingMeta.path}
           element={<MobileLandingPage footer={<Footer />} />}
+        />
+        <Route
+          path={aboutLandingMeta.path}
+          element={<AboutLandingPage footer={<Footer />} />}
         />
         <Route element={<DocsLayout />}>
           <Route path="/guide/sitemap" element={<DocPage path="/guide/sitemap" />} />
