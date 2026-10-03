@@ -319,7 +319,7 @@ function homeBody(context: MiraDocsStaticBuildContext): string {
 }
 
 function staticMobilePhoneMockup(): string {
-  return `<figure class="mobile-landing-phone-stage" aria-label="Mira Mobile 会话界面示意"><div class="mobile-landing-phone-orbit" aria-hidden="true"></div><div class="mobile-landing-phone"><div class="mobile-landing-phone-screen"><div class="mobile-landing-phone-notch" aria-hidden="true"></div><div class="mobile-landing-phone-brand">Mira</div><div class="mobile-landing-phone-bubble me">今晚回去继续刚才那段对话。</div><div class="mobile-landing-phone-bubble">可以。你也可以连接桌面 Mira，把更重的工作交给电脑。</div><div class="mobile-landing-phone-status">DESKTOP HOST CONNECTED</div></div></div></figure>`;
+  return `<figure class="mobile-landing-phone-stage" aria-label="Mira Mobile 会话界面示意"><div class="mobile-landing-phone"><div class="mobile-landing-phone-screen"><div class="mobile-landing-phone-notch" aria-hidden="true"></div><div class="mobile-landing-phone-brand">Mira</div><div class="mobile-landing-phone-bubble me">今晚回去继续刚才那段对话。</div><div class="mobile-landing-phone-bubble">可以。你也可以连接桌面 Mira，把更重的工作交给电脑。</div><div class="mobile-landing-phone-status">DESKTOP HOST CONNECTED</div></div></div></figure>`;
 }
 
 function mobileLandingBody(context: MiraDocsStaticBuildContext): string {
