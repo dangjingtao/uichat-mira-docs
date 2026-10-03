@@ -31,7 +31,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { directoryLabels, logoUrl, topNavigationOrder } from "./site.config";
+import { directoryLabels, topNavigationOrder } from "./site.config";
 import {
   allDocs,
   pageDirectories,
@@ -53,6 +53,10 @@ import { mobileLandingMeta } from "./content/mobile-landing";
 import { aboutLandingMeta } from "./content/about-landing";
 import { resolveCoverSource } from "./lib/blog-cover";
 import { PwaUpdatePrompt, ShareButton } from "./components/SiteActions";
+import { BrandLogo } from "./components/BrandLogo";
+import { SiteFooter } from "./components/SiteFooter";
+import NotFoundPage from "./pages/NotFoundPage";
+import { decodedPathname } from "./lib/path";
 
 type LinkItem = { label: string; href: string };
 type SiteArea = {
@@ -76,14 +80,6 @@ function navigationDirectory(doc: Doc) {
 function docHref(path: string) {
   return `${appBase}${path.replace(/^\/+/, "")}`;
 }
-function decodedPathname(path: string) {
-  try {
-    return decodeURI(path);
-  } catch {
-    return path;
-  }
-}
-
 const siteAreaRoots = [
   ...new Set(
     [...pageDirectories, ...allDocs.map((doc) => doc.root)].map(logicalSiteAreaKey),
@@ -149,13 +145,6 @@ visibleSections.forEach((section) => {
     });
   });
 });
-const localLogoSrc = `${appBase}mira-logo.png`;
-const logoSrc = logoUrl.trim() || localLogoSrc;
-function handleLogoError(event: SyntheticEvent<HTMLImageElement>) {
-  if (event.currentTarget.dataset.logoFallbackApplied) return;
-  event.currentTarget.dataset.logoFallbackApplied = "true";
-  event.currentTarget.src = localLogoSrc;
-}
 const localMiraAvatarUrl = `${appBase}mira-avatar.png`;
 const miraAvatarUrl =
   "https://assets.tomz.io/images/1784065334968-image-20260715054214404.webp";
@@ -395,23 +384,6 @@ const navItems: LinkItem[] = [
     return rank(a) - rank(b);
   });
 
-function Footer({ className = "" }: { className?: string }) {
-  return (
-    <footer className={className}>
-      <div className="wrap footer-simple">
-        <p className="footer-copy">
-          <span className="brand" style={{ color: "#fff" }}>
-            <img className="brand-logo" src={logoSrc} onError={handleLogoError} alt="" />
-            UIChat Mira
-          </span>
-          <span>Released under the MIT License.</span>
-        </p>
-        <p className="footer-copyright">Copyright © 2026 Tomz Dang</p>
-      </div>
-    </footer>
-  );
-}
-
 function MobileHeaderPanel({
   onSearch,
   onToggleTheme,
@@ -475,7 +447,7 @@ function SiteHeader({
     <nav className={`top-nav${wide ? " docs-header" : ""}`}>
       <div className="wrap">
         <Link className="brand" to="/">
-          <img className="brand-logo" src={logoSrc} onError={handleLogoError} alt="" />
+          <BrandLogo />
           UIChat Mira
         </Link>
         <ul className="menu">
@@ -559,50 +531,6 @@ function SiteHeader({
         </div>
       </div>
     </nav>
-  );
-}
-
-function NotFoundPage({ onSearch }: { onSearch: () => void }) {
-  const location = useLocation();
-  const requestedPath = decodedPathname(location.pathname);
-
-  useEffect(() => {
-    const robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
-    const previousRobots = robots?.content;
-    robots?.setAttribute("content", "noindex,nofollow");
-
-    return () => {
-      if (robots && previousRobots) robots.content = previousRobots;
-    };
-  }, []);
-
-  return (
-    <>
-      <main className="not-found-page">
-        <div className="not-found-glow" aria-hidden="true" />
-        <div className="not-found-card">
-          <div className="not-found-number" aria-hidden="true">404</div>
-          <h1>这条路径没有内容</h1>
-          <p>
-            页面可能已经移动、被删除，或者地址输入有误。你可以返回首页，
-            也可以搜索站内已有的文档与博客。
-          </p>
-          <code className="not-found-path">{requestedPath}</code>
-          <div className="not-found-actions">
-            <Link className="btn btn-primary" to="/">
-              返回首页
-            </Link>
-            <button className="btn btn-secondary" type="button" onClick={onSearch}>
-              搜索站内内容
-            </button>
-            <Link className="not-found-doc-link" to="/guide/about/origin">
-              查看 Mira 文档 →
-            </Link>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </>
   );
 }
 
@@ -775,16 +703,16 @@ function RoutedApp() {
         <Route
           path="/"
           element={
-            <HomePage footer={<Footer />} />
+            <HomePage footer={<SiteFooter />} />
           }
         />
         <Route
           path={mobileLandingMeta.path}
-          element={<MobileLandingPage footer={<Footer />} />}
+          element={<MobileLandingPage footer={<SiteFooter />} />}
         />
         <Route
           path={aboutLandingMeta.path}
-          element={<AboutLandingPage footer={<Footer />} />}
+          element={<AboutLandingPage footer={<SiteFooter />} />}
         />
         <Route element={<DocsLayout />}>
           <Route path="/guide/sitemap" element={<DocPage path="/guide/sitemap" />} />
@@ -1116,7 +1044,7 @@ function DocsLayout() {
         </main>
         {!isBlogArea && <Toc doc={currentDoc} activeHeading={activeHeading} />}
       </div>
-      {isBlogArea && <Footer className="blog-footer" />}
+      {isBlogArea && <SiteFooter className="blog-footer" />}
     </div>
   );
 }
