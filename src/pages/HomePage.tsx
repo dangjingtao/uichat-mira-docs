@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { ArrowUpRight, Download, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CoreCapabilities, type CapabilityItem } from "../CoreCapabilities";
-import { SitemapGalaxy, type SitemapGalaxyData } from "../components/SitemapGalaxy";
 import { allDocs, compareBlogDocs } from "../content/mira-docs-adapter";
 
 const appBase = import.meta.env.BASE_URL;
@@ -77,12 +76,10 @@ const recentPosts = allDocs
   .slice(0, 3);
 
 type HomePageProps = {
-  darkMode: boolean;
-  sitemapData: SitemapGalaxyData;
   footer: ReactNode;
 };
 
-export default function HomePage({ darkMode, sitemapData, footer }: HomePageProps) {
+export default function HomePage({ footer }: HomePageProps) {
   return (
     <div className="site home-page">
       <header className="home-hero">
@@ -178,15 +175,6 @@ export default function HomePage({ darkMode, sitemapData, footer }: HomePageProp
 
       <CoreCapabilities items={capabilityItems} className="home-capabilities" />
 
-      <section className="sitemap-galaxy-home" aria-label="网站地图星图">
-        <div className="wrap">
-          <SitemapGalaxy
-            key={darkMode ? "sitemap-galaxy-dark" : "sitemap-galaxy-light"}
-            data={sitemapData}
-            theme={darkMode ? "dark" : "light"}
-          />
-        </div>
-      </section>
 
       <section className="home-writing-section" aria-labelledby="home-writing-title">
         <div className="wrap">
