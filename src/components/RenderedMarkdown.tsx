@@ -89,7 +89,7 @@ export function RenderedMarkdown({
     if (!container) return;
     let rendering = false;
     let queued = false;
-    const renderMermaid = async () => {
+    async function renderMermaid() {
       if (rendering) {
         queued = true;
         return;
@@ -127,13 +127,19 @@ export function RenderedMarkdown({
         rendering = false;
         if (queued) {
           queued = false;
-          void renderMermaid();
+          scheduleMermaidRender();
         }
       }
-    };
+    }
 
-    void renderMermaid();
-    const observer = new MutationObserver(() => void renderMermaid());
+    function scheduleMermaidRender() {
+      renderMermaid().catch((error) => {
+        console.warn("Mira Mermaid 图表调度失败。", error);
+      });
+    }
+
+    scheduleMermaidRender();
+    const observer = new MutationObserver(scheduleMermaidRender);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
