@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,6 +19,54 @@ const outPath = path.join(
   "src/data/agent-core-benchmark/core-v0.1.json",
 );
 
+function resolveGitDir(repositoryRoot) {
+  const dotGit = path.join(repositoryRoot, ".git");
+  const stat = fs.statSync(dotGit);
+  if (stat.isDirectory()) return dotGit;
+
+  const pointer = fs.readFileSync(dotGit, "utf8").trim();
+  const match = /^gitdir:\s+(.+)$/.exec(pointer);
+  if (!match) {
+    throw new Error(`Unsupported .git pointer in ${repositoryRoot}`);
+  }
+  return path.resolve(repositoryRoot, match[1]);
+}
+
+function readGitHeadCommit(repositoryRoot) {
+  const gitDir = resolveGitDir(repositoryRoot);
+  const head = fs.readFileSync(path.join(gitDir, "HEAD"), "utf8").trim();
+
+  if (/^[0-9a-f]{40}$/i.test(head)) return head.toLowerCase();
+
+  const symbolic = /^ref:\s+(.+)$/.exec(head);
+  if (!symbolic) {
+    throw new Error(`Unsupported Git HEAD in ${repositoryRoot}: ${head}`);
+  }
+
+  const refPath = path.join(gitDir, ...symbolic[1].split("/"));
+  if (fs.existsSync(refPath)) {
+    const commit = fs.readFileSync(refPath, "utf8").trim();
+    if (/^[0-9a-f]{40}$/i.test(commit)) return commit.toLowerCase();
+  }
+
+  const packedRefsPath = path.join(gitDir, "packed-refs");
+  if (fs.existsSync(packedRefsPath)) {
+    for (const line of fs.readFileSync(packedRefsPath, "utf8").split(/\r?\n/)) {
+      const [commit, ref] = line.trim().split(/\s+/);
+      if (
+        ref === symbolic[1] &&
+        /^[0-9a-f]{40}$/i.test(commit)
+      ) {
+        return commit.toLowerCase();
+      }
+    }
+  }
+
+  throw new Error(
+    `Unable to resolve Git HEAD ref ${symbolic[1]} in ${repositoryRoot}`,
+  );
+}
+
 for (const source of [caseSetPath, publicResultPath]) {
   if (!fs.existsSync(source)) {
     throw new Error(`Missing canonical benchmark source: ${source}`);
@@ -28,11 +75,7 @@ for (const source of [caseSetPath, publicResultPath]) {
 
 const caseSet = JSON.parse(fs.readFileSync(caseSetPath, "utf8"));
 const result = JSON.parse(fs.readFileSync(publicResultPath, "utf8"));
-const sourceCommit = execFileSync(
-  "git",
-  ["-C", desktopRoot, "rev-parse", "HEAD"],
-  { encoding: "utf8" },
-).trim();
+const sourceCommit = readGitHeadCommit(desktopRoot);
 
 if (caseSet.caseSetVersion !== result.caseSetVersion) {
   throw new Error(
