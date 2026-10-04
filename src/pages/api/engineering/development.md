@@ -25,6 +25,11 @@ Mira 使用 pnpm workspace。具体脚本应以 dev 分支 package.json 与各�
 - Harness 改动分别测试 match、exposure、invocation、policy 和 evidence。
 - Provider 改动至少验证能力降级与不可用状态。
 
+
+## Agent Benchmark
+
+Agent Core 的长期公开回归入口见 [Mira Agent Core Benchmark](/guide/benchmark)。正式题库和结果投影都固定到对应 Mira Desktop commit；官网不维护第二套评分合同。
+
 ## 文档也属于变更
 
 如果公共行为、架构契约或配置发生变化，应同步 current contract 与用户文档。规划材料要标明状态，避免“想做”被搜索结果误读成“已经实现”。
