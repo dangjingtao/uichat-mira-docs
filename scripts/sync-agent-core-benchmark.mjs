@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const frozenSourceCommit = "bcb79fafa5b7e98e82d4f830df4112d6ce9c07a0";
 const desktopRoot = path.resolve(
   process.env.MIRA_DESKTOP_ROOT || path.join(repoRoot, "..", "mira-desktop"),
 );
@@ -76,6 +77,11 @@ for (const source of [caseSetPath, publicResultPath]) {
 const caseSet = JSON.parse(fs.readFileSync(caseSetPath, "utf8"));
 const result = JSON.parse(fs.readFileSync(publicResultPath, "utf8"));
 const sourceCommit = readGitHeadCommit(desktopRoot);
+if (sourceCommit !== frozenSourceCommit) {
+  throw new Error(
+    `Mira Desktop source must be frozen at ${frozenSourceCommit}; got ${sourceCommit}`,
+  );
+}
 
 if (caseSet.caseSetVersion !== result.caseSetVersion) {
   throw new Error(
