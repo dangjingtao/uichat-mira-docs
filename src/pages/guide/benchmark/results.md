@@ -84,7 +84,7 @@ unknown/unknown 表示对应 cancelled / waiting-user 路径没有可验证的 p
 
 ## Diagnostic cases
 
-另外 8 个 diagnostic_untimed case 属于冻结题库，但不进入本次正式 macro average，也不会获得虚构 timing credit。完整列表见 [正式题库](/guide/benchmark/cases)。
+另外 8 个 diagnostic_untimed case 属于冻结题库，但不进入本次正式 macro average，也不会获得虚构 timing credit。完整列表见 [正式题库](../cases/)。
 
 ## Judge 方法记录
 
