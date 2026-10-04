@@ -92,9 +92,9 @@ function overviewPage() {
       "",
       "## 从这里开始",
       "",
-      "- [正式题库](/guide/benchmark/cases)：查看 25 个冻结 case 的公开题面、意图、计分参与方式与 timing。",
-      "- [测试方法](/guide/benchmark/method)：了解 3 次 repetition、canonical/adapted/noncanonical、四个主指标、timeout 与 Judge 边界。",
-      "- [正式结果](/guide/benchmark/results)：查看当前 Formal run 的实验身份、case/tier 结果与 incomplete 原因。",
+      "- [正式题库](./cases/)：查看 25 个冻结 case 的公开题面、意图、计分参与方式与 timing。",
+      "- [测试方法](./method/)：了解 3 次 repetition、canonical/adapted/noncanonical、四个主指标、timeout 与 Judge 边界。",
+      "- [正式结果](./results/)：查看当前 Formal run 的实验身份、case/tier 结果与 incomplete 原因。",
       "",
       "## 为什么不发布一个总分",
       "",
@@ -495,7 +495,7 @@ function resultsPage() {
     "",
     "## Diagnostic cases",
     "",
-    "另外 8 个 diagnostic_untimed case 属于冻结题库，但不进入本次正式 macro average，也不会获得虚构 timing credit。完整列表见 [正式题库](/guide/benchmark/cases)。",
+    "另外 8 个 diagnostic_untimed case 属于冻结题库，但不进入本次正式 macro average，也不会获得虚构 timing credit。完整列表见 [正式题库](../cases/)。",
     "",
     "## Judge 方法记录",
     "",
@@ -535,6 +535,12 @@ const outputs = new Map([
 let mismatch = false;
 for (const [filePath, content] of outputs) {
   const normalized = content.trimEnd() + "\n";
+  if (normalized.includes("](/guide/benchmark")) {
+    throw new Error(
+      "Generated Benchmark pages must use base-path-safe relative internal links: " +
+        path.relative(repoRoot, filePath),
+    );
+  }
   if (checkOnly) {
     const current = fs.existsSync(filePath)
       ? fs.readFileSync(filePath, "utf8")
