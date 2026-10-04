@@ -28,9 +28,9 @@ Mira Agent Core Benchmark 用于测试 Mira 在真实 Agent 工作中能否**完
 
 ## 从这里开始
 
-- [正式题库](/guide/benchmark/cases)：查看 25 个冻结 case 的公开题面、意图、计分参与方式与 timing。
-- [测试方法](/guide/benchmark/method)：了解 3 次 repetition、canonical/adapted/noncanonical、四个主指标、timeout 与 Judge 边界。
-- [正式结果](/guide/benchmark/results)：查看当前 Formal run 的实验身份、case/tier 结果与 incomplete 原因。
+- [正式题库](./cases/)：查看 25 个冻结 case 的公开题面、意图、计分参与方式与 timing。
+- [测试方法](./method/)：了解 3 次 repetition、canonical/adapted/noncanonical、四个主指标、timeout 与 Judge 边界。
+- [正式结果](./results/)：查看当前 Formal run 的实验身份、case/tier 结果与 incomplete 原因。
 
 ## 为什么不发布一个总分
 
