@@ -63,6 +63,7 @@ order: 99
 - [对话工作区](/guide/product/workspace)
 - [知识库与 RAG](/guide/product/knowledge)
 - [评测工作台](/guide/product/evaluation)
+- [Mira Agent Core Benchmark](/guide/benchmark)：公开冻结题库、方法与正式结果；这是工程质量 Benchmark，不是 Evaluation 工作台里的业务评测 Run。
 - [角色工作台](/guide/product/roles-microapps)
 - [微应用中心](/guide/product/microapps)
 - [企业集成](/guide/product/enterprise-integrations)
@@ -80,6 +81,7 @@ Knowledge Base 和 Evaluation 是相邻但独立的产品域。前者持有文�
 - [Knowledge Base 与 RAG Runtime](/api/architecture/knowledge-rag)
 - [Evaluation Runtime 与指标语义](/api/architecture/evaluation-runtime)
 - [Agent 当前运行真相](/api/architecture/agent)
+- [Mira Agent Core Benchmark](/guide/benchmark)：从当前 Agent 合同进入公开 Benchmark 题库与 Formal 结果。
 - [Harness 与工具边界](/api/architecture/harness)
 - [Agent 策略](/api/architecture/agent-strategy)
 - [MicroApps 与独立 Runtime](/api/architecture/microapps)

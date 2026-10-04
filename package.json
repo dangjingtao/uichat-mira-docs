@@ -6,16 +6,18 @@
   "scripts": {
     "dev": "vite",
     "verify:mira-docs": "node scripts/verify-mira-docs-compat.mjs",
-    "verify:static-output": "node scripts/verify-mira-docs-static-output.mjs",
+    "verify:static-output": "node scripts/verify-mira-docs-static-output.mjs && node scripts/verify-agent-core-benchmark-static.mjs",
     "comic:inspect": "node scripts/comic-pipeline/inspect.mjs",
     "comic:build": "node scripts/comic-pipeline/build.mjs",
     "comic:verify": "node scripts/comic-pipeline/verify.mjs",
     "comic:publish": "node scripts/comic-pipeline/publish-r2.mjs",
     "comic:test": "node scripts/comic-pipeline/test.mjs",
-    "build": "npm run verify:mira-docs && tsc -b && vite build",
+    "build": "npm run verify:benchmark && npm run verify:mira-docs && tsc -b && vite build",
     "build:github-pages": "npm run build -- --mode github-pages",
     "preview": "vite preview",
-    "verify:current-status": "node scripts/verify-current-status.mjs"
+    "verify:current-status": "node scripts/verify-current-status.mjs",
+    "benchmark:sync": "node scripts/sync-agent-core-benchmark.mjs && node scripts/generate-agent-core-benchmark-pages.mjs --write",
+    "verify:benchmark": "node scripts/verify-agent-core-benchmark-public.mjs && node scripts/generate-agent-core-benchmark-pages.mjs --check"
   },
   "dependencies": {
     "@fontsource/cormorant-garamond": "^5.2.11",
