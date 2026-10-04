@@ -23,5 +23,6 @@ export const directoryLabels: Record<string, string> = {
   status: "现状与方向",
   architecture: "架构",
   engineering: "工程",
+  benchmark: "Agent Benchmark",
   视觉: "视觉",
 };

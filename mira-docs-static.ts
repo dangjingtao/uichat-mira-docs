@@ -171,6 +171,7 @@ function staticDirectoryTitle(directory: string): string {
     status: "现状与方向",
     architecture: "架构",
     engineering: "工程",
+    benchmark: "Agent Benchmark",
   };
   if (!directory) return "文档";
   return directory

@@ -208,6 +208,11 @@ Mira 当前不是：
 
 当前 SubAgent 是受控、单层、任务局部的执行所有权转移。
 
+
+## Agent Core Benchmark
+
+Mira Agent 的公开质量基线见 [Mira Agent Core Benchmark](/guide/benchmark)。该专题展示冻结题库、测试方法与 Formal 结果；Benchmark 官网页面只消费公开投影，不替代主仓库中的 canonical contract、case-set 和 raw artifacts。
+
 ## 当前阶段
 
 2026 年 8 月起，Agent 进入功能稳定迭代。重点是修复合同漂移、稳定审批恢复、减少提前完成、提高 Evidence 与 Artifact 可信度，并用回归测试保护已经形成的边界，而不是重新设计一套更大的 Agent Graph。
