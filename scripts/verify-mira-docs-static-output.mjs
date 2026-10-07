@@ -365,13 +365,16 @@ if (existsSync(sitemapPath)) {
   }
 }
 
-if (existsSync(redirectsPath)) {
+if (existsSync(redirectsPath) && existsSync(sitemapPath)) {
   const redirects = readFileSync(redirectsPath, "utf8");
-  for (const route of visibleRoutes) {
-    if (route === "/") continue;
-    const canonical = `${route}/`;
-    if (!redirects.includes(`${route} ${canonical} 301`)) {
-      failures.push(`_redirects 缺少 canonical 跳转: ${route} -> ${canonical}`);
+  const sitemap = readFileSync(sitemapPath, "utf8");
+  const canonicalPaths = [...sitemap.matchAll(/<loc>([^<]+)<\\/loc>/g)]
+    .map((match) => new URL(match[1]).pathname)
+    .filter((pathname) => pathname !== "/" && pathname.endsWith("/"));
+  for (const canonical of canonicalPaths) {
+    const source = canonical.replace(/\\/$/, "");
+    if (!redirects.includes(`${source} ${canonical} 301`)) {
+      failures.push(`_redirects 缺少 canonical 跳转: ${source} -> ${canonical}`);
     }
   }
 }
