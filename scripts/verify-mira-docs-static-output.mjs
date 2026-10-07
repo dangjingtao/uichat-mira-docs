@@ -368,7 +368,7 @@ if (existsSync(sitemapPath)) {
 if (existsSync(redirectsPath) && existsSync(sitemapPath)) {
   const redirects = readFileSync(redirectsPath, "utf8");
   const sitemap = readFileSync(sitemapPath, "utf8");
-  const canonicalPaths = [...sitemap.matchAll(/<loc>([^<]+)<\\/loc>/g)]
+  const canonicalPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
     .map((match) => new URL(match[1]).pathname)
     .filter((pathname) => pathname !== "/" && pathname.endsWith("/"));
   for (const canonical of canonicalPaths) {
