@@ -121,7 +121,8 @@ const indexPath = resolve(distRoot, "index.html");
 const notFoundPath = resolve(distRoot, "404.html");
 const sitemapPath = resolve(distRoot, "sitemap.xml");
 const robotsPath = resolve(distRoot, "robots.txt");
-for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath]) {
+const redirectsPath = resolve(distRoot, "_redirects");
+for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath, redirectsPath]) {
   if (!existsSync(file)) failures.push(`缺少构建产物: ${file}`);
 }
 
@@ -352,6 +353,17 @@ if (existsSync(sitemapPath)) {
   }
 }
 
+if (existsSync(redirectsPath)) {
+  const redirects = readFileSync(redirectsPath, "utf8");
+  for (const route of visibleRoutes) {
+    if (route === "/") continue;
+    const canonical = `${route}/`;
+    if (!redirects.includes(`${route} ${canonical} 301`)) {
+      failures.push(`_redirects 缺少 canonical 跳转: ${route} -> ${canonical}`);
+    }
+  }
+}
+
 if (existsSync(robotsPath)) {
   const robots = readFileSync(robotsPath, "utf8");
   const expected = `Sitemap: ${siteUrl}${expectedBase}/sitemap.xml`;
@@ -365,5 +377,5 @@ if (failures.length) {
 }
 
 console.log(
-  `MiraDocs static output passed: ${visibleRoutes.size} routes, complete article shells/Markdown rendering/canonical/JSON-LD/404/sitemap/robots verified.`,
+  `MiraDocs static output passed: ${visibleRoutes.size} routes, complete article shells/Markdown rendering/canonical/JSON-LD/404/sitemap/robots/redirects verified.`,
 );
