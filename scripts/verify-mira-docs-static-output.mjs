@@ -115,6 +115,18 @@ for (const route of visibleRoutes) {
   if (legacyHrefPattern.test(html)) {
     failures.push(`静态页面仍包含旧文档链接: ${route}`);
   }
+  for (const target of visibleRoutes) {
+    if (target === "/") continue;
+    const slashlessCandidates = [
+      `href="${target}"`,
+      `href="${target}#`,
+      `href="${expectedBase}${target}"`,
+      `href="${expectedBase}${target}#`,
+    ];
+    if (slashlessCandidates.some((candidate) => html.includes(candidate))) {
+      failures.push(`静态页面包含非 canonical 内链: ${route} -> ${target}`);
+    }
+  }
 }
 
 const indexPath = resolve(distRoot, "index.html");
