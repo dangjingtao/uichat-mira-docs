@@ -372,7 +372,7 @@ if (existsSync(redirectsPath) && existsSync(sitemapPath)) {
     .map((match) => new URL(match[1]).pathname)
     .filter((pathname) => pathname !== "/" && pathname.endsWith("/"));
   for (const canonical of canonicalPaths) {
-    const source = canonical.replace(/\\/$/, "");
+    const source = canonical.replace(/\/$/, "");
     if (!redirects.includes(`${source} ${canonical} 301`)) {
       failures.push(`_redirects 缺少 canonical 跳转: ${source} -> ${canonical}`);
     }
