@@ -73,15 +73,30 @@ function logicalSiteAreaKey(root: string) {
 function navigationDirectory(doc: Doc) {
   return doc.root === VISUAL_CONTENT_ROOT ? VISUAL_NAV_DIRECTORY : doc.directory;
 }
+function canonicalRoutePath(path: string) {
+  const match = path.match(/^([^?#]*)([?#].*)?$/);
+  const pathname = match?.[1] || path;
+  const suffix = match?.[2] || "";
+  if (
+    pathname === "/" ||
+    pathname.endsWith("/") ||
+    /\/[^/]+\.[^/]+$/.test(pathname)
+  ) {
+    return `${pathname}${suffix}`;
+  }
+  return `${pathname}/${suffix}`;
+}
 function docHref(path: string) {
-  return `${appBase}${path.replace(/^\/+/, "")}`;
+  return `${appBase}${canonicalRoutePath(path).replace(/^\/+/, "")}`;
 }
 function decodedPathname(path: string) {
+  let decoded = path;
   try {
-    return decodeURI(path);
+    decoded = decodeURI(path);
   } catch {
-    return path;
+    decoded = path;
   }
+  return decoded === "/" ? decoded : decoded.replace(/\/+$/, "");
 }
 
 const siteAreaRoots = [
@@ -170,13 +185,14 @@ const siteTitle = "UIChat Mira";
 const defaultPageTitle = "本地优先的多模型智能体";
 
 function getPageTitle(pathname: string) {
-  if (pathname === "/") return defaultPageTitle;
-  if (pathname === "/guide/sitemap") return "站点地图";
+  const routePath = decodedPathname(pathname);
+  if (routePath === "/") return defaultPageTitle;
+  if (routePath === "/guide/sitemap") return "站点地图";
 
-  const doc = allDocs.find((item) => item.path === pathname);
+  const doc = allDocs.find((item) => item.path === routePath);
   if (doc) return doc.title;
 
-  const area = siteAreas.find((item) => item.path === pathname);
+  const area = siteAreas.find((item) => item.path === routePath);
   return area?.title || "页面不存在";
 }
 
@@ -655,7 +671,7 @@ function SearchOverlay({
       return;
     }
     if (event.key === "Enter" && results[activeIndex]) {
-      navigate(results[activeIndex].path);
+      navigate(canonicalRoutePath(results[activeIndex].path));
       onClose();
     }
   }
@@ -699,7 +715,7 @@ function SearchOverlay({
               <Link
                 className={`search-result${index === activeIndex ? " active" : ""}`}
                 key={doc.path}
-                to={doc.path}
+                to={canonicalRoutePath(doc.path)}
                 role="option"
                 aria-selected={index === activeIndex}
                 onMouseEnter={() => setActiveIndex(index)}
@@ -1002,7 +1018,7 @@ function AreaDocNav({ area, current }: { area: SiteArea; current: string }) {
         <h5>
           <Link
             className={current === area.path ? "active" : ""}
-            to={area.path}
+            to={canonicalRoutePath(area.path)}
           >
             {area.title}
           </Link>
@@ -1016,7 +1032,7 @@ function AreaDocNav({ area, current }: { area: SiteArea; current: string }) {
               <li key={doc.path}>
                 <Link
                   className={current === doc.path ? "active" : ""}
-                  to={doc.path}
+                  to={canonicalRoutePath(doc.path)}
                 >
                   {doc.title}
                 </Link>
@@ -1105,11 +1121,11 @@ function DocsLayout() {
   return (
     <div className={`docs-app${isBlogArea ? " blog-app" : ""}`}>
       {!isBlogArea && <MobileDocsBar currentDoc={currentDoc} tocOpen={mobileTocOpen} onMenu={() => setMobileMenuOpen(true)} onToc={() => setMobileTocOpen((value) => !value)} />}
-      {mobileMenuOpen && !isBlogArea ? <MobileDocsDrawer area={currentArea} current={location.pathname} onClose={() => setMobileMenuOpen(false)} /> : null}
+      {mobileMenuOpen && !isBlogArea ? <MobileDocsDrawer area={currentArea} current={currentPath} onClose={() => setMobileMenuOpen(false)} /> : null}
       {mobileTocOpen && currentDoc && !isBlogArea ? <MobilePageToc doc={currentDoc} onClose={() => setMobileTocOpen(false)} /> : null}
       <div className={`docs-shell${isBlogArea ? " blog-shell" : ""}`}>
         {!isBlogArea && currentArea ? (
-          <AreaDocNav area={currentArea} current={location.pathname} />
+          <AreaDocNav area={currentArea} current={currentPath} />
         ) : null}
         <main className={`doc-main${isBlogArea ? " blog-main" : ""}`}>
           <Outlet />
@@ -1488,7 +1504,7 @@ function AreaPage({ area }: { area: SiteArea }) {
                   <ol>
                     {group.docs.map((doc) => (
                       <li key={doc.path}>
-                        <Link to={doc.path}>
+                        <Link to={canonicalRoutePath(doc.path)}>
                           {doc.title}
                           <span>→</span>
                         </Link>
@@ -1563,7 +1579,7 @@ function DynamicSitemap() {
             <ol>
               {section.docs.map((doc) => (
                 <li key={doc.path}>
-                  <Link to={doc.path}>
+                  <Link to={canonicalRoutePath(doc.path)}>
                     {doc.title}
                     <span>→</span>
                   </Link>
