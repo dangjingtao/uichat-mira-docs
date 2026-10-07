@@ -109,7 +109,7 @@ function basePath(base: string): string {
   return base === "/" ? "" : base.replace(/\/$/, "");
 }
 
-function docHref(path: string, context: MiraDocsStaticBuildContext): string {
+function canonicalRoutePath(path: string): string {
   const match = path.match(/^([^?#]*)([?#].*)?$/);
   const pathname = match?.[1] || path;
   const suffix = match?.[2] || "";
@@ -117,7 +117,20 @@ function docHref(path: string, context: MiraDocsStaticBuildContext): string {
     pathname === "/" || pathname.endsWith("/") || /\/[^/]+\.[^/]+$/.test(pathname)
       ? pathname
       : `${pathname}/`;
-  return `${basePath(context.base)}${canonicalPath}${suffix}`;
+  return `${canonicalPath}${suffix}`;
+}
+
+function docHref(path: string, context: MiraDocsStaticBuildContext): string {
+  return `${basePath(context.base)}${canonicalRoutePath(path)}`;
+}
+
+function canonicalizeInternalHtmlLinks(
+  html: string,
+  context: MiraDocsStaticBuildContext,
+): string {
+  return html.replace(/href="(\/[^"]*)"/g, (_match, href: string) => {
+    return `href="${docHref(href, context)}"`;
+  });
 }
 
 const VISUAL_CONTENT_ROOT = "design-md";
@@ -258,7 +271,10 @@ function documentBody(
   context: MiraDocsStaticBuildContext,
   docs: StaticDoc[],
 ): string {
-  const body = renderMiraMarkdown(doc.source, { removeH1: true });
+  const body = canonicalizeInternalHtmlLinks(
+    renderMiraMarkdown(doc.source, { removeH1: true }),
+    context,
+  );
   const main = `<main class="doc-main seo-static-content"><div class="doc-eyebrow">${miraDocsEscapeHtml(doc.group)} · ${String(doc.order).padStart(2, "0")}</div><div class="doc-title-block"><h1>${miraDocsEscapeHtml(doc.title)}</h1>${doc.description ? `<p class="doc-lede">${miraDocsEscapeHtml(doc.description)}</p>` : ""}</div><article class="markdown">${body}</article>${pageNavigation(previous, next, context)}</main>`;
   return `${staticSiteHeader(context)}<div class="docs-app seo-static-docs-app"><div class="docs-shell">${staticDocNav(doc, docs, context)}${main}${staticDocToc(doc)}</div></div>`;
 }
@@ -281,7 +297,10 @@ function articleBody(
   next: StaticDoc | undefined,
   context: MiraDocsStaticBuildContext,
 ): string {
-  const body = renderMiraMarkdown(doc.source, { removeH1: true });
+  const body = canonicalizeInternalHtmlLinks(
+    renderMiraMarkdown(doc.source, { removeH1: true }),
+    context,
+  );
   const authors = doc.authors.join(" × ");
   const meta = [authors, doc.date, doc.readTime, doc.group]
     .filter(Boolean)
