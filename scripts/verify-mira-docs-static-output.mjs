@@ -115,13 +115,30 @@ for (const route of visibleRoutes) {
   if (legacyHrefPattern.test(html)) {
     failures.push(`静态页面仍包含旧文档链接: ${route}`);
   }
+  const internalHrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
+  for (const href of internalHrefs) {
+    if (!href.startsWith("/")) continue;
+    const [hrefPath] = href.split(/[?#]/, 1);
+    const withoutBase =
+      expectedBase !== "/" && hrefPath.startsWith(`${expectedBase}/`)
+        ? hrefPath.slice(expectedBase.length)
+        : hrefPath;
+    if (
+      withoutBase !== "/" &&
+      visibleRoutes.has(withoutBase) &&
+      !withoutBase.endsWith("/")
+    ) {
+      failures.push(`静态页面包含非 canonical 内链: ${route} -> ${withoutBase}`);
+    }
+  }
 }
 
 const indexPath = resolve(distRoot, "index.html");
 const notFoundPath = resolve(distRoot, "404.html");
 const sitemapPath = resolve(distRoot, "sitemap.xml");
 const robotsPath = resolve(distRoot, "robots.txt");
-for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath]) {
+const redirectsPath = resolve(distRoot, "_redirects");
+for (const file of [indexPath, notFoundPath, sitemapPath, robotsPath, redirectsPath]) {
   if (!existsSync(file)) failures.push(`缺少构建产物: ${file}`);
 }
 
@@ -184,7 +201,7 @@ if (existsSync(indexPath)) {
   if (!html.includes("People are not infrastructure.")) {
     failures.push("首页缺少 Mira Values 主句");
   }
-  if (!html.includes("/about#fair-work")) {
+  if (!html.includes("/about/#fair-work")) {
     failures.push("首页 Mira Values 缺少 About fair-work 链接");
   }
   const homeBlogIndex = html.indexOf(">博客</a>");
@@ -352,6 +369,20 @@ if (existsSync(sitemapPath)) {
   }
 }
 
+if (existsSync(redirectsPath) && existsSync(sitemapPath)) {
+  const redirects = readFileSync(redirectsPath, "utf8");
+  const sitemap = readFileSync(sitemapPath, "utf8");
+  const canonicalPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((match) => new URL(match[1]).pathname)
+    .filter((pathname) => pathname !== "/" && pathname.endsWith("/"));
+  for (const canonical of canonicalPaths) {
+    const source = canonical.replace(/\/$/, "");
+    if (!redirects.includes(`${source} ${canonical} 301`)) {
+      failures.push(`_redirects 缺少 canonical 跳转: ${source} -> ${canonical}`);
+    }
+  }
+}
+
 if (existsSync(robotsPath)) {
   const robots = readFileSync(robotsPath, "utf8");
   const expected = `Sitemap: ${siteUrl}${expectedBase}/sitemap.xml`;
@@ -365,5 +396,5 @@ if (failures.length) {
 }
 
 console.log(
-  `MiraDocs static output passed: ${visibleRoutes.size} routes, complete article shells/Markdown rendering/canonical/JSON-LD/404/sitemap/robots verified.`,
+  `MiraDocs static output passed: ${visibleRoutes.size} routes, complete article shells/Markdown rendering/canonical/JSON-LD/404/sitemap/robots/redirects verified.`,
 );
