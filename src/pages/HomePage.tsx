@@ -10,7 +10,7 @@ const mobileRepoUrl = "https://github.com/uichat-mira/mira-mobile";
 const organizationUrl = "https://github.com/uichat-mira";
 const fairWorkUrl = "https://github.com/uichat-mira/.github/blob/main/FAIR-WORK.md";
 
-function docHref(path: string) {
+function canonicalRoutePath(path: string) {
   const match = path.match(/^([^?#]*)([?#].*)?$/);
   const pathname = match?.[1] || path;
   const suffix = match?.[2] || "";
@@ -18,7 +18,11 @@ function docHref(path: string) {
     pathname === "/" || pathname.endsWith("/") || /\/[^/]+\.[^/]+$/.test(pathname)
       ? pathname
       : `${pathname}/`;
-  return `${appBase}${canonicalPath.replace(/^\/+/, "")}${suffix}`;
+  return `${canonicalPath}${suffix}`;
+}
+
+function docHref(path: string) {
+  return `${appBase}${canonicalRoutePath(path).replace(/^\/+/, "")}`;
 }
 
 const capabilityItems: CapabilityItem[] = [
@@ -109,7 +113,7 @@ export default function HomePage({ footer }: HomePageProps) {
                 <Download size={16} aria-hidden="true" />
                 下载 Mira
               </a>
-              <Link className="btn btn-secondary" to="/guide/about/origin">
+              <Link className="btn btn-secondary" to={canonicalRoutePath("/guide/about/origin")}>
                 认识 Mira
               </Link>
             </div>
@@ -171,16 +175,16 @@ export default function HomePage({ footer }: HomePageProps) {
                   <span>{doc.group}</span>
                 </div>
                 <h3>
-                  <Link to={doc.path}>{doc.title}</Link>
+                  <Link to={canonicalRoutePath(doc.path)}>{doc.title}</Link>
                 </h3>
                 <p>{doc.description}</p>
-                <Link className="home-writing-link" to={doc.path}>
+                <Link className="home-writing-link" to={canonicalRoutePath(doc.path)}>
                   阅读全文 →
                 </Link>
               </article>
             ))}
           </div>
-          <Link className="text-link home-writing-more" to="/blogs">
+          <Link className="text-link home-writing-more" to={canonicalRoutePath("/blogs")}>
             查看全部文章 →
           </Link>
         </div>
@@ -211,7 +215,7 @@ export default function HomePage({ footer }: HomePageProps) {
               Mira Mobile
               <ArrowUpRight size={14} aria-hidden="true" />
             </a>
-            <Link to="/guide/about/author">
+            <Link to={canonicalRoutePath("/guide/about/author")}>
               项目与维护者
               <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
@@ -228,7 +232,7 @@ export default function HomePage({ footer }: HomePageProps) {
             <p>Mira 反对 996，以及违法、强迫和无偿的过度劳动。</p>
           </div>
           <div className="home-values-links">
-            <Link className="text-link" to="/about#fair-work">
+            <Link className="text-link" to={canonicalRoutePath("/about#fair-work")}>
               关于 Mira
               <ArrowUpRight size={14} aria-hidden="true" />
             </Link>
