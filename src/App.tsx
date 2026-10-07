@@ -292,6 +292,11 @@ function removeMarkdownH1(source: string) {
     })
     .join("\n");
 }
+function canonicalizeInternalHtmlLinks(html: string) {
+  return html.replace(/href="(\/[^"]*)"/g, (_match, href: string) => {
+    return `href="${canonicalRoutePath(href)}"`;
+  });
+}
 function renderMarkdown(source: string) {
   const withoutTitles = removeMarkdownH1(source);
   const htmlBlocks: string[] = [];
@@ -324,7 +329,7 @@ function renderMarkdown(source: string) {
     const placeholder = `MIRA_HTML_BLOCK_${index}`;
     html = html.replace(new RegExp(`<p>${placeholder}<\\/p>|${placeholder}`, "g"), block);
   });
-  return html.replace(
+  const withAnchors = html.replace(
     /<h([23])((?:\s[^>]*)?)>([\s\S]*?)<\/h\1>/g,
     (_, level, attributes, text) => {
       if (/\bid\s*=\s*["'][^"']+["']/i.test(attributes)) {
@@ -336,6 +341,7 @@ function renderMarkdown(source: string) {
         : `<h${level}${attributes}>${text}</h${level}>`;
     },
   );
+  return canonicalizeInternalHtmlLinks(withAnchors);
 }
 function RenderedMarkdown({ html, className = "markdown" }: { html: string; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -611,7 +617,7 @@ function NotFoundPage({ onSearch }: { onSearch: () => void }) {
             <button className="btn btn-secondary" type="button" onClick={onSearch}>
               搜索站内内容
             </button>
-            <Link className="not-found-doc-link" to="/guide/about/origin">
+            <Link className="not-found-doc-link" to={canonicalRoutePath("/guide/about/origin")}>
               查看 Mira 文档 →
             </Link>
           </div>
