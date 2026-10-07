@@ -110,7 +110,14 @@ function basePath(base: string): string {
 }
 
 function docHref(path: string, context: MiraDocsStaticBuildContext): string {
-  return `${basePath(context.base)}${path}`;
+  const match = path.match(/^([^?#]*)([?#].*)?$/);
+  const pathname = match?.[1] || path;
+  const suffix = match?.[2] || "";
+  const canonicalPath =
+    pathname === "/" || pathname.endsWith("/") || /\/[^/]+\.[^/]+$/.test(pathname)
+      ? pathname
+      : `${pathname}/`;
+  return `${basePath(context.base)}${canonicalPath}${suffix}`;
 }
 
 const VISUAL_CONTENT_ROOT = "design-md";
