@@ -38,18 +38,6 @@ if (normalizedBuildBase !== "/" && window.location.pathname === normalizedBuildB
     "",
     `${normalizedBuildBase}/${window.location.search}${window.location.hash}`,
   );
-} else {
-  const isDeploymentRoot =
-    window.location.pathname === "/" ||
-    (normalizedBuildBase !== "/" && window.location.pathname === `${normalizedBuildBase}/`);
-
-  if (!isDeploymentRoot && window.location.pathname.endsWith("/")) {
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname.replace(/\/+$/, "")}${window.location.search}${window.location.hash}`,
-    );
-  }
 }
 
 
