@@ -13,7 +13,7 @@
     "comic:publish": "node scripts/comic-pipeline/publish-r2.mjs",
     "comic:test": "node scripts/comic-pipeline/test.mjs",
     "build": "npm run verify:benchmark && npm run verify:mira-docs && tsc -b && vite build && node scripts/generate-canonical-redirects.mjs",
-    "build:github-pages": "npm run build -- --mode github-pages",
+    "build:github-pages": "npm run verify:benchmark && npm run verify:mira-docs && tsc -b && vite build --mode github-pages && node scripts/generate-canonical-redirects.mjs",
     "preview": "vite preview",
     "verify:current-status": "node scripts/verify-current-status.mjs",
     "benchmark:sync": "node scripts/sync-agent-core-benchmark.mjs && node scripts/generate-agent-core-benchmark-pages.mjs --write",
