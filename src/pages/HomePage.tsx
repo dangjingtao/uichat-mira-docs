@@ -11,7 +11,14 @@ const organizationUrl = "https://github.com/uichat-mira";
 const fairWorkUrl = "https://github.com/uichat-mira/.github/blob/main/FAIR-WORK.md";
 
 function docHref(path: string) {
-  return `${appBase}${path.replace(/^\/+/, "")}`;
+  const match = path.match(/^([^?#]*)([?#].*)?$/);
+  const pathname = match?.[1] || path;
+  const suffix = match?.[2] || "";
+  const canonicalPath =
+    pathname === "/" || pathname.endsWith("/") || /\/[^/]+\.[^/]+$/.test(pathname)
+      ? pathname
+      : `${pathname}/`;
+  return `${appBase}${canonicalPath.replace(/^\/+/, "")}${suffix}`;
 }
 
 const capabilityItems: CapabilityItem[] = [
