@@ -115,16 +115,20 @@ for (const route of visibleRoutes) {
   if (legacyHrefPattern.test(html)) {
     failures.push(`静态页面仍包含旧文档链接: ${route}`);
   }
-  for (const target of visibleRoutes) {
-    if (target === "/") continue;
-    const slashlessCandidates = [
-      `href="${target}"`,
-      `href="${target}#`,
-      `href="${expectedBase}${target}"`,
-      `href="${expectedBase}${target}#`,
-    ];
-    if (slashlessCandidates.some((candidate) => html.includes(candidate))) {
-      failures.push(`静态页面包含非 canonical 内链: ${route} -> ${target}`);
+  const internalHrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
+  for (const href of internalHrefs) {
+    if (!href.startsWith("/")) continue;
+    const [hrefPath] = href.split(/[?#]/, 1);
+    const withoutBase =
+      expectedBase !== "/" && hrefPath.startsWith(`${expectedBase}/`)
+        ? hrefPath.slice(expectedBase.length)
+        : hrefPath;
+    if (
+      withoutBase !== "/" &&
+      visibleRoutes.has(withoutBase) &&
+      !withoutBase.endsWith("/")
+    ) {
+      failures.push(`静态页面包含非 canonical 内链: ${route} -> ${withoutBase}`);
     }
   }
 }
@@ -197,7 +201,7 @@ if (existsSync(indexPath)) {
   if (!html.includes("People are not infrastructure.")) {
     failures.push("首页缺少 Mira Values 主句");
   }
-  if (!html.includes("/about#fair-work")) {
+  if (!html.includes("/about/#fair-work")) {
     failures.push("首页 Mira Values 缺少 About fair-work 链接");
   }
   const homeBlogIndex = html.indexOf(">博客</a>");
